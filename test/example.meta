@@ -1,0 +1,20 @@
+#testing meta table
+#DONORDIST 0, 1, 2, 3, ..., 2^nploid-1; this is basically deletion or nothing
+#RECPTDIST 0, 1, 2, 3, ..., 2^nploid-1; this is basically insertion or nothing
+#IF DONOR is multiple and is providing sequence, a random one among them is chosen 
+#IF RECPT is multiple and every in the multiple is receiving the chosen donor seq
+#FOR HOMOZYGOUS EVENTS TO HAPPEN at nploid=2: 
+#DONOR must be fix_3, RECPT must be fix_3
+#And Sequence Content Should be the same for any donor sequence
+#FOR HEMIZYGOUS EVENTS TO HAPPEN at nploid=2: 
+#DONOR must be fix_1/fix_2, RECPT must be fix_1/fix_2
+#And Sequence Content Should be the same for any donor sequence
+#METATYPE	COUNT	SIZEDIST/SEQ	COPYDIST	DONORDIST	RECPTDIST	DONORFREQ	RECPTFREQ	NOTE
+FINS	2	example.fas	fix_1	fix_3	fix_3	fix_0.5	fix_0.5	#FINS=COPY*INS, foreign insertion
+ITRP	2	fix_1000	fix_1	fix_3	fix_3	fix_0.5	fix_0.5	#ITRP=1*DEL + COPY * INS, inverted transposition
+DEL	4	fix_500_500_1000_2000_2000	fix_1	fix_3	fix_3	fix_1.0	fix_0.5	#DEL=1*DEL, deletion
+TRP	2	fix_1000	fix_1	fix_3	fix_3	fix_1.0	fix_0.5	#TRP=1*DEL + COPY*INS, transposition
+INV	2	fix_1000	fix_1	fix_3	fix_3	fix_0.5	fix_0.5	#INV=1*DEL + COPY*INS, inversion
+IDUP	2	fix_1000	fix_2	fix_3	fix_3	fix_0.5	fix_0.5	#IDUP=1*DEL + COPY*INS, inverted duplication
+DINS	2	fix_1000	fix_1	fix_3	fix_3	fix_0.5	fix_0.5	#DINS=COPY*INS, domestic insertion
+DUP	2	fix_1000	fix_2	fix_3	fix_3	fix_0.5	fix_0.5	#DUP=COPY*INS, duplication
