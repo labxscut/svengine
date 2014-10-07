@@ -80,6 +80,8 @@ def main(args):
 		runmode=1;
 	elif args.hapfiles!=None and args.varfile!=None:
 		runmode=3;
+	else:
+		raise Exception("must provide meta/var file and bam/hap files!")
 
 	if runmode==0:
 		sys.stderr.write("inccorrect input specification, please use on of following: \n \
@@ -94,7 +96,10 @@ def main(args):
 	nligation = args.nligation						#this input has default
 	parlist = ConfigParser.ConfigParser()
 	parlist.readfp(parfile)
-	oprefix = 'example' if not args.oprefix else args.oprefix
+	metafile = args.metafile
+	varfile = args.varfile
+	oname = metafile.name.rstrip(".meta") if metafile else varfile.name.rstrip(".var")
+	oprefix = oname if not args.oprefix else args.oprefix
 	
 
 	if len(hapfiles) == 1: #reuse hapfiles for haplotype
@@ -111,8 +116,6 @@ def main(args):
 	except pybedtools.cbedtools.BedToolsFileError:
 		raise Exception("incorrect gapfile provided, must in BED format")
 
-
-
 	dic={} #common dictionary interface for passing parameters
 	for i in ('hapseq','gaptab','reffile','plansize','nligation','nploid','oprefix','nprocs'):
 		dic[i] = locals()[i]
@@ -120,7 +123,6 @@ def main(args):
 	print "entering runmode", runmode
 
 	if runmode==1 or runmode==2:
-		metafile = args.metafile
 		metatab = CommentedFile(metafile)
 		dic['metatab']=metatab
 		varlist = makevar(Bunch(dic))
@@ -130,7 +132,7 @@ def main(args):
 		print "done var2file"
 
 	if runmode==3 or runmode==4:
-		dic['varfile'] = args.varfile
+		dic['varfile'] = varfile
 		varlist = file2var(Bunch(dic))
   	# FIXME: file2var needs to be tested?
 
