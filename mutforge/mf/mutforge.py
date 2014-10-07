@@ -179,6 +179,7 @@ def var2wgs(bun):
 	nprocs=bun.nprocs
 	oprefix=bun.oprefix
 	parlist=bun.parlist
+	nploid=bun.nploid
 	nligation=bun.nligation
 	nlibrary=bun.parlist.getint('wgsim', 'nlibrary')
 	libnames=json.loads(parlist.get('wgsim', 'libnames'))
@@ -232,7 +233,7 @@ def var2wgs(bun):
 	for hap in hapvar.keys():
 		hapfas=bun.hapseq[hap].filename
 		for feat in hapvar[hap]:
-			hapiter.append([hap,hapfas,nligation,parlist,reffile,feat])
+			hapiter.append([hap,hapfas,nligation,parlist,reffile,nploid,feat])
 	for it in hapiter:
 		print it
 
@@ -267,7 +268,7 @@ def var2wgs(bun):
 	return fbam
 
 def fakebam(iter): # makebam from a pair of seqs of representing the original and sved haplotype
-	hap=iter[0]; hapfas=iter[1]; nligation=iter[2]; parlist=iter[3]; reffile=iter[4]; bed=iter[5];
+	hap=iter[0]; hapfas=iter[1]; nligation=iter[2]; parlist=iter[3]; reffile=iter[4]; nploid=iter[5]; bed=iter[6];
 	seq0=SeqRecord(Seq(pysam.Fastafile(hapfas).fetch(bed[0],int(bed[1])+1,int(bed[2])), generic_dna),id=bed[0], name="", description="")
 	seq1=seq0
 	#CHR ST	ED	VID	MID	FREQ	DEL	INS
@@ -293,21 +294,21 @@ def fakebam(iter): # makebam from a pair of seqs of representing the original an
 	for lib in range(0,nlibrary):
 		freq0 = 1-freq
 		print "-----"
-		bam0 = runwgs(parlist,nligation,reffile,seq0,lib,freq0)
-		bam1 = runwgs(parlist,nligation,reffile,seq1,lib,freq)
+		bam0 = runwgs(parlist,nligation,reffile,nploid,seq0,lib,freq0)
+		bam1 = runwgs(parlist,nligation,reffile,nploid,seq1,lib,freq)
 		print "-----"
 		bams[lib] = mergebam([bam0,bam1],tempfile.NamedTemporaryFile('w',delete=False).name)
 
 	return [hap,bams]
 
-def runwgs(parlist,nligation,reffile,seq,lib,freq): #create bam file for 1 library given seq and freq
+def runwgs(parlist,nligation,reffile,nploid,seq,lib,freq): #create bam file for 1 library given seq and freq
 	libnames=json.loads(parlist.get('wgsim', 'libnames'))
 	coverage=json.loads(parlist.get('wgsim', 'coverage'))
 	isize=json.loads(parlist.get('wgsim', 'isize'))
 	rl1=json.loads(parlist.get('wgsim', 'read1'))
 	rl2=json.loads(parlist.get('wgsim', 'read2'))
 	libn=libnames[lib]
-	nrdp = len(seq)*coverage[libn]*freq/(rl1[libn]+rl2[libn])
+	nrdp = len(seq)*coverage[libn]/nploid*freq/(rl1[libn]+rl2[libn])
 	nmode = len(isize[libn])
 	mode = [ None ] * nmode
 	fa=tempfile.NamedTemporaryFile('w',delete=False).name
