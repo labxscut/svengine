@@ -244,9 +244,14 @@ def var2wgs(bun):
 	for i in xrange(0,len(bedbams)):
 		for lib in xrange(0,nlibrary):
 			print bedbams[i][1][lib];
-			if lib == 0: libcnt0 += 1
-			else: libcnt1 += 1;
-			if not libbams.get(lib,None) libbams[lib].append(bedbams[i][1][lib]) else libbams[lib]=[bedbams[i][1][lib]]
+			if lib == 0: 
+				libcnt0 += 1
+			else: 
+				libcnt1 += 1;
+			if libbams.get(lib,None) == None:
+				libbams[lib]=[bedbams[i][1][lib]]
+			else:
+				libbams[lib].append(bedbams[i][1][lib]) 
 
 	print "len bedbams:", len(bedbams)
 	for lib in range(0,nlibrary):
