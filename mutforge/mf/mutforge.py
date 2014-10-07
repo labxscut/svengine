@@ -146,6 +146,7 @@ def chkvar(varbed):
 	else: return False
 
 def ppbam(bun,bamfiles):
+	
 	return None
 
 def var2wgs(bun):
@@ -197,32 +198,26 @@ def var2wgs(bun):
 #			print hapbed[hap]
 		#VID=None, MID=None, FREQ=0, DEL=0, INS=None
 
-	bamfiles = collections.OrderedDict() #bamfiles to be merged: [ [lib11, lib21, ...], [lib12, lib22, ...] ]
+	libbams = [ [] ] * nlibrary #bamfiles to be merged: [ [hap1lib1, hap1lib2, ...], [hap2lib1, hap2lib2, ...] ]
 	pool = Pool(processes=int(nprocs))
 	for hap in hapvar.keys():
 		#print hapvar[hap]
 		for bed in hapvar[hap]:
-			bam = makebam(bun,hap,bed)
+			bedbam = makebam(bun,hap,bed)
 			#bam = pool.apply_async(makebam, [bun,var,bedline])
-			bamfiles.get(hap,[]).append(bam)
+			for lib in range(0,nlibrary):
+				libbams[lib] += bedbam[lib]
 
-	fbam = [None] * nlibrary
+	fbam = [ None ] * nlibrary
 	for lib in range(0,nlibrary):
-		hapbam = []
-		for hap in hapvar.keys():
-		 	hapbam.extend([ bam[lib] for bam in bamfiles[hap] ])
-		#print libnames[lib]
-		fbam[lib] = mergebam(hapbam,'.'.join([oprefix,libnames[lib]])) #post processing: librarywise merging bams
+		fbam[lib] = mergebam(libbams[lib],'.'.join([oprefix,libnames[lib]])) #post processing: librarywise merging bams
 	
 	return fbam
 
-def makebam(bun,hap,bed): #generate fastq, thin edge and map fastq to reffile
+def makebam(bun,hap,bed): # makebam from a pair of seqs of representing the original and sved haplotype
 	nligation=bun.nligation
 	hapfas=bun.hapseq[hap]
 	seq0=SeqRecord(Seq(hapfas.fetch(bed[0],int(bed[1])+1,int(bed[2])), generic_dna),id=bed[0], name="", description="")
-	seqfile0=tempfile.NamedTemporaryFile('w',delete=False)
-	SeqIO.write(seq0, seqfile0, "fasta")
-	seqfile0.close()
 	seq1=seq0
 	#CHR ST	ED	VID	MID	FREQ	DEL	INS
 	if int(bed[6])!=0: #work on deletion
@@ -239,22 +234,25 @@ def makebam(bun,hap,bed): #generate fastq, thin edge and map fastq to reffile
 		for i in range(1,info[4]):
 			seqi.seq += seqt.seq
 		seq1.seq=seq1.seq[:nligation]+seqi.seq+seq1.seq[nligation:]
-#	print bed
-#	print len(seq0)
-#	print len(seq1)
 	parlist=bun.parlist
 	nlibrary=parlist.getint('wgsim', 'nlibrary')
 	libnames=json.loads(parlist.get('wgsim', 'libnames'))
 	freq=float(bed[5])
 
-	bams = [] * nlibrary
+	bams = [ None ] * nlibrary
 	for lib in range(0,nlibrary):
 		freq0 = 1-freq
 		bam0 = runwgs(bun,seq0,lib,freq0)
 		bam1 = runwgs(bun,seq1,lib,freq)
-		bams[lib] = mergebam([bam0,bam1],tempfile.NamedTemporaryFile('w',delete=False))
+		bams[lib] = mergebam([bam0,bam1],tempfile.NamedTemporaryFile('w',delete=False).name)
 
-	return bam
+	return bams
+
+def runcmd(cmd):
+	try:
+		subprocess.Popen(cmd,shell=True)
+	except OSError:
+		raise Exception("cmd %s didn't run successfully" % cmd)
 
 def runwgs(bun,seq,lib,freq): #create bam file for 1 library given seq and freq
 	libnames=json.loads(bun.parlist.get('wgsim', 'libnames'))
@@ -271,7 +269,7 @@ def runwgs(bun,seq,lib,freq): #create bam file for 1 library given seq and freq
 	fa=tempfile.NamedTemporaryFile('w',delete=False).name
 	SeqIO.write(seq,fa,'fasta')
 	if freq == 0 or nrdp == 0:
-		return tempfile.NamedTemporaryFile('w',delete=False).name
+		return None
 	else:
 		for m in range(0,nmode):
 			mden=isize[libn][m][0]; mnread = int(nrdp * mden)+1
@@ -281,29 +279,31 @@ def runwgs(bun,seq,lib,freq): #create bam file for 1 library given seq and freq
 			mbam=tempfile.NamedTemporaryFile('w',delete=False).name
 			#print (misize,misizesd,mnread,rl1[libn],rl2[libn],fa,fq1,fq2)
 			wgs_cmd="wgsim -h -d %d -s %d -N %d -1 %d -2 %d %s %s %s" % (misize,misizesd,mnread,rl1[libn],rl2[libn],fa,fq1,fq2)
-			print wgs_cmd
-			#subprocess.Popen(wgs_cmd) #fastq file
+			#print wgs_cmd
+			runcmd(wgs_cmd) #fastq file
+			#print (fq1,fq2,nligation,len(seq)-nligation)
 			fq3,fq4=filterfq(fq1,fq2,nligation,len(seq)-nligation) #half ligation region reads
 			bwasw_cmd="bwa bwasw %s %s %s | samtools view -uS - | samtools sort - %s" % (reffile.name,fq3,fq4,mbam)
 			#subprocess.Popen(bwasw_cmd)  #bam file
-			print bwasw_cmd
+			runcmd(bwasw_cmd)
+			#print bwasw_cmd
 			#TODO: for tmpfile in (fq1,fq2,fq3,fq4): os.remove(tmpfile)
-			mode[m]=mbam
+			mode[m]=mbam+'.bam'
 	libbam = mergebam(mode,tempfile.NamedTemporaryFile('w',delete=False).name)
-	#TODO: for tmpfile in mode: os.remove(tmpfile)
+	#TODO: for tmpfile in mode + [fa]: os.remove(tmpfile)
 	return libbam
 
 def filterfq(fq1,fq2,leftcut,rightcut): #half ligation region reads
 	fq3seq = []; fq4seq=[]; thincnt=0
 	for rfq1,rfq2 in zip(SeqIO.parse(open(fq1,'rU'),'fastq'),SeqIO.parse(open(fq2,'rU'),'fastq')):
-		assert rfq1[:-1] == rfq2[:-1], "unmatching fastq1 and fastq2, error in simulation"
+		assert rfq1.id[:-1] == rfq2.id[:-1], "unmatching fastq1 and fastq2, error in simulation"
 		#@fins.seq1_461_964_1:0:0_1:0:0_0/1
-		rdpl = int(rfq1.split('_')[1]); rdpr = int(rfq1.split('_')[2])
-		print rdpl, rdpr
+		rdpl = int(rfq1.id.split('_')[1]); rdpr = int(rfq1.id.split('_')[2])
+		#print rdpl, rdpr
 		if (rdpl < leftcut and rdpr < leftcut) or (rdpl > rightcut and rdpr > rightcut):
 			#TODO: currently thin when both in ligation region, future may need check not thin if at chrom start/end
 			thincnt+=1
-			if thincnt % 1 == 0: #odd counts not thinned, thin exactly 1/2
+			if thincnt % 2 == 1: #odd counts not thinned, thin exactly 1/2
 				fq3seq.append(rfq1); fq4seq.append(rfq2)
 		else:
 			fq3seq.append(rfq1); fq4seq.append(rfq2)
@@ -311,17 +311,23 @@ def filterfq(fq1,fq2,leftcut,rightcut): #half ligation region reads
 	fq4=tempfile.NamedTemporaryFile('w',delete=False).name
 	SeqIO.write(fq3seq,fq3,'fastq')
 	SeqIO.write(fq4seq,fq4,'fastq')
-	return fq3,fq4
+	return fq3,fq4 #NOTE: these are freeed in upper level
 
 def mergebam(bams,oprefix):
-	nbams = len(bams); fbam=oprefix+".bam";
-	#samtools merge take upto 4092 files in one merge
+	bams = [x for x in bams if x is not None] #remove empty components
+	nbams = len(bams); fbam=oprefix;
+	#samtools merge can take up to 4092 files in one merge
 	for i in range(0,nbams/4000+1):
-		if i == nbams/4000: mbam=fbam
-		else: mbam=tempfile.NamedTemporaryFile('w',delete=False).name
+		if i == nbams/4000:
+			mbam=fbam
+		else:
+			os.remove(mbam)
+			mbam=tempfile.NamedTemporaryFile('w',delete=False).name
 		merge_cmd = "samtools merge %s %s" % (mbam, " ".join(bams[i*4000:min((i+1)*4000,nbams)]))
+		print merge_cmd
+		runcmd(merge_cmd)
 		#subprocess.Popen(bwasw_cmd)  #bam file
-	return fbam
+	return fbam+".bam"
 
 def file2var(bun):
 	ifile=csv.reader(CommentedFile(bun.varfile)); hapseq=bun.hapseq; nligation=bun.nligation
