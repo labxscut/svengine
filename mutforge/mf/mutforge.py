@@ -42,8 +42,8 @@ class Bunch(object):
 
 def runcmd(cmd):
 	try:
-		#subprocess.call(cmd,shell=True,stderr=open('./stderr.txt','w'),stdout=open('./stdout.txt','w'))
-		subprocess.call(cmd,shell=True)
+		subprocess.call(cmd,shell=True,stderr=open('./stderr.txt','a'),stdout=open('./stdout.txt','a'))
+		#subprocess.call(cmd,shell=True)
 	except OSError:
 		raise Exception("cmd %s didn't run successfully" % cmd)
 
@@ -225,7 +225,6 @@ def var2wgs(bun):
 			print hapvar[hap]
 		#VID=None, MID=None, FREQ=0, DEL=0, INS=None
 
-	libbams = [ [] ] * nlibrary #bamfiles to be merged: [ [hap1lib1, hap1lib2, ...], [hap2lib1, hap2lib2, ...] ]
 	hapiter=[]
 	print len(hapvar[0])
 	print hapvar[0][0]
@@ -241,11 +240,17 @@ def var2wgs(bun):
 	bedbams=pool.map(fakebam,hapiter,1)
 	print bedbams
 
+	libbams = [ [] ] * nlibrary #bamfiles to be merged: [ [hap1lib1, hap1lib2, ...], [hap2lib1, hap2lib2, ...] ]
 	for lib in range(0,nlibrary):
 		for i in xrange(0,len(bedbams)):
-			libbams[lib] += [bedbams[i][1][lib]]
+			print bedbams[i][1][lib]
+			libbams[lib].append(bedbams[i][1][lib])
 
 	print libbams
+	print "len bedbams:", len(bedbams)
+	for lib in range(0,nlibrary):
+		print "len libbams:", len(libbams[lib])
+
 	fbam = [None] * nlibrary
 	for lib in range(0,nlibrary):
 		fbam[lib] = mergebam(libbams[lib],'.'.join([oprefix,libnames[lib]])) #post processing: librarywise merging bams
@@ -278,8 +283,10 @@ def fakebam(iter): # makebam from a pair of seqs of representing the original an
 	bams = [None] * nlibrary
 	for lib in range(0,nlibrary):
 		freq0 = 1-freq
+		print "-----"
 		bam0 = runwgs(parlist,nligation,reffile,seq0,lib,freq0)
 		bam1 = runwgs(parlist,nligation,reffile,seq1,lib,freq)
+		print "-----"
 		bams[lib] = mergebam([bam0,bam1],tempfile.NamedTemporaryFile('w',delete=False).name)
 
 	return [hap,bams]
@@ -295,7 +302,7 @@ def runwgs(parlist,nligation,reffile,seq,lib,freq): #create bam file for 1 libra
 	nmode = len(isize[libn])
 	mode = [ None ] * nmode
 	fa=tempfile.NamedTemporaryFile('w',delete=False).name
-	print "run wgs for:", libn, fa, coverage
+	print "run wgs for:", libn, fa, coverage[libn], nrdp
 	SeqIO.write(seq,fa,'fasta')
 	if freq == 0 or nrdp == 0:
 		return None
@@ -647,7 +654,7 @@ def run():
                         help="palnsize + ligation*2 is the grain size for genome planning, (default=10000bp)")
 	parser.add_argument('-g', '--nligation', dest='nligation', default=2000,
                         help="genome trunk ligation (default=2000bp)")
-	parser.add_argument('-n', '--nprocs', dest='nprocs', default=2,
+	parser.add_argument('-n', '--nprocs', dest='nprocs', default=1,
                         help="split into multiple processes (default=1)")
 	parser.add_argument('--layout', action='store_true', default=False, help="dry run to layout")
 	args = parser.parse_args()
