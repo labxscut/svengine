@@ -42,7 +42,7 @@ class Bunch(object):
 
 def runcmd(cmd):
 	try:
-		subprocess.call(cmd,shell=True)
+		subprocess.call(cmd,shell=True,stderr=open('./stderr.txt','w'),stdout=open('./stdout.txt','w'))
 	except OSError:
 		raise Exception("cmd %s didn't run successfully" % cmd)
 
@@ -69,17 +69,6 @@ def main(args):
 
 	nprocs = args.nprocs
 	print "successfully debugging loading"
-	
-	pool = Pool(processes=int(nprocs))
-
-	#d=[]
-	
-	#partial_test = partial(test_map,b=0)
-	#d=pool.map(partial_test,[1,2,3])
-	#d=apply_async(partial_test,[1,2,3])
-	#print d
-	
-	#quit()
 
 	runmode=0 #1 fasta+meta, 2 bam+meta, 3 fasta+var, 4 bam+var
 	if args.inbamfilenames!=None and args.metafile!=None:
@@ -121,17 +110,23 @@ def main(args):
 	except pybedtools.cbedtools.BedToolsFileError:
 		raise Exception("incorrect gapfile provided, must in BED format")
 
+
+
 	dic={} #common dictionary interface for passing parameters
 	for i in ('hapseq','gaptab','reffile','plansize','nligation','nploid','oprefix','nprocs'):
 		dic[i] = locals()[i]
+
+	print "entering runmode", runmode
 
 	if runmode==1 or runmode==2:
 		metafile = args.metafile
 		metatab = CommentedFile(metafile)
 		dic['metatab']=metatab
 		varlist = makevar(Bunch(dic))
+		print "done makevar"
 		dic['varlist']=varlist
 		var2file(Bunch(dic))
+		print "done var2file"
 
 	if runmode==3 or runmode==4:
 		dic['varfile'] = args.varfile
@@ -142,6 +137,7 @@ def main(args):
 		dic['parlist'] = parlist
 		fbam = var2wgs(Bunch(dic)) # run wgsim + bwa + samtools to generate bamfiles
 		print fbam
+		print "done var2wgs"
 
 	if runmode==2 or runmode==4:
 		inbamfilenames = args.inbamfilenames.split(':')
@@ -226,23 +222,10 @@ def var2wgs(bun):
 			print hapvar[hap]
 		#VID=None, MID=None, FREQ=0, DEL=0, INS=None
 
-	#libbams = [ [] ] * nlibrary #bamfiles to be merged: [ [hap1lib1, hap1lib2, ...], [hap2lib1, hap2lib2, ...] ]
-	bedbams = {}
-	partial_test = partial(test_map,b=0)
-
-	pool = Pool(processes=int(nprocs))
-
-	d=pool.map(partial_test,[1,2,3])
-	print d
-
-	
+	libbams = [ [] ] * nlibrary #bamfiles to be merged: [ [hap1lib1, hap1lib2, ...], [hap2lib1, hap2lib2, ...] ]
 	hapiter=[]
 	print len(hapvar[0])
 	print hapvar[0][0]
-	
-#	hapcnt={};
-#	for hap in hapvar.keys():
-#		hapcnt[hap]=len(hapvar)
 
 	for hap in hapvar.keys():
 		hapfas=bun.hapseq[hap].filename
@@ -251,18 +234,15 @@ def var2wgs(bun):
 	for it in hapiter:
 		print it
 
-	bedbams=[]
-	#partial_fakebam = partial(fakebam,nligation=nligation,parlist=parlist,reffile=reffile)
-	bedbams=pool.map(fakebam,hapiter)
-
-	quit()
+	pool = Pool(processes=int(nprocs))
+	bedbams=pool.map(fakebam,hapiter,1)
+	print bedbams
 
 	for lib in range(0,nlibrary):
-		for hap in hapvar.keys():
-			for i in xrange(0,len(bedbams[hap])):
-				libbams[lib] += bedbams[hap][i][lib]
+		for i in xrange(0,len(bedbams)):
+			libbams[lib] += bedbams[i][1][lib]
 
-	fbam = [ None ] * nlibrary
+	fbam = [None] * nlibrary
 	for lib in range(0,nlibrary):
 		fbam[lib] = mergebam(libbams[lib],'.'.join([oprefix,libnames[lib]])) #post processing: librarywise merging bams
 	
@@ -291,14 +271,14 @@ def fakebam(iter): # makebam from a pair of seqs of representing the original an
 	libnames=json.loads(parlist.get('wgsim', 'libnames'))
 	freq=float(bed[5])
 
-	bams = [ None ] * nlibrary
+	bams = [None] * nlibrary
 	for lib in range(0,nlibrary):
 		freq0 = 1-freq
 		bam0 = runwgs(parlist,nligation,reffile,seq0,lib,freq0)
 		bam1 = runwgs(parlist,nligation,reffile,seq1,lib,freq)
 		bams[lib] = mergebam([bam0,bam1],tempfile.NamedTemporaryFile('w',delete=False).name)
 
-	return {hap:bams}
+	return [hap,bams]
 
 def runwgs(parlist,nligation,reffile,seq,lib,freq): #create bam file for 1 library given seq and freq
 	libnames=json.loads(parlist.get('wgsim', 'libnames'))
@@ -307,10 +287,11 @@ def runwgs(parlist,nligation,reffile,seq,lib,freq): #create bam file for 1 libra
 	rl1=json.loads(parlist.get('wgsim', 'read1'))
 	rl2=json.loads(parlist.get('wgsim', 'read2'))
 	libn=libnames[lib]
-	nrdp = (len(seq)*coverage[libn]*freq)/2+1
+	nrdp = (len(seq)*coverage[libn]*freq/(rl1[libn]+rl2[libn]))+1
 	nmode = len(isize[libn])
 	mode = [ None ] * nmode
 	fa=tempfile.NamedTemporaryFile('w',delete=False).name
+	print "run wgs for:", libn, fa, coverage
 	SeqIO.write(seq,fa,'fasta')
 	if freq == 0 or nrdp == 0:
 		return None
@@ -322,12 +303,12 @@ def runwgs(parlist,nligation,reffile,seq,lib,freq): #create bam file for 1 libra
 			fq2=tempfile.NamedTemporaryFile('w',delete=False).name
 			mbam=tempfile.NamedTemporaryFile('w',delete=False).name
 			#print (misize,misizesd,mnread,rl1[libn],rl2[libn],fa,fq1,fq2)
-			wgs_cmd="wgsim -h -d %d -s %d -N %d -1 %d -2 %d %s %s %s >/dev/null 2>&1" % (misize,misizesd,mnread,rl1[libn],rl2[libn],fa,fq1,fq2)
+			wgs_cmd="wgsim -h -d %d -s %d -N %d -1 %d -2 %d %s %s %s > /dev/null 2>&1" % (misize,misizesd,mnread,rl1[libn],rl2[libn],fa,fq1,fq2)
 			print wgs_cmd
 			runcmd(wgs_cmd) #fastq file
 			fq3,fq4=filterfq(fq1,fq2,nligation,len(seq)-nligation) #half ligation region reads
 			#print (fq1,fq2,fq3,fq4,nligation,len(seq)-nligation)
-			bwasw_cmd="bwa bwasw %s %s %s | samtools view -uS - | samtools sort - %s >/dev/null 2>&1" % (reffile,fq3,fq4,mbam)
+			bwasw_cmd="bwa bwasw %s %s %s | samtools view -uS - | samtools sort - %s > /dev/null 2>&1" % (reffile,fq3,fq4,mbam)
 			print bwasw_cmd
 			runcmd(bwasw_cmd)
 			#TODO: for tmpfile in (fq1,fq2,fq3,fq4): os.remove(tmpfile)
@@ -373,7 +354,7 @@ def mergebam(bams,oprefix):
 			else:
 				cbam = mbam
 				mbam = tempfile.NamedTemporaryFile('w',delete=False).name
-			merge_cmd = "samtools merge -f %s %s %s >/dev/null 2>&1" % (mbam, cbam, " ".join(bams[i*4000:min((i+1)*4000,nbams)]))
+			merge_cmd = "samtools merge -f %s %s %s > /dev/null 2>&1" % (mbam, cbam, " ".join([bam for bam in bams[i*4000:min((i+1)*4000,nbams)]]))
 			print merge_cmd
 			runcmd(merge_cmd)
 	#FIXME: who do we clean up this mess of temporary files here?
@@ -478,19 +459,6 @@ def makevar(bun):
 		assert(len(recptvec)==cnt)
 		assert(len(donorfreq)==cnt)
 		assert(len(recptfreq)==cnt)
-
-		def maketid(stretches,varstretch):
-			#print stretches
-			#print varstretch
-			tids = [t for t, x in enumerate(stretches) if x >= varstretch] #always random pick among min qualifying tids
-			if tids == []: raise Exception("cannot allocate genome region for metafile, please reduce plansize!");
-			mtids = locatemin([stretches[i] for i in tids])
-			#print mtids
-			tid = random.sample([tids[i] for i in mtids[1]],1)[0]   #locate the tid
-			#print tid
-			for i in xrange(tid,tid+varstretch): stretches[i]=0;						#mark head of stretch used
-			if mtids[0]-varstretch>0: stretches[tid+varstretch]=mtids[0]-varstretch; #mark remaining stretch by its head
-			return tid, stretches
 			
 		for i in xrange(0,cnt): #this could be parallelized? yes if we preallocate trunks
 			metacnt[metatype] = metacnt.get(metatype,0) + 1
@@ -559,22 +527,29 @@ def makevar(bun):
 	return varlist #synonym to varlist
 
 def blocktrunks(trunks,gaptab):
-	#print(trunks)
-	#print(gaptab)
+#	for gap in gaptab:
+#		print gap
+#	for trunk in trunks:
+#		print trunk
 	remains = trunks.intersect(gaptab,v=True) #only keeping non overlapping trunks
+#	for remain in remains:
+#		print remain
 	#FIXME: sometimes bedtool error will rise if temporary files were deleted, how to fix in safeway?
-	#print(remains) #this has to be loaded to memory
-	cnt=1; stretches = [0] * len(remains)
-	for j in xrange(1,len(remains)):
-		if remains[j].chrom==remains[j-1].chrom and remains[j].start == remains[j-1].end:
+	nr = len(remains)
+	cnt=1; stretches = [0] * nr; j=0;
+	for feat in remains:
+		if j==0:
+			j = j+1; pfeat=feat; continue
+		if feat.chrom == pfeat.chrom and feat.start == pfeat.end:
 			cnt+=1 #continue counting from j-1 to j
 		else:    #stop counting, j-1 in stretch starts from , j is not in
 			stretches[j-cnt]=cnt
 			for k in xrange(j-cnt+1,j): stretches[k] = 0
 			cnt=1  #start new counting
-		if j == len(remains)-1 : #this is forced ending, we need to trace back (cnt-1)
+		if j == nr-1 : #this is forced ending, we need to trace back (cnt-1)
 			stretches[j-cnt+1]=cnt
 			for k in xrange(j-cnt+2,j): stretches[k] = 0
+		j=j+1; pfeat=feat
 	return remains,stretches
 
 def maketrunks(bun):
@@ -590,6 +565,19 @@ def maketrunks(bun):
 		trunks.extend([ '%s\t%s\t%s' % (hapseq[0].references[i], str(p), str(p+plansize+2*nligation)) for p in pos ])
 	trunks = pybedtools.BedTool("\n".join([ x for x in trunks ]), from_string=True) #convert to BED
 	return trunks
+
+def maketid(stretches,varstretch):
+	#print stretches
+	#print varstretch
+	tids = [t for t, x in enumerate(stretches) if x >= varstretch] #always random pick among min qualifying tids
+	if tids == []: raise Exception("cannot allocate genome region for metafile, please reduce plansize!");
+	mtids = locatemin([stretches[i] for i in tids])
+	#print mtids
+	tid = random.sample([tids[i] for i in mtids[1]],1)[0]   #locate the tid
+	#print tid
+	for i in xrange(tid,tid+varstretch): stretches[i]=0;						#mark head of stretch used
+	if mtids[0]-varstretch>0: stretches[tid+varstretch]=mtids[0]-varstretch; #mark remaining stretch by its head
+	return tid, stretches
 
 def expanddist(diststring, cnt):
 	dist=diststring.split('_')
@@ -662,9 +650,9 @@ def run():
 	main(args)
 
 if __name__ == '__main__':
-	starttime=time.ctime()
+	starttime=time.time()
 	run()
-	print "total runtime: ", time.ctime()-starttime, " seconds"
+	print "total runtime: ", time.time()-starttime, " seconds"
 
 def makebam(bun,hap,bed): # makebam from a pair of seqs of representing the original and sved haplotype
 	nligation=bun.nligation
