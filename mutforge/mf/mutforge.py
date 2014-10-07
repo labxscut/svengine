@@ -42,7 +42,8 @@ class Bunch(object):
 
 def runcmd(cmd):
 	try:
-		subprocess.call(cmd,shell=True,stderr=open('./stderr.txt','w'),stdout=open('./stdout.txt','w'))
+		#subprocess.call(cmd,shell=True,stderr=open('./stderr.txt','w'),stdout=open('./stdout.txt','w'))
+		subprocess.call(cmd,shell=True)
 	except OSError:
 		raise Exception("cmd %s didn't run successfully" % cmd)
 
@@ -240,8 +241,9 @@ def var2wgs(bun):
 
 	for lib in range(0,nlibrary):
 		for i in xrange(0,len(bedbams)):
-			libbams[lib] += bedbams[i][1][lib]
+			libbams[lib] += [bedbams[i][1][lib]]
 
+	print libbams
 	fbam = [None] * nlibrary
 	for lib in range(0,nlibrary):
 		fbam[lib] = mergebam(libbams[lib],'.'.join([oprefix,libnames[lib]])) #post processing: librarywise merging bams
