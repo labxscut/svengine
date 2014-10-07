@@ -1,1 +1,0 @@
-/Users/charlie/ws/hg/hg19/human_g1k_v37.fasta.pac

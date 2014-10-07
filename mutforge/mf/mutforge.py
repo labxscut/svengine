@@ -33,6 +33,11 @@ class Bunch(object):
 #paradigm to make dictionary from local variables
 #for i in ('apple', 'banana', 'carrot'):
 #    fruitdict[i] = locals()[i]
+#paradigm to generate random sequence
+#''.join([random.choice('AGTC') for x in range(1200)])
+#paradigm to get fasta file size
+#pysam.Fastafile('example.fna').lengths
+#fas2bed(fasfile)
 
 def CountUnique(mylist):
 	h = {}
@@ -131,7 +136,7 @@ def var2bs(bun):
 def fas2bed(fasfile):
 	fasseq = pysam.Fastafile(fasfile)
 	bed = [ fasseq.references[i]+"\t0\t"+str(fasseq.lengths[i]) for i in range(0,min(fasseq.nreferences,maxrefnum)) ]
-	return pybedtools.BedTool('\n'.join(bed))
+	return pybedtools.BedTool('\n'.join(bed),from_string=True)
 
 def fas2size(fasfile):
 	sizefile = tempfile.NamedTemporaryFile('w',delete=False)

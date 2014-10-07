@@ -2,38 +2,5 @@
 #chromStart - The starting position of the feature in the chromosome or scaffold. The first base in a chromosome is numbered 0.
 #chromEnd - The ending position of the feature in the chromosome or scaffold. The chromEnd base is not included in the display of the feature. For example, the first 100 bases of a chromosome are defined as chromStart=0, chromEnd=100, and span the bases numbered 0-99.
 #following basically only declears 22:25000001-26000000 as non gap region
-1	0	249250621
-2	0	243199373
-3	0	198022430
-4	0	191154276
-5	0	180915260
-6	0	171115067
-7	0	159138663
-8	0	146364022
-9	0	141213431
-10	0	135534747
-11	0	135006516
-12	0	133851895
-13	0	115169878
-14	0	107349540
-15	0	102531392
-16	0	90354753
-17	0	81195210
-18	0	78077248
-19	0	59128983
-20	0	63025520
-21	0	48129895
-#22	0	51304566
-#22	0	10000
-#22	10000
-#22	13000000	16000000
-#22	16000000	16050000
-#22	16697850	16847850
-#22	20509431	20609431
-#22	50364777	50414777
-#22	51244566	51294566
-#22	51294566	51304566
-22	0	25000000
-22	26000000	51304566
-X	0	155270560
-Y	0	59373566
+1	1000000	1725748
+2	3000000	3799223
