@@ -238,18 +238,22 @@ def var2wgs(bun):
 
 	pool = Pool(processes=int(nprocs))
 	bedbams=pool.map(fakebam,hapiter,1)
-	print bedbams
 
-	libbams = [ [] ] * nlibrary #bamfiles to be merged: [ [hap1lib1, hap1lib2, ...], [hap2lib1, hap2lib2, ...] ]
-	for lib in range(0,nlibrary):
-		for i in xrange(0,len(bedbams)):
-			print bedbams[i][1][lib]
-			libbams[lib].append(bedbams[i][1][lib])
+	libbams = {} #bamfiles to be merged: [ [hap1lib1, hap1lib2, ...], [hap2lib1, hap2lib2, ...] ]
+	libcnt0 = 0; libcnt1 = 0
+	for i in xrange(0,len(bedbams)):
+		for lib in xrange(0,nlibrary):
+			print bedbams[i][1][lib];
+			if lib == 0: libcnt0 += 1
+			else: libcnt1 += 1;
+			if not libbams.get(lib,None) libbams[lib].append(bedbams[i][1][lib]) else libbams[lib]=[bedbams[i][1][lib]]
 
-	print libbams
 	print "len bedbams:", len(bedbams)
 	for lib in range(0,nlibrary):
 		print "len libbams:", len(libbams[lib])
+	print  libcnt0,libcnt1
+	#print bedbams
+	#print libbams
 
 	fbam = [None] * nlibrary
 	for lib in range(0,nlibrary):
@@ -298,32 +302,35 @@ def runwgs(parlist,nligation,reffile,seq,lib,freq): #create bam file for 1 libra
 	rl1=json.loads(parlist.get('wgsim', 'read1'))
 	rl2=json.loads(parlist.get('wgsim', 'read2'))
 	libn=libnames[lib]
-	nrdp = (len(seq)*coverage[libn]*freq/(rl1[libn]+rl2[libn]))+1
+	nrdp = len(seq)*coverage[libn]*freq/(rl1[libn]+rl2[libn])
 	nmode = len(isize[libn])
 	mode = [ None ] * nmode
 	fa=tempfile.NamedTemporaryFile('w',delete=False).name
-	print "run wgs for:", libn, fa, coverage[libn], nrdp
+	print "run wgs for:", libn, fa, coverage[libn], freq, nrdp
 	SeqIO.write(seq,fa,'fasta')
 	if freq == 0 or nrdp == 0:
 		return None
 	else:
 		for m in range(0,nmode):
-			mden=isize[libn][m][0]; mnread = int(nrdp * mden)+1
-			misize=isize[libn][m][1]; misizesd=isize[libn][m][2]
-			fq1=tempfile.NamedTemporaryFile('w',delete=False).name
-			fq2=tempfile.NamedTemporaryFile('w',delete=False).name
-			mbam=tempfile.NamedTemporaryFile('w',delete=False).name
-			#print (misize,misizesd,mnread,rl1[libn],rl2[libn],fa,fq1,fq2)
-			wgs_cmd="wgsim -h -d %d -s %d -N %d -1 %d -2 %d %s %s %s > /dev/null 2>&1" % (misize,misizesd,mnread,rl1[libn],rl2[libn],fa,fq1,fq2)
-			print wgs_cmd
-			runcmd(wgs_cmd) #fastq file
-			fq3,fq4=filterfq(fq1,fq2,nligation,len(seq)-nligation) #half ligation region reads
-			#print (fq1,fq2,fq3,fq4,nligation,len(seq)-nligation)
-			bwasw_cmd="bwa bwasw %s %s %s | samtools view -uS - | samtools sort - %s > /dev/null 2>&1" % (reffile,fq3,fq4,mbam)
-			print bwasw_cmd
-			runcmd(bwasw_cmd)
-			#TODO: for tmpfile in (fq1,fq2,fq3,fq4): os.remove(tmpfile)
-			mode[m]=mbam+'.bam'
+			mden=isize[libn][m][0]; mnread = int(nrdp * mden)
+			if mnread>0:
+				misize=isize[libn][m][1]; misizesd=isize[libn][m][2]
+				fq1=tempfile.NamedTemporaryFile('w',delete=False).name
+				fq2=tempfile.NamedTemporaryFile('w',delete=False).name
+				mbam=tempfile.NamedTemporaryFile('w',delete=False).name
+				#print (misize,misizesd,mnread,rl1[libn],rl2[libn],fa,fq1,fq2)
+				wgs_cmd="wgsim -h -d %d -s %d -N %d -1 %d -2 %d %s %s %s > /dev/null 2>&1" % (misize,misizesd,mnread,rl1[libn],rl2[libn],fa,fq1,fq2)
+				print wgs_cmd
+				runcmd(wgs_cmd) #fastq file
+				fq3,fq4=filterfq(fq1,fq2,nligation,len(seq)-nligation) #half ligation region reads
+				#print (fq1,fq2,fq3,fq4,nligation,len(seq)-nligation)
+				bwasw_cmd="bwa bwasw %s %s %s | samtools view -uS - | samtools sort - %s > /dev/null 2>&1" % (reffile,fq3,fq4,mbam)
+				print bwasw_cmd
+				runcmd(bwasw_cmd)
+				#TODO: for tmpfile in (fq1,fq2,fq3,fq4): os.remove(tmpfile)
+				mode[m]=mbam+'.bam'
+			else:
+				mode[m]=None
 	libbam = mergebam(mode,tempfile.NamedTemporaryFile('w',delete=False).name)
 	#TODO: for tmpfile in mode + [fa]: os.remove(tmpfile)
 	return libbam

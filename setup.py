@@ -32,7 +32,7 @@ setup(name="mutforge",
     #packages=['lsa'],
     #requires=['numpy(>=1.1)','scipy(>=0.6)','python(>=2.5)','matplotlib(>=0.98)'],
     zip_safe=False,
-    install_requires=["python >= 2.7","pysam >= 0.7","pybedtools >= 0.1"],
+    install_requires=["python >= 2.7","pysam >= 0.7","pybedtools >= 0.1","biopython >= 0.1"],
     provides=['mutforge'],
     #can insert C++ extension when needed
     #ext_modules = [ Extension('lsa._compcore', 
