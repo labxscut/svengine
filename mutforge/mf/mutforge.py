@@ -442,9 +442,7 @@ def var2bed(bun):
 		varcopy[var][9]=formatins(varcopy[var][9])
 	for var in varcopy.keys():
 		varcopy[var][5]=varcopy[var][5]+nligation #actual site
-		print [varcopy[var][4],varcopy[var][5],varcopy[var][5]+varcopy[var][7]+1]
-		print varcopy[var]
-		ofile.writerow([varcopy[var][4],varcopy[var][5],varcopy[var][5]+varcopy[var][7]+1]+varcopy[var])
+		ofile.writerow([varcopy[var][4],varcopy[var][5],varcopy[var][5]+varcopy[var][7]]+varcopy[var])
 	return None
 
 def makevar(bun):
