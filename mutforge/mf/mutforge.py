@@ -614,19 +614,22 @@ def maketrunks(bun):
 	return trunks
 
 def maketid(stretches,varstretch):
-	#print stretches
-	#print varstretch
+	print stretches
+	print varstretch
+	print len(stretches)
 	tids = [t for t, x in enumerate(stretches) if x >= varstretch] #always random pick among min qualifying tids
 	if tids == []: raise Exception("cannot allocate genome region for metafile, please reduce plansize!");
 	if varstretch == 1: #insertion type sequence, could from any place
-		mtids = tids
+		mtids = [1,tids]
 	else:
-		mtids = locatemin([stretches[i] for i in tids])
-	#print mtids
-	tid = random.sample([tids[i] for i in mtids[1]],1)[0]   #locate the tid
+		mtids = locatemin([stretches[i] for i in tids]) #will give [64,0]
+	print tids
+	print mtids
+	tid = random.sample(mtids[1],1)[0]   #locate the tid
+	vtid = stretches[tid]
 	#print tid
 	for i in xrange(tid,tid+varstretch): stretches[i]=0;						#mark head of stretch used
-	if mtids[0]-varstretch>0: stretches[tid+varstretch]=mtids[0]-varstretch; #mark remaining stretch by its head
+	if vtid-varstretch>0: stretches[tid+varstretch]=vtid-varstretch; #mark remaining stretch by its head
 	return tid, stretches
 
 def expanddist(diststring, cnt):
