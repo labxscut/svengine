@@ -533,14 +533,14 @@ def makevar(bun):
 				for r in recpt:    #inserting sequence: [ filename, chr, start, size, copy, rc=True/False ]
 					varid = vartag+str(varcnt)
 					varlist[varid]=[varid,mid,recptfreq[i],r,trunks[rtid].chrom,trunks[rtid].start,False,0,True,\
-						[hapseq[dpick].filename,trunks[dtid].chrom,trunks[dtid].start,sizevec[i],copyvec[i],rc]]
+						[hapseq[dpick].filename,trunks[dtid].chrom,trunks[dtid].start+nligation,sizevec[i],copyvec[i],rc]]
 					varcnt+=1
 			elif metatype == 'INV' or metatype == 'IDUP':  #one deletion at donor followed by insertion of reverse
 				dtid,stretches=maketid(stretches,sizevec[i]/(plansize+2*nligation)+1)
 				for d in donor:
 					varid = vartag+str(varcnt)
 					varlist[varid]=[varid,mid,donorfreq[i],d,trunks[dtid].chrom,trunks[dtid].start,True,sizevec[i],True,
-						[hapseq[dpick].filename,trunks[dtid].chrom,trunks[dtid].start,sizevec[i],copyvec[i],True]]
+						[hapseq[dpick].filename,trunks[dtid].chrom,trunks[dtid].start+nligation,sizevec[i],copyvec[i],True]]
 					varcnt+=1
 			elif metatype == 'DINS':
 				dtid,stretches=maketid(stretches,sizevec[i]/(plansize+2*nligation)+1)
@@ -548,14 +548,14 @@ def makevar(bun):
 				for r in recpt:    #inserting sequence: [ filename, chr, start, size, copy, rc=True/False ]
 					varid = vartag+str(varcnt)
 					varlist[varid]=[varid,mid,recptfreq[i],r,trunks[rtid].chrom,trunks[rtid].start,False,0,True,\
-						[hapseq[dpick].filename,trunks[dtid].chrom,trunks[dtid].start,sizevec[i],copyvec[i],False]]
+						[hapseq[dpick].filename,trunks[dtid].chrom,trunks[dtid].start+nligation,sizevec[i],copyvec[i],False]]
 					varcnt+=1
 			elif metatype == 'DUP':
 				rtid,stretches=maketid(stretches,sizevec[i]/(plansize+2*nligation)+1)
 				for r in recpt:    #inserting sequence: [ filename, chr, start, size, copy, rc=True/False ]
 					varid = vartag+str(varcnt)
-					varlist[varid]=[varid,mid,recptfreq[i],r,trunks[rtid].chrom,trunks[rtid].start,False,0,True,\
-						[hapseq[r].filename,trunks[rtid].chrom,trunks[rtid].start,sizevec[i],copyvec[i]-1,False]]
+					varlist[varid]=[varid,mid,recptfreq[i],r,trunks[rtid].chrom,trunks[rtid].start,True,sizevec[i],True,\
+						[hapseq[r].filename,trunks[rtid].chrom,trunks[rtid].start+nligation,sizevec[i],copyvec[i],False]]
 					varcnt+=1
 			elif metatype == 'FINS':
 				#print donor, recpt, dpick
@@ -618,7 +618,10 @@ def maketid(stretches,varstretch):
 	#print varstretch
 	tids = [t for t, x in enumerate(stretches) if x >= varstretch] #always random pick among min qualifying tids
 	if tids == []: raise Exception("cannot allocate genome region for metafile, please reduce plansize!");
-	mtids = locatemin([stretches[i] for i in tids])
+	if varstretch == 1: #insertion type sequence, could from any place
+		mtids = tids
+	else:
+		mtids = locatemin([stretches[i] for i in tids])
 	#print mtids
 	tid = random.sample([tids[i] for i in mtids[1]],1)[0]   #locate the tid
 	#print tid
