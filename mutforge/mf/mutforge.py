@@ -127,12 +127,12 @@ def main(args):
 		metatab = CommentedFile(metafile)
 		dic['metatab']=metatab
 		varlist = makevar(Bunch(dic))
-		print "done makevar"
+		#print "done makevar"
 		dic['varlist']=varlist
 		
-		print "before", varlist
+		#print "before", varlist
 		var2file(Bunch(dic))
-		print "after", varlist
+		#print "after", varlist
 		print "done var2file"
 
 
@@ -178,7 +178,8 @@ def fas2size(fasfile):
 	return sizefile.name
 
 def chkvar(varbed):
-	if varbed.merge().count() == varbed.count(): return True;
+	print varbed
+	if varbed.sort().merge().count() == varbed.sort().count(): return True;
 	else: return False
 
 def ppbam(bun,bamfiles):
@@ -216,15 +217,15 @@ def var2wgs(bun):
 		assert chkvar(hapvar[hap]) == True, "varfile contains self overlaps, which is not allowed"
 	for hap in hapvar.keys():
 		sizefile = fas2size(hapseq[hap].filename)												 #create genome size file
-		if hap==0:
-			print "varing region: for hap", hap
+		#if hap==0:
+			#print "varing region: for hap", hap
 			#print hapbed[hap].truncate_to_chrom({"22":(0,51304567)})
-			print hapvar[hap]
+			#print hapvar[hap]
 		hapbed[hap] = hapvar[hap].complement(g=sizefile) #create complementary blocks
-		if hap==0:
-			print "complement region: for hap", hap
+		#if hap==0:
+			#print "complement region: for hap", hap
 			#print hapbed[hap].truncate_to_chrom({"22":(0,51304567)})
-			print hapbed[hap]
+			#print hapbed[hap]
 		hapbed[hap] = hapbed[hap].slop(g=sizefile,b=nligation)
 		if hap==0:
 			print "all dummy regions: for hap", hap
@@ -232,43 +233,43 @@ def var2wgs(bun):
 			print hapbed[hap]
 		hapbed[hap] = pybedtools.BedTool('\n'.join([ f[0]+'\t'+str(f[1])+'\t'+str(f[2])+'\tNone\tNone\t0\t0\tNone' for f in hapbed[hap]]),from_string=True)
 		hapvar[hap] = hapvar[hap].cat(hapbed[hap],postmerge=False)
-		if hap==0:
-			print "all generating regions: for hap", hap
-			print hapvar[hap]
+		#if hap==0:
+			#print "all generating regions: for hap", hap
+			#print hapvar[hap]
 		#VID=None, MID=None, FREQ=0, DEL=0, INS=None
 
 	hapiter=[]
-	print len(hapvar[0])
-	print hapvar[0][0]
+	#print len(hapvar[0])
+	#print hapvar[0][0]
 
 	for hap in hapvar.keys():
 		hapfas=bun.hapseq[hap].filename
 		for feat in hapvar[hap]:
 			hapiter.append([hap,hapfas,nligation,parlist,reffile,nploid,feat])
-	for it in hapiter:
-		print it
+	#for it in hapiter:
+	#	print it
 
 	pool = Pool(processes=int(nprocs))
 	bedbams=pool.map(fakebam,hapiter,1)
 
 	libbams = {} #bamfiles to be merged: [ [hap1lib1, hap1lib2, ...], [hap2lib1, hap2lib2, ...] ]
-	libcnt0 = 0; libcnt1 = 0
+	#libcnt0 = 0; libcnt1 = 0
 	for i in xrange(0,len(bedbams)):
 		for lib in xrange(0,nlibrary):
-			print bedbams[i][1][lib];
-			if lib == 0: 
-				libcnt0 += 1
-			else: 
-				libcnt1 += 1;
+			#print bedbams[i][1][lib];
+			#if lib == 0: 
+			#	libcnt0 += 1
+			#else: 
+			#	libcnt1 += 1;
 			if libbams.get(lib,None) == None:
 				libbams[lib]=[bedbams[i][1][lib]]
 			else:
 				libbams[lib].append(bedbams[i][1][lib]) 
 
-	print "len bedbams:", len(bedbams)
-	for lib in range(0,nlibrary):
-		print "len libbams:", len(libbams[lib])
-	print  libcnt0,libcnt1
+	#print "len bedbams:", len(bedbams)
+	#for lib in range(0,nlibrary):
+	#	print "len libbams:", len(libbams[lib])
+	#print  libcnt0,libcnt1
 	#print bedbams
 	#print libbams
 
@@ -304,10 +305,10 @@ def fakebam(iter): # makebam from a pair of seqs of representing the original an
 	bams = [None] * nlibrary
 	for lib in range(0,nlibrary):
 		freq0 = 1-freq
-		print "-----"
+		#print "-----"
 		bam0 = runwgs(parlist,nligation,reffile,nploid,seq0,lib,freq0)
 		bam1 = runwgs(parlist,nligation,reffile,nploid,seq1,lib,freq)
-		print "-----"
+		#print "-----"
 		bams[lib] = mergebam([bam0,bam1],tempfile.NamedTemporaryFile('w',delete=False).name)
 
 	return [hap,bams]
@@ -323,7 +324,7 @@ def runwgs(parlist,nligation,reffile,nploid,seq,lib,freq): #create bam file for 
 	nmode = len(isize[libn])
 	mode = [ None ] * nmode
 	fa=tempfile.NamedTemporaryFile('w',delete=False).name
-	print "run wgs for:", libn, fa, coverage[libn], freq, nrdp
+	#print "run wgs for:", libn, fa, coverage[libn], freq, nrdp
 	SeqIO.write(seq,fa,'fasta')
 	if freq == 0 or nrdp == 0:
 		return None
@@ -614,17 +615,17 @@ def maketrunks(bun):
 	return trunks
 
 def maketid(stretches,varstretch):
-	print stretches
-	print varstretch
-	print len(stretches)
+	#print stretches
+	#print varstretch
+	#print len(stretches)
 	tids = [t for t, x in enumerate(stretches) if x >= varstretch] #always random pick among min qualifying tids
 	if tids == []: raise Exception("cannot allocate genome region for metafile, please reduce plansize!");
 	if varstretch == 1: #insertion type sequence, could from any place
 		mtids = [1,tids]
 	else:
 		mtids = locatemin([stretches[i] for i in tids]) #will give [64,0]
-	print tids
-	print mtids
+	#print tids
+	#print mtids
 	tid = random.sample(mtids[1],1)[0]   #locate the tid
 	vtid = stretches[tid]
 	#print tid
