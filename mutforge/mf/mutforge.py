@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import time, re, os, shutil, sys, random, csv, subprocess, traceback, argparse, tempfile, itertools, operator, collections, ConfigParser, json, imp
+import copy, time, re, os, shutil, sys, random, csv, subprocess, traceback, argparse, tempfile, itertools, operator, collections, ConfigParser, json, imp
 from itertools import izip
 from collections import Counter
 from multiprocessing import Pool
@@ -14,6 +14,7 @@ from Bio.Alphabet import generic_dna
 io_quote = "this is for end user"
 code_quote = 'this is for program'
 maxrefnum = 24 		  #for debugging and human, should set to a big number afterwards
+burnin = 100000		#burnin region for each chromosome
 
 class CommentedFile:
 	def __init__(self, f, commentstring="#"):
@@ -128,13 +129,22 @@ def main(args):
 		varlist = makevar(Bunch(dic))
 		print "done makevar"
 		dic['varlist']=varlist
+		
+		print "before", varlist
 		var2file(Bunch(dic))
+		print "after", varlist
 		print "done var2file"
+
 
 	if runmode==3 or runmode==4:
 		dic['varfile'] = varfile
 		varlist = file2var(Bunch(dic))
   	# FIXME: file2var needs to be tested?
+
+	var2bed(Bunch(dic))
+	print "done var2bed"
+	
+	#quit()
 
 	if runmode==1 or runmode==3:
 		dic['parlist'] = parlist
@@ -147,6 +157,7 @@ def main(args):
 		var2bs(Bunch(dic))
 
 	return None #done
+
 
 def var2bs(bun):
 	numinbamfiles = len(inbamfilenames)
@@ -198,7 +209,7 @@ def var2wgs(bun):
 		#print var
 		#print [var[4],var[5],var[5]+var[7],var[0],var[1],var[2],var[6],var[8]]
 		#CHR ST	ED	VID	MID	FREQ	DEL	INS; adding one base size to ensure flanking regions are separate
-		hapvar[var[3]] = hapvar.get(var[3],[]) + [[var[4],var[5],var[5]+var[7]+2*nligation+1,var[0],var[1],var[2],var[7],var[9]]]
+		hapvar[var[3]] = hapvar.get(var[3],[]) + [[var[4],var[5],var[5]+var[7]+2*nligation+1,var[0],var[1],var[2],var[7],formatins(var[9])]]
 	#print hapvar
 	for hap in hapvar.keys():
 		hapvar[hap] = pybedtools.BedTool('\n'.join([ '\t'.join([str(c) for c in x]) for x in hapvar[hap] ]), from_string=True)
@@ -413,13 +424,27 @@ def formatins(cell):
 	return ','.join([cell[0],coord,str(cell[4]),revcomp])
 
 def var2file(bun):
-	varlist=bun.varlist; hapseq=bun.hapseq; nligation=bun.nligation; ofile=csv.writer(open(bun.oprefix+'.var','w'),delimiter='\t')
+	#IMPORTANT: OrderedDict and List are all mutable
+	varcopy=copy.deepcopy(bun.varlist); nligation=bun.nligation; ofile=csv.writer(open(bun.oprefix+'.var','w'),delimiter='\t')
 	ofile.writerow(['#VID','MID','VARFREQ','VARHAP','VARCHR','VARPOS','VARDEL','VARDELSIZE','VARINS','VARINSSEQ(HAP/SEQFILE,CHR:START-END,COPY,REVCOMP)'])
-	for var in varlist.keys():
-		varlist[var][9]=formatins(varlist[var][9])
-	for var in varlist.keys():
-		varlist[var][5]=varlist[var][5]+nligation
-	ofile.writerows(varlist.values())
+	for var in varcopy.keys():
+		varcopy[var][9]=formatins(varcopy[var][9])
+	for var in varcopy.keys():
+		varcopy[var][5]=varcopy[var][5]+nligation #actual site
+	ofile.writerows(varcopy.values())
+	return None
+
+def var2bed(bun):
+	#IMPORTANT: OrderedDict and List are all mutable
+	varcopy=copy.deepcopy(bun.varlist); nligation=bun.nligation; ofile=csv.writer(open(bun.oprefix+'.bed','w'),delimiter='\t')
+	ofile.writerow(['#CHROM','START','END','VID','MID','VARFREQ','VARHAP','VARCHR','VARPOS','VARDEL','VARDELSIZE','VARINS','VARINSSEQ(HAP/SEQFILE,CHR:START-END,COPY,REVCOMP)'])
+	for var in varcopy.keys():
+		varcopy[var][9]=formatins(varcopy[var][9])
+	for var in varcopy.keys():
+		varcopy[var][5]=varcopy[var][5]+nligation #actual site
+		print [varcopy[var][4],varcopy[var][5],varcopy[var][5]+varcopy[var][7]+1]
+		print varcopy[var]
+		ofile.writerow([varcopy[var][4],varcopy[var][5],varcopy[var][5]+varcopy[var][7]+1]+varcopy[var])
 	return None
 
 def makevar(bun):
@@ -585,7 +610,7 @@ def maketrunks(bun):
 	nligation=bun.nligation
 	trunks = [] # trunk[i].start = sv[i].pos - nligation; trunk[i+1] = trunk[i].start + plansize + 2*ligation
 	for i in xrange(0,min(hapseq[0].nreferences,maxrefnum)):
-		pos=xrange(0,hapseq[0].lengths[i]-plansize-2*nligation,plansize+2*nligation)
+		pos=xrange(burnin,hapseq[0].lengths[i]-plansize-2*nligation-burnin,plansize+2*nligation)
 		trunks.extend([ '%s\t%s\t%s' % (hapseq[0].references[i], str(p), str(p+plansize+2*nligation)) for p in pos ])
 	trunks = pybedtools.BedTool("\n".join([ x for x in trunks ]), from_string=True) #convert to BED
 	return trunks
@@ -678,36 +703,116 @@ if __name__ == '__main__':
 	run()
 	print "total runtime: ", time.time()-starttime, " seconds"
 
-def makebam(bun,hap,bed): # makebam from a pair of seqs of representing the original and sved haplotype
-	nligation=bun.nligation
-	hapfas=bun.hapseq[hap]
-	seq0=SeqRecord(Seq(hapfas.fetch(bed[0],int(bed[1])+1,int(bed[2])), generic_dna),id=bed[0], name="", description="")
-	seq1=seq0
-	#CHR ST	ED	VID	MID	FREQ	DEL	INS
-	if int(bed[6])!=0: #work on deletion
-		seq1.seq=seq1.seq[:nligation]+seq1.seq[nligation+int(bed[6]):];
-	if bed[7]!="None": #work on insertion
-		#print bed[7]
-		info = readins(bed[7])
-		#print info
-		seqi = SeqRecord(Seq(pysam.Fastafile(info[0]).fetch(info[1],info[2],info[2]+info[3]), generic_dna),id=info[0], name="", description="")
-		#['example.fasta', '22', 25202000, 1000, 2, False]
-		if info[5]:
-			seqi.seq = seqi.seq.reverse_complement();
-		seqt=seqi
-		for i in range(1,info[4]):
-			seqi.seq += seqt.seq
-		seq1.seq=seq1.seq[:nligation]+seqi.seq+seq1.seq[nligation:]
-	parlist=bun.parlist
-	nlibrary=parlist.getint('wgsim', 'nlibrary')
-	libnames=json.loads(parlist.get('wgsim', 'libnames'))
-	freq=float(bed[5])
+#def var2vcf(bun):
+#	varlist=bun.varlist; ofile=[ csv.writer(open(bun.oprefix+'.'+str('.vcf','w'),delimiter='\t')
+#	vcf_meta = call_meta + sample_meta + contig_meta
+#	ofile.writerow(vcf_meta)
+#	ofile.writerow(["#CHROM","POS","ID","REF","ALT","QUAL","FILTER","INFO","FORMAT"])
+#	metalist={}
+#	for var in varlist.keys():
+#		if not metalist.get(varlist[var][1],False):
+#			metalist[varlist[var][1]].append(varlist[var])
+#		else:
+#			metalist[varlist[var][1]]=varlist[var]
+#	for mid in metalist.keys():
+#		sv_type=''.join([i for i in mid if not i.isdigit()])
+#		if len(metalist[mid])
+	#NOTE: only when reffile == hapfiles vcf file will make sense
+	#NOTE: need to go over by MID and report correspondingly
 
-	bams = [ None ] * nlibrary
-	for lib in range(0,nlibrary):
-		freq0 = 1-freq
-		bam0 = runwgs(parlist,nligation,reffile,seq0,lib,freq0)
-		bam1 = runwgs(parlist,nligation,reffile,seq1,lib,freq)
-		bams[lib] = mergebam([bam0,bam1],tempfile.NamedTemporaryFile('w',delete=False).name)
-
-	return bams
+#meta_keys=["fileformat","fileDate","source","reference","phasing"]
+#meta_values=["None","None","None","None","partial"]
+#info_values=[
+#'<ID=NS,Number=1,Type=Integer,Description="Number of Samples With Data">',
+#'<ID=DP,Number=1,Type=Integer,Description="Total Depth">',
+#'<ID=AF,Number=A,Type=Float,Description="Allele Frequency">',
+#'<ID=AA,Number=1,Type=String,Description="Ancestral Allele">',
+#'<ID=DB,Number=0,Type=Flag,Description="dbSNP membership, build 129">',
+#'<ID=H2,Number=0,Type=Flag,Description="HapMap2 membership">',
+#'<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">',
+#'<ID=BKPTID,Number=.,Type=String,Description="ID of the assembled alternate allele in the assembly file">',
+#'<ID=CIEND,Number=2,Type=Integer,Description="Confidence interval around END for imprecise variants">',
+#'<ID=CIPOS,Number=2,Type=Integer,Description="Confidence interval around POS for imprecise variants">',
+#'<ID=END,Number=1,Type=Integer,Description="End position of the variant described in this record">',
+#'<ID=HOMLEN,Number=.,Type=Integer,Description="Length of base pair identical micro-homology at event breakpoints">',
+#'<ID=HOMSEQ,Number=.,Type=String,Description="Sequence of base pair identical micro-homology at event breakpoints">',
+#'<ID=IMPRECISE,Number=0,Type=Flag,Description="Imprecise structural variation">',
+#'<ID=SOMATIC,Number=0,Type=Flag,Description="SOMATIC structural variation">',
+#'<ID=NOVEL,Number=0,Type=Flag,Description="Indicates a novel structural variation">',
+#'<ID=MEINFO,Number=4,Type=String,Description="Mobile element info of the form NAME,START,END,POLARITY">',
+#'<ID=METRANS,Number=.,Type=String,Description="Mobile element transduction info of the form CHR,START,END,POLARITY">',
+#'<ID=SVLEN,Number=.,Type=Integer,Description="Difference in length between REF and ALT alleles">',
+#'<ID=DGVID,Number=1,Type=String,Description="ID of this element in Database of Genomic Variation">',
+#'<ID=DBVARID,Number=1,Type=String,Description="ID of this element in DBVAR">',
+#'<ID=DBRIPID,Number=1,Type=String,Description="ID of this element in DBRIP">',
+#'<ID=MATEID,Number=.,Type=String,Description="ID of mate breakends">',
+#'<ID=PARID,Number=1,Type=String,Description="ID of partner breakend">',
+#'<ID=EVENT,Number=1,Type=String,Description="ID of event associated to breakend">',
+#'<ID=CILEN,Number=2,Type=Integer,Description="Confidence interval around the length of the inserted material between breakends">',
+#'<ID=DPADJ,Number=.,Type=Integer,Description="Read Depth of adjacency">',
+#'<ID=CN,Number=1,Type=Integer,Description="Copy number of segment containing breakend">',
+#'<ID=CNADJ,Number=.,Type=Integer,Description="Copy number of adjacency">',
+#'<ID=CICN,Number=2,Type=Integer,Description="Confidence interval around copy number for the segment">',
+#'<ID=CICNADJ,Number=.,Type=Integer,Description="Confidence interval around copy number for the adjacency">'
+#]
+#format_values=[
+#'<ID=CN,Number=1,Type=Integer,Description="Copy number genotype for imprecise events">',
+#'<ID=CNQ,Number=1,Type=Float,Description="Copy number genotype quality for imprecise events">',
+#'<ID=CNL,Number=.,Type=Float,Description="Copy number genotype likelihood for imprecise events">',
+#'<ID=NQ,Number=1,Type=Integer,Description="Phred style probability score that the variant is novel with respect to the genome ancestor">',
+#'<ID=HAP,Number=1,Type=Integer,Description="Unique haplotype identifier">',
+#'<ID=AHAP,Number=1,Type=Integer,Description="Unique identifier of ancestral haplotype">',
+#'<ID=GT,Number=1,Type=String,Description="Genotype">',
+#'<ID=GQ,Number=1,Type=Integer,Description="Genotype Quality">',
+#'<ID=DP,Number=1,Type=Integer,Description="Read Depth">',
+#'<ID=AD,Number=1,Type=Integer,Description="Read Supporting ALT">',#TCGA
+#'<ID=BQ,Number=1,Type=Integer,Description="Base Quality ofr Read Supporting ALT">',#TCGA
+#'<ID=SS,Number=1,Type=Integer,Description="Somatic Status 0=wt,1=gm,3=so,4=LOH,5=PTM/unknown">',#TCGA
+#'<ID=HQ,Number=2,Type=Integer,Description="Haplotype Quality">',
+#'<ID=GL,Number=G,Type=Integer,Description="Genotype Likelihood">',
+#'<ID=lW,Number=1,Type=Integer,Description="Max Coverage Likelihood Ratio">',
+#'<ID=lWc,Number=1,Type=Integer,Description="Cumulative Max Coverage Likelihood Ratio">',
+#'<ID=lCd,Number=1,Type=Integer,Description="Deletion Insert Size Likelihood Ratio">',
+#'<ID=lCi,Number=1,Type=Integer,Description="Insertion Insert Size Likelihood Ratio">',
+#'<ID=lDl,Number=1,Type=Integer,Description="Left/Plus Anchored Hang Read Likelihood Ratio">',
+#'<ID=lDr,Number=1,Type=Integer,Description="Right/Minus Anchored Hang Read Likelihood Ratio">',
+#'<ID=RGl,Number=1,Type=Integer,Description="Left Limit of Voted Region">',
+#'<ID=RGr,Number=1,Type=Integer,Description="Right Limit of Voted Region">',
+#'<ID=BPl,Number=1,Type=Integer,Description="Softclipped Reads Left Break Point">',
+#'<ID=BPr,Number=1,Type=Integer,Description="Softclipped Reads Right Break Point">'
+#]
+#alt_values=[
+#'<ID=DEL,Description="Deletion">',
+#'<ID=DEL:ME:ALU,Description="Deletion of ALU element">',
+#'<ID=DEL:ME:L1,Description="Deletion of L1 element">',
+#'<ID=DUP,Description="Duplication">',
+#'<ID=DUP:TANDEM,Description="Tandem Duplication">',
+#'<ID=INS,Description="Insertion of novel sequence">',
+#'<ID=INS:ME:ALU,Description="Insertion of ALU element">',
+#'<ID=INS:ME:L1,Description="Insertion of L1 element">',
+#'<ID=INV,Description="Inversion">',
+#'<ID=CNV,Description="Copy number variable region">'
+#]
+#filter_values=[
+#'<ID=q10,Description="Quality below 10">',
+#'<ID=s50,Description="Less than 50% of samples have data">'
+#]
+#info_keys= ["INFO"] * len(info_values)
+#format_keys= ["FORMAT"] * len(format_values)
+#alt_keys= ["ALT"] * len(alt_values)
+#filter_keys= ["FILTER"] * len(filter_values)
+#sv_keys= info_keys + format_keys + alt_keys + filter_keys
+#sv_values= info_values + format_values + alt_values + filter_values
+#
+#def sample_meta(id, genomes, mixture, desc):
+#  template=['##SAMPLE=<ID=%s,Genomes=%s,Mixture=%s,Description="%s">'] * len(id)
+#  return "\n".join( [ template[i] % (id[i], genomes[i], mixture[i], desc[i]) for i in range(0,len(id)) ] )
+#
+#def contig_meta(id, length, md5, species):
+#  template=['##contig=<ID=%s,length=%s,md5=%s,species="%s">'] * len(id)
+#	return "\n".join( [ template[i] % (id[i], length[i], md5[i], species[i]) for i in range(0,len(id)) ] )
+#
+#def call_meta(keys, values, program="mutforge"):
+#  keys.append(["fileformat","fileDate","source"])
+#	values.append(["VCFv4.1",time.ctime(),program)])
+#  return "\n".join([ '##'+key+'='+value for key,value in izip(keys,values) ])

@@ -2,10 +2,9 @@
 #number of libraries
 #haplotype option should be always set on wgsim
 nlibrary=2
-#library names ['lib1','lib2']
+#library-wise option=optbam"lib1":optbam2
 libnames=["lib1","lib2"]
-#library-wise {lib1:opt1,lib2:opt2}
 coverage: {"lib1":10,"lib2":5}
-isize: {"lib1":[[0.5,200,20],[0.5,400,40]],"lib2":[[1,300,30]]}
+isize: {"lib1":[[0.7,250,20],[0.3,400,40]],"lib2":[[1,300,30]]}
 read1: {"lib1":100,"lib2":100}
 read2: {"lib1":100,"lib2":100}
