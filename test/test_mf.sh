@@ -1,7 +1,17 @@
 #in this example we generate one SV type of 1k size each in the region of 30M - 31M 
 #PYTHONPATH=$HOME/setup/mutforge/mutforge/ python -m mf.mutforge -m example.meta example.fasta example.bed example.par example.fasta
 PYTHONPATH=$HOME/setup/mutforge/mutforge/ python -m mf.mutforge --nprocs 64  -m deletion.meta example.fna example.bed example.par example.fna
+samtools index deletion.lib1.bam
+samtools index deletion.lib2.bam
+plot_vcf.R deletion.bed -o deletion.lib1 -f bed deletion.lib1.bam
+plot_vcf.R deletion.bed -o deletion.lib2 -f bed deletion.lib2.bam
+#above gonna generate deletion.var, deletion.lib1.bam, deleltion.lib2.bam and everything prefixed with deletion
 PYTHONPATH=$HOME/setup/mutforge/mutforge/ python -m mf.mutforge --nprocs 64  -m inversion.meta example.fna example.bed example.par example.fna
+samtools index inversion.lib1.bam
+samtools index inversion.lib2.bam
+plot_vcf.R inversion.bed -o inversion.lib1 -f bed inversion.lib1.bam
+plot_vcf.R inversion.bed -o inversion.lib2 -f bed inversion.lib2.bam
+#above gonna generate deletion.var, deletion.lib1.bam, deleltion.lib2.bam and everything prefixed with inversion
 PYTHONPATH=$HOME/setup/mutforge/mutforge/ python -m mf.mutforge --nprocs 64  -m insertion.meta example.fna example.bed example.par example.fna
 PYTHONPATH=$HOME/setup/mutforge/mutforge/ python -m mf.mutforge --nprocs 64  -m duplication.meta example.fna example.bed example.par example.fna
 PYTHONPATH=$HOME/setup/mutforge/mutforge/ python -m mf.mutforge --nprocs 64  -m transposition.meta example.fna example.bed example.par example.fna
@@ -21,14 +31,6 @@ PYTHONPATH=$HOME/setup/mutforge/mutforge/ python -m mf.mutforge --nprocs 64  -m 
 #swan_stat.R transposition.lib2.bam
 #swan_stat.R deletion.lib1.bam
 #swan_stat.R deletion.lib2.bam
-samtools index deletion.lib1.bam
-samtools index deletion.lib2.bam
-plot_vcf.R deletion.bed -o deletion.lib1 -f bed deletion.lib1.bam
-plot_vcf.R deletion.bed -o deletion.lib2 -f bed deletion.lib2.bam
-samtools index inversion.lib1.bam
-samtools index inversion.lib2.bam
-plot_vcf.R inversion.bed -o inversion.lib1 -f bed inversion.lib1.bam
-plot_vcf.R inversion.bed -o inversion.lib2 -f bed inversion.lib2.bam
 samtools index insertion.lib1.bam
 samtools index insertion.lib2.bam
 plot_vcf.R insertion.bed -o insertion.lib1 -f bed insertion.lib1.bam

@@ -339,9 +339,9 @@ def runwgs(parlist,nligation,reffile,nploid,seq,lib,freq): #create bam file for 
 				wgs_cmd="wgsim -h -d %d -s %d -N %d -1 %d -2 %d %s %s %s > /dev/null 2>&1" % (misize,misizesd,mnread,rl1[libn],rl2[libn],fa,fq1,fq2)
 				print wgs_cmd
 				runcmd(wgs_cmd) #fastq file
-				fq3,fq4=filterfq(fq1,fq2,nligation,len(seq)-nligation) #half ligation region reads
+				#fq3,fq4=filterfq(fq1,fq2,nligation,len(seq)-nligation) #half ligation region reads
 				#print (fq1,fq2,fq3,fq4,nligation,len(seq)-nligation)
-				bwasw_cmd="bwa bwasw %s %s %s | samtools view -uS - | samtools sort - %s > /dev/null 2>&1" % (reffile,fq3,fq4,mbam)
+				bwasw_cmd="bwa bwasw %s %s %s | samtools view -uS - | samtools sort - %s > /dev/null 2>&1" % (reffile,fq1,fq2,mbam)
 				print bwasw_cmd
 				runcmd(bwasw_cmd)
 				#TODO: for tmpfile in (fq1,fq2,fq3,fq4): os.remove(tmpfile)
