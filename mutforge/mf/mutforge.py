@@ -315,6 +315,7 @@ def fakebam(iter): # makebam from a pair of seqs of representing the original an
 		#print "-----"
 		bams[lib] = mergebam([bam0,bam1],tempfile.NamedTemporaryFile('w',delete=False).name)
 
+	print "done processing %d out of %d regions" % (iter[6],iter[7])
 	return [hap,bams]
 
 def runwgs(parlist,nligation,reffile,nploid,seq,lib,freq): #create bam file for 1 library given seq and freq
