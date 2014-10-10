@@ -1,4 +1,4 @@
-[wgsim]
+[xwgsim]
 #number of libraries
 #haplotype option should be always set on wgsim
 nlibrary=2

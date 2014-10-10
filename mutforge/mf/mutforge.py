@@ -148,7 +148,7 @@ def main(args):
 
 	if runmode==1 or runmode==3:
 		dic['parlist'] = parlist
-		fbam = var2wgs(Bunch(dic)) # run wgsim + bwa + samtools to generate bamfiles
+		fbam = var2wgs(Bunch(dic)) # run xwgsim + bwa + samtools to generate bamfiles
 		print fbam
 		print "done var2wgs"
 
@@ -193,8 +193,8 @@ def var2wgs(bun):
 	parlist=bun.parlist
 	nploid=bun.nploid
 	nligation=bun.nligation
-	nlibrary=bun.parlist.getint('wgsim', 'nlibrary')
-	libnames=json.loads(parlist.get('wgsim', 'libnames'))
+	nlibrary=bun.parlist.getint('xwgsim', 'nlibrary')
+	libnames=json.loads(parlist.get('xwgsim', 'libnames'))
 	varlist=bun.varlist
 	reffile = bun.reffile.name
 	parlist = bun.parlist
@@ -255,9 +255,9 @@ def var2wgs(bun):
 
 	pool = Pool(processes=int(nprocs))
 	bedbams=[]
-	#bedbams=pool.map(fakebam,hapiter,1)
-	for hapit in hapiter:
-		bedbams.append(fakebam(hapit))
+	bedbams=pool.map(fakebam,hapiter,1)
+	#for hapit in hapiter:
+	#	bedbams.append(fakebam(hapit))
 
 	libbams = {} #bamfiles to be merged: [ [hap1lib1, hap1lib2, ...], [hap2lib1, hap2lib2, ...] ]
 	#libcnt0 = 0; libcnt1 = 0
@@ -306,8 +306,8 @@ def fakebam(hapit): # makebam from a pair of seqs of representing the original a
 		for i in range(1,info[4]):
 			seqi.seq += seqt.seq
 		seq1.seq=seq1.seq[:nligation]+seqi.seq+seq1.seq[nligation:]
-	nlibrary=parlist.getint('wgsim', 'nlibrary')
-	libnames=json.loads(parlist.get('wgsim', 'libnames'))
+	nlibrary=parlist.getint('xwgsim', 'nlibrary')
+	libnames=json.loads(parlist.get('xwgsim', 'libnames'))
 	freq=float(bed[5])
 
 	bams = [None] * nlibrary
@@ -323,11 +323,11 @@ def fakebam(hapit): # makebam from a pair of seqs of representing the original a
 	return [hap,bams]
 
 def runwgs(parlist,nligation,reffile,nploid,seq,lib,freq): #create bam file for 1 library given seq and freq
-	libnames=json.loads(parlist.get('wgsim', 'libnames'))
-	coverage=json.loads(parlist.get('wgsim', 'coverage'))
-	isize=json.loads(parlist.get('wgsim', 'isize'))
-	rl1=json.loads(parlist.get('wgsim', 'read1'))
-	rl2=json.loads(parlist.get('wgsim', 'read2'))
+	libnames=json.loads(parlist.get('xwgsim', 'libnames'))
+	coverage=json.loads(parlist.get('xwgsim', 'coverage'))
+	isize=json.loads(parlist.get('xwgsim', 'isize'))
+	rl1=json.loads(parlist.get('xwgsim', 'read1'))
+	rl2=json.loads(parlist.get('xwgsim', 'read2'))
 	libn=libnames[lib]
 	nrdp = len(seq)*coverage[libn]/nploid*freq/(rl1[libn]+rl2[libn])
 	nmode = len(isize[libn])
@@ -346,7 +346,7 @@ def runwgs(parlist,nligation,reffile,nploid,seq,lib,freq): #create bam file for 
 				fq2=tempfile.NamedTemporaryFile('w',delete=False).name
 				mbam=tempfile.NamedTemporaryFile('w',delete=False).name
 				#print (misize,misizesd,mnread,rl1[libn],rl2[libn],fa,fq1,fq2)
-				wgs_cmd="wgsim -h -d %d -s %d -N %d -1 %d -2 %d -l %d %s %s %s > /dev/null 2>&1" % (misize,misizesd,mnread,rl1[libn],rl2[libn],nligation,fa,fq1,fq2)
+				wgs_cmd="xwgsim -h -d %d -s %d -N %d -1 %d -2 %d -l %d %s %s %s > /dev/null 2>&1" % (misize,misizesd,mnread,rl1[libn],rl2[libn],nligation,fa,fq1,fq2)
 				print wgs_cmd
 				runcmd(wgs_cmd) #fastq file
 				#fq3,fq4=filterfq(fq1,fq2,nligation,len(seq)-nligation) #half ligation region reads
