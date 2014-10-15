@@ -215,9 +215,9 @@ def main(args):
 	ref = pysam.Fastafile(reffile.name)
 	seq0 = [ SeqRecord(Seq(ref.fetch(ref.references[i],0,ref.lengths[i]) ),id=ref.references[i],name=ref.references[i],description=ref.references[i]) for i in xrange(0,ref.nreferences) ]
 	seq1 = var2seq(brpt,reffile,nligation,oprefix)
-	nlibrary=parlist.getint('wgsim', 'nlibrary')
+	nlibrary=parlist.getint('xwgsim', 'nlibrary')
 	bams = [None] * nlibrary
-	libnames=json.loads(parlist.get('wgsim', 'libnames'))
+	libnames=json.loads(parlist.get('xwgsim', 'libnames'))
 	for lib in range(0,nlibrary):
 		bam0 = mf.runwgs(parlist,nligation,reffile.name,nploid,seq0,lib,freq0)
 		bam1 = mf.runwgs(parlist,nligation,reffile.name,nploid,seq1,lib,freq1)
