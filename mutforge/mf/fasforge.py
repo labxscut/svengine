@@ -4,12 +4,15 @@
 import copy, time, re, os, shutil, sys, random, csv, subprocess, traceback, argparse, tempfile, itertools, operator, collections, ConfigParser, json, imp, StringIO
 import pysam
 import pybedtools
-#import mutforge.mf.mutforge as mf
-import mf.mutforge as mf
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio.Alphabet import generic_dna
+#properly import muforge
+try:
+	import mf.mutforge as mf #in debugging
+except ImportError:
+	import mutforge as mf #in production
 
 def lumpy2var(bp,ref,nligation):
 	idx=1; delidx=1; insidx=1; traidx=1; invidx=1; dupidx=1; varlist=collections.OrderedDict()

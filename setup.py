@@ -47,7 +47,8 @@ setup(name="mutforge",
             'addindel = mutforge.bs.addindel:run',
             'addsv = mutforge.bs.addsv:run',
             'addsnv = mutforge.bs.addsnv:run',
-						'mutforge = mutforge.mf.mutforge:run'
+						'mutforge = mutforge.mf.mutforge:run',
+						'fasforge = mutforge.mf.fasforge:run'
       ]
    },
 )
