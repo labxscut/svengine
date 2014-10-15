@@ -1,5 +1,5 @@
 #overall
-PYTHONPATH=$HOME/setup/mutforge/mutforge/ python -m mf.fasforge -m test_homo.meta -v test_homo.lumpy example.bed simple.par example.fna
+PYTHONPATH=$HOME/setup/mutforge/mutforge/ python -m mf.fasforge -m test.meta -v test.lumpy example.bed simple.par example.fna
 #test deletion
 PYTHONPATH=$HOME/setup/mutforge/mutforge/ python -m mf.fasforge -v fadel.lumpy example.bed simple.par example.fna
 #test duplication
