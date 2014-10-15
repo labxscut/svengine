@@ -102,7 +102,7 @@ def var2seq(brpt,reffile,nligation,oprefix): #assume varbed is checked for nonov
 		else:
 			brs = collections.OrderedDict(sorted(brpt[rname].items(), key=lambda t: t[0]))
 			seg = []; nbrs=len(brs) #member of seg are Seqs
-			print brs
+			#print brs
 			for j in xrange(0,nbrs):
 				#VID MID VARFRQ VARHAP VARCHR VARPOS VARDEL VARDELSZ VARINS VARINSSZ
 				var=brs.values()[j]
@@ -190,7 +190,24 @@ def main(args):
 		dic['varlist']=varlist #this is needed for vartab
 		vartab=mf.var2bed(mf.Bunch(dic))
 		#print "vartab=", vartab
-		assert mf.chkvar(vartab) == True, "varfile contains self overlaps, which is not allowed"
+		#try:
+		#	assert mf.chkvar(vartab) == True, "==Warn: varfile contains self overlaps, which is not allowed"
+		#except AssertionError:
+		ovlptab=vartab.intersect(vartab,c=True)
+		print len(ovlptab)
+		assert len(ovlptab) == len(varlist), "assert the same set of vars in ovlptab and varlist"
+		#for j in xrange(0,len(ovlptab)-1):
+		#	print ovlptab[j][3]
+		print "OK"
+		ovlpkey=[ varlist.keys()[j] for j in range(0,len(ovlptab)) if int(ovlptab[j][3]) > 1 ]
+		print "OK1"
+		for key in ovlpkey:
+			del varlist[key]
+		print "OK2"
+		dic['varlist']=varlist #this is needed for vartab
+		print "OK3"
+		vartab=mf.var2bed(mf.Bunch(dic))
+		assert mf.chkvar(vartab) == True, "==Warn: varfile contains self overlaps, which is not allowed"
 		gaptab=vartab.cat(gaptab)
 
 	gaptab=gaptab.sort()
