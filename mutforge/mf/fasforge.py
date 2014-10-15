@@ -56,7 +56,7 @@ def lumpy2var(bp,ref,nligation):
 			varlist[var][9] = (ref.name,	line[0], int(line[4]), int(line[1])-int(line[4])+1, 2, False)	#VAR INS SIZE
 		if line[10] == "TYPE:TRANSLOCATION":
 			line2 = bp.next() #this can be ingnored
-			if int(line[2])-int(line[1])==1:
+			if int(line[2])-int(line[1])==1:  #where insertion happens
 				delst=int(line[4]); deled=int(line[5]); delchr=line[3]; insst=int(line[1]); insted=int(line[2]); inschr=line[0]
 			else:
 				delst=int(line[1]); deled=int(line[2]); delchr=line[0]; insst=int(line[4]); insted=int(line[5]); inschr=line[3]
@@ -99,7 +99,7 @@ def var2seq(brpt,reffile,nligation,oprefix): #assume varbed is checked for nonov
 		else:
 			brs = collections.OrderedDict(sorted(brpt[rname].items(), key=lambda t: t[0]))
 			seg = []; nbrs=len(brs) #member of seg are Seqs
-			#print "nbrs=",nbrs
+			print brs
 			for j in xrange(0,nbrs):
 				#VID MID VARFRQ VARHAP VARCHR VARPOS VARDEL VARDELSZ VARINS VARINSSZ
 				var=brs.values()[j]
@@ -109,9 +109,13 @@ def var2seq(brpt,reffile,nligation,oprefix): #assume varbed is checked for nonov
 					seged=brs.values()[j+1][5]
 				if j == 0: #first seg appended without var
 					seg.append(rseq[segst:var[5]]); segst=var[5] 
+					#print "nonchanged seq", rseq[segst:var[5]]
 				seq1 = rseq[segst:seged] #seg if connected is the new seq 
 				if var[6]: #work on deletion
+					#print "deletion:", len(seq1)
 					seq1 = seq1[:nligation]+seq1[nligation+var[7]:]
+					#print "=>", len(seq1)
+					segst = seged
 				if var[8]: #work on insertion
 					#['example.fasta', '22', 25202000, 1000, 2, False]
 					info = var[9]
@@ -119,10 +123,14 @@ def var2seq(brpt,reffile,nligation,oprefix): #assume varbed is checked for nonov
 					if info[5]:
 						seqi = seqi.reverse_complement();
 					seqi = Seq(str(seqi)*info[4], generic_dna)
+					#print "insertion:", len(seq1)
 					seq1 = seq1[:nligation]+seqi+seq1[nligation:]
+					#print "=>", len(seq1)
+					segst = seged
 				#print seq1
 				seg.append(seq1)
-		#print seg
+		#print "old:",len(rseq)
+		#print "new:",len(SeqRecord( Seq(''.join([str(s) for s in seg]), generic_dna), id=rname, name=rname, description=oprefix+"."+rname ) )
 		seq.append( SeqRecord( Seq(''.join([str(s) for s in seg]), generic_dna), id=rname, name=rname, description=oprefix+"."+rname ) )
 	#print seq
 	SeqIO.write(seq,oprefix+".fna",'fasta')
