@@ -193,20 +193,18 @@ def main(args):
 		#try:
 		#	assert mf.chkvar(vartab) == True, "==Warn: varfile contains self overlaps, which is not allowed"
 		#except AssertionError:
-		ovlptab=vartab.intersect(vartab,c=True)
-		print len(ovlptab)
+		#d.iloc[0:1,0:1]
+		ovlptab=vartab.intersect(vartab,c=True).to_dataframe()
+		print "input vars before deovlapping", len(ovlptab)
 		assert len(ovlptab) == len(varlist), "assert the same set of vars in ovlptab and varlist"
 		#for j in xrange(0,len(ovlptab)-1):
 		#	print ovlptab[j][3]
-		print "OK"
-		ovlpkey=[ varlist.keys()[j] for j in range(0,len(ovlptab)) if int(ovlptab[j][3]) > 1 ]
-		print "OK1"
+		ovlpkey=[ varlist.keys()[j] for j in range(0,len(ovlptab)) if int(ovlptab.iloc[j,3]) > 1 ]
 		for key in ovlpkey:
-			del varlist[key]
-		print "OK2"
+			del varlist[key] #exclude these overlapping
 		dic['varlist']=varlist #this is needed for vartab
-		print "OK3"
 		vartab=mf.var2bed(mf.Bunch(dic))
+		print "input vars after deovlapping", len(vartab)
 		assert mf.chkvar(vartab) == True, "==Warn: varfile contains self overlaps, which is not allowed"
 		gaptab=vartab.cat(gaptab)
 
@@ -219,6 +217,7 @@ def main(args):
 		varlist = mf.makevar(mf.Bunch(dic),metatab)
 		dic['varlist'] = varlist
 		varbed = mf.var2bed(mf.Bunch(dic))
+		print "all output vars", len(vartab)
 		assert mf.chkvar(varbed) == True, "varfile contains self overlaps, which is not allowed"
 
 	mf.var2file(mf.Bunch(dic))
