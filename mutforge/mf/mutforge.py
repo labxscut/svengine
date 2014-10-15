@@ -69,6 +69,10 @@ def test_map(a,b):
 
 def main(args):
 
+	#NOTE: varlist var location is varlist[var][1]+nligation, not converted
+	#NOTE: varbed var location is varbed[var][1], converted
+	#NOTE: sequence position is always converted
+
 	nprocs = args.nprocs
 	print "successfully debugging loading"
 
@@ -125,8 +129,9 @@ def main(args):
 
 	if runmode==1 or runmode==2:
 		metatab = CommentedFile(metafile)
-		dic['metatab']=metatab
-		varlist = makevar(Bunch(dic))
+		#dic['metatab']=metatab
+		dic['varlist']=collections.OrderedDict()
+		varlist = makevar(Bunch(dic),metatab)
 		#print "done makevar"
 		dic['varlist']=varlist
 		
@@ -183,7 +188,6 @@ def chkvar(varbed):
 	else: return False
 
 def ppbam(bun,bamfiles):
-	
 	return None
 
 def var2wgs(bun):
@@ -314,8 +318,8 @@ def fakebam(hapit): # makebam from a pair of seqs of representing the original a
 	for lib in range(0,nlibrary):
 		freq0 = 1-freq
 		#print "-----"
-		bam0 = runwgs(parlist,nligation,reffile,nploid,seq0,lib,freq0)
-		bam1 = runwgs(parlist,nligation,reffile,nploid,seq1,lib,freq)
+		bam0 = runwgs(parlist,nligation,reffile,nploid,[seq0],lib,freq0)
+		bam1 = runwgs(parlist,nligation,reffile,nploid,[seq1],lib,freq)
 		#print "-----"
 		bams[lib] = mergebam([bam0,bam1],tempfile.NamedTemporaryFile('w',delete=False).name)
 
@@ -323,18 +327,19 @@ def fakebam(hapit): # makebam from a pair of seqs of representing the original a
 	return [hap,bams]
 
 def runwgs(parlist,nligation,reffile,nploid,seq,lib,freq): #create bam file for 1 library given seq and freq
+	fa=tempfile.NamedTemporaryFile('w',delete=False).name
+	SeqIO.write(seq,fa,'fasta')
+	seql = sum( [ len(s) for s in seq ] ) #len of all seqs
 	libnames=json.loads(parlist.get('xwgsim', 'libnames'))
 	coverage=json.loads(parlist.get('xwgsim', 'coverage'))
 	isize=json.loads(parlist.get('xwgsim', 'isize'))
 	rl1=json.loads(parlist.get('xwgsim', 'read1'))
 	rl2=json.loads(parlist.get('xwgsim', 'read2'))
 	libn=libnames[lib]
-	nrdp = len(seq)*coverage[libn]/nploid*freq/(rl1[libn]+rl2[libn])
+	nrdp = seql*coverage[libn]/nploid*freq/(rl1[libn]+rl2[libn])
 	nmode = len(isize[libn])
 	mode = [ None ] * nmode
-	fa=tempfile.NamedTemporaryFile('w',delete=False).name
 	#print "run wgs for:", libn, fa, coverage[libn], freq, nrdp
-	SeqIO.write(seq,fa,'fasta')
 	if freq == 0 or nrdp == 0:
 		return None
 	else:
@@ -452,20 +457,50 @@ def var2bed(bun):
 		varcopy[var][9]=formatins(varcopy[var][9])
 	for var in varcopy.keys():
 		varcopy[var][5]=varcopy[var][5]+nligation #actual site
-		ofile.writerow([varcopy[var][4],varcopy[var][5],varcopy[var][5]+varcopy[var][7]]+varcopy[var])
-	return None
+		ofile.writerow([varcopy[var][4],varcopy[var][5],varcopy[var][5]+varcopy[var][7]+1]+varcopy[var])
+	return pybedtools.BedTool("\n".join([ str(varcopy[var][4])+"\t"+str(varcopy[var][5])+"\t"+str(varcopy[var][5]+varcopy[var][7]) for var in varcopy.keys() ]), from_string=True) 
 
-def makevar(bun):
-	metatab = bun.metatab
+def makevar(bun,metatab):
+	#metatab = bun.metatab
 	gaptab = bun.gaptab
 	hapseq = bun.hapseq
 	nploid = bun.nploid
 	plansize = bun.plansize
 	nligation = bun.nligation
+	varlist = bun.varlist
 	trunks = maketrunks(bun)   													#trunks is in bed format
 	trunks,stretches = blocktrunks(trunks,gaptab)  #block trunks that not usable
 	
-	metacnt={}; varcnt=1; varlist=collections.OrderedDict()
+	# seqfile,sizestring #random seq from seqfile using sizestring
+	# seqfile #use seqfile exactly
+	metacnt={}; delvec=set(); finsvec=set(); dinsvec=set(); dupvec=set(); travec=set(); idupvec=set(); invvec=set(); itravec=set(); 
+	for var in varlist:
+		meta=varlist[var][1].split("_")[0]
+		if meta == "DEL":
+			delvec.add(varlist[var][1])
+		elif meta == "FINS":
+			finsvec.add(varlist[var][1])
+		elif meta == "DINS":
+			dinsvec.add(varlist[var][1])
+		elif meta == "DUP":
+			dupvec.add(varlist[var][1])
+		elif meta == "TRA":
+			travec.add(varlist[var][1])
+		elif meta == "IDUP":
+			idupvec.add(varlist[var][1])
+		elif meta == "INV":
+			invvec.add(varlist[var][1])
+		elif meta == "ITRA":
+			itravec.add(varlist[var][1])
+	metacnt['DEL']=len(delvec);
+	metacnt['FINS']=len(finsvec);
+	metacnt['DINS']=len(dinsvec);
+	metacnt['DUP']=len(dupvec);
+	metacnt['TRA']=len(travec);
+	metacnt['IDUP']=len(idupvec);
+	metacnt['INV']=len(invvec);
+	metacnt['ITRA']=len(itravec);
+	varcnt=len(varlist)
 	
 	rows=[]
 	for row in metatab:
@@ -480,12 +515,17 @@ def makevar(bun):
 		if metatype != 'FINS':
 			sizedist = expanddist(row[2],cnt)
 		else:
-			#print "foreignseq=", row[2]
-			foreignseq = pysam.Fastafile(row[2])
-			if(foreignseq.nreferences!=cnt):
-				raise Exception("number of foreign sequences provided not equal to specified in FINS!")
+			sizeopt = row[2].split(',')
+			foreignseq = pysam.Fastafile(sizeopt[0])
+			if len(sizeopt)==1: #use exact size
+				randseq = False
+				if(foreignseq.nreferences!=cnt):
+					raise Exception("number of foreign sequences provided not equal to specified in FINS!")
+				else:
+					sizedist = CountUnique(foreignseq.lengths)
 			else:
-				sizedist = CountUnique(foreignseq.lengths)
+				randseq = True
+				sizedist = expanddist(sizeopt[1],cnt)
 
 		copydist = expanddist(row[3],cnt)
 		donordist = expanddist(row[4],cnt)
@@ -519,7 +559,7 @@ def makevar(bun):
 			
 		for i in xrange(0,cnt): #this could be parallelized? yes if we preallocate trunks
 			metacnt[metatype] = metacnt.get(metatype,0) + 1
-			mid = metatype + str(metacnt[metatype])
+			mid = metatype + "_" + str(metacnt[metatype])
 			#print metatype
 			donor=demultiplex(donorvec[i]) #this is a list of donor haplos
 			recpt=demultiplex(recptvec[i]) #this is a list of recpt haplos
@@ -529,26 +569,26 @@ def makevar(bun):
 			if metatype == 'DEL':    #this should be only operations to donors
 				dtid,stretches=maketid(stretches,sizevec[i]/(plansize+2*nligation)+1)
 				for d in donor:
-					varid = vartag+str(varcnt)
+					varid = vartag+"_"+str(varcnt)
 					varlist[varid]=[varid,mid,donorfreq[i],d,trunks[dtid].chrom,trunks[dtid].start,True,sizevec[i],False,None]
 					varcnt+=1
-			elif metatype == 'TRP' or metatype == 'ITRP':  #one deletion at donor followed by a insertion at recepient
-				rc = True if metatype == 'ITRP' else False
+			elif metatype == 'TRA' or metatype == 'ITRA':  #one deletion at donor followed by a insertion at recepient
+				rc = True if metatype == 'ITRA' else False
 				dtid,stretches=maketid(stretches,sizevec[i]/(plansize+2*nligation)+1)
 				for d in donor:
-					varid = vartag+str(varcnt)
+					varid = vartag+"_"+str(varcnt)
 					varlist[varid]=[varid,mid,donorfreq[i],d,trunks[dtid].chrom,trunks[dtid].start,True,sizevec[i],False,None]
 					varcnt+=1
 				rtid,stretches=maketid(stretches,1)
 				for r in recpt:    #inserting sequence: [ filename, chr, start, size, copy, rc=True/False ]
-					varid = vartag+str(varcnt)
+					varid = vartag+"_"+str(varcnt)
 					varlist[varid]=[varid,mid,recptfreq[i],r,trunks[rtid].chrom,trunks[rtid].start,False,0,True,\
 						[hapseq[dpick].filename,trunks[dtid].chrom,trunks[dtid].start+nligation,sizevec[i],copyvec[i],rc]]
 					varcnt+=1
 			elif metatype == 'INV' or metatype == 'IDUP':  #one deletion at donor followed by insertion of reverse
 				dtid,stretches=maketid(stretches,sizevec[i]/(plansize+2*nligation)+1)
 				for d in donor:
-					varid = vartag+str(varcnt)
+					varid = vartag+"_"+str(varcnt)
 					varlist[varid]=[varid,mid,donorfreq[i],d,trunks[dtid].chrom,trunks[dtid].start,True,sizevec[i],True,
 						[hapseq[dpick].filename,trunks[dtid].chrom,trunks[dtid].start+nligation,sizevec[i],copyvec[i],True]]
 					varcnt+=1
@@ -556,14 +596,14 @@ def makevar(bun):
 				dtid,stretches=maketid(stretches,sizevec[i]/(plansize+2*nligation)+1)
 				rtid,stretches=maketid(stretches,1)
 				for r in recpt:    #inserting sequence: [ filename, chr, start, size, copy, rc=True/False ]
-					varid = vartag+str(varcnt)
+					varid = vartag+"_"+str(varcnt)
 					varlist[varid]=[varid,mid,recptfreq[i],r,trunks[rtid].chrom,trunks[rtid].start,False,0,True,\
 						[hapseq[dpick].filename,trunks[dtid].chrom,trunks[dtid].start+nligation,sizevec[i],copyvec[i],False]]
 					varcnt+=1
 			elif metatype == 'DUP':
 				rtid,stretches=maketid(stretches,sizevec[i]/(plansize+2*nligation)+1)
 				for r in recpt:    #inserting sequence: [ filename, chr, start, size, copy, rc=True/False ]
-					varid = vartag+str(varcnt)
+					varid = vartag+"_"+str(varcnt)
 					varlist[varid]=[varid,mid,recptfreq[i],r,trunks[rtid].chrom,trunks[rtid].start,True,sizevec[i],True,\
 						[hapseq[r].filename,trunks[rtid].chrom,trunks[rtid].start+nligation,sizevec[i],copyvec[i],False]]
 					varcnt+=1
@@ -573,10 +613,18 @@ def makevar(bun):
 				#print foreignseq.filename
 				#print foreignseq.references[i]
 				for r in recpt:    #inserting sequence: [ filename, chr, start, size, copy, rc=True/False ]
-					varid = vartag+str(varcnt)
+					varid = vartag+"_"+str(varcnt)
 					#print foreignseq[i]
-					varlist[varid]=[varid,mid,recptfreq[i],r,trunks[rtid].chrom,trunks[rtid].start,False,0,True,\
-						[foreignseq.filename,foreignseq.references[i],0,foreignseq.lengths[i],copyvec[i],False]]
+					if randseq == False:
+						varlist[varid]=[varid,mid,recptfreq[i],r,trunks[rtid].chrom,trunks[rtid].start,False,0,True,\
+							[foreignseq.filename,foreignseq.references[i],0,foreignseq.lengths[i],copyvec[i],False]]
+					else:
+						rvec = [ j for j in xrange(0,len(foreignseq.references)) if foreignseq.lengths[j] > sizevec[i] ]
+						ri = random.sample( rvec, 1 )[0]
+						si = random.sample( xrange(0,foreignseq.lengths[ri]-sizevec[i]), 1 )[0]
+						rc = random.sample( [True, False], 1 )[0]
+						varlist[varid]=[varid,mid,recptfreq[i],r,trunks[rtid].chrom,trunks[rtid].start,False,0,True,\
+							[foreignseq.filename,foreignseq.references[ri],si,sizevec[i],copyvec[i],rc]]
 					varcnt+=1
 			else:
 				raise Exception("unknown metatype %s" % metatype)
@@ -629,10 +677,10 @@ def maketid(stretches,varstretch):
 	#print len(stretches)
 	tids = [t for t, x in enumerate(stretches) if x >= varstretch] #always random pick among min qualifying tids
 	if tids == []: raise Exception("cannot allocate genome region for metafile, please reduce plansize!");
-	if varstretch == 1: #insertion type sequence, could from any place
-		mtids = [1,tids]
+	if varstretch >= 1: #could from any place that has a stretch >= varstretch
+		mtids = [varstretch,tids]
 	else:
-		mtids = locatemin([stretches[i] for i in tids]) #will give [64,0]
+		mtids = locatemin([stretches[i] for i in tids]) #this is not currently used
 	#print tids
 	#print mtids
 	tid = random.sample(mtids[1],1)[0]   #locate the tid
