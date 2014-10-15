@@ -624,7 +624,7 @@ def makevar(bun,metatab):
 						si = random.sample( xrange(0,foreignseq.lengths[ri]-sizevec[i]), 1 )[0]
 						rc = random.sample( [True, False], 1 )[0]
 						varlist[varid]=[varid,mid,recptfreq[i],r,trunks[rtid].chrom,trunks[rtid].start,False,0,True,\
-							[foreignseq.filename,foreignseq.references[ri],si,foreignseq.lengths[ri],copyvec[i],rc]]
+							[foreignseq.filename,foreignseq.references[ri],si,sizevec[i],copyvec[i],rc]]
 					varcnt+=1
 			else:
 				raise Exception("unknown metatype %s" % metatype)

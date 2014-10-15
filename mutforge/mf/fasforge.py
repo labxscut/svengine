@@ -189,9 +189,9 @@ def main(args):
 		#print "vartab=", vartab
 		assert mf.chkvar(vartab) == True, "varfile contains self overlaps, which is not allowed"
 		gaptab=vartab.cat(gaptab)
-		gaptab=gaptab.sort()
-		dic['gaptab']=gaptab
-		mf.var2file(mf.Bunch(dic))
+
+	gaptab=gaptab.sort()
+	dic['gaptab']=gaptab
 
 	if runmode%2 == 1:	
 		dic['hapseq']=[pysam.Fastafile(reffile.name)];
@@ -201,6 +201,7 @@ def main(args):
 		varbed = mf.var2bed(mf.Bunch(dic))
 		assert mf.chkvar(varbed) == True, "varfile contains self overlaps, which is not allowed"
 
+	mf.var2file(mf.Bunch(dic))
 	#read in bedpe to generate varlist
 	#now we need to check whether the  sv has been correctly inserted
 	#we also need to check whether the position is properly selected 
