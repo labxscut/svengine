@@ -435,7 +435,7 @@ def formatins(cell):
 	#print cell
 	if not cell: return 'None';
 	revcomp = 'r' if cell[5] else 'f'
-	coord = cell[1]+':'+str(cell[2]+1)+'-'+str(cell[2]+cell[3])
+	coord = cell[1]+':'+str(cell[2]+1)+'-'+str(cell[2]+1+cell[3])
 	return ','.join([cell[0],coord,str(cell[4]),revcomp])
 
 def var2file(bun):

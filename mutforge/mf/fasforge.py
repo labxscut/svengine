@@ -25,7 +25,7 @@ def lumpy2var(bp,ref,nligation):
 			varlist[var][4] = line[0]		#VAR CHR
 			varlist[var][5] = int(line[1])-nligation #VAR POS
 			varlist[var][6] = True	#VAR DEL
-			varlist[var][7] = int(line[4])-int(line[1]) #VAR DEL SIZE
+			varlist[var][7] = int(line[4])-int(line[1])+1 #VAR DEL SIZE
 			varlist[var][8] = False	#VAR INS
 			varlist[var][9] = None	#VAR INS SIZE
 		if line[10] == "TYPE:INVERSION":
@@ -38,10 +38,10 @@ def lumpy2var(bp,ref,nligation):
 			varlist[var][4] = line[0]		#VAR CHR
 			varlist[var][5] = int(line[1])-nligation	#VAR POS
 			varlist[var][6] = True	#VAR DEL
-			varlist[var][7] = int(line[4])-int(line[1]) #VAR DEL SIZE
-			varlist[var][8] = False	#VAR INS
-			varlist[var][9] = (ref.name,	line[0], int(line[1]), int(line[4]), 1, True)	#VAR INS SIZE
-		if line[10] == "TYPE:DUPLICATION":
+			varlist[var][7] = int(line[4])-int(line[1])+1 #VAR DEL SIZE
+			varlist[var][8] = True	#VAR INS
+			varlist[var][9] = (ref.name,	line[0], int(line[1]), int(line[4])-int(line[1])+1, 1, True)	#VAR INS SIZE
+		if line[10] == "TYPE:DUPLICATION": #something weird with lumpy's output here, start is bigger than end
 			mid="DUP_"+str(dupidx); var="VAR_"+str(idx); idx+=1; dupidx+=1
 			varlist[var]=[None] * 10
 			varlist[var][0] = var	#VID
@@ -51,33 +51,39 @@ def lumpy2var(bp,ref,nligation):
 			varlist[var][4] = line[0]		#VAR CHR
 			varlist[var][5] = int(line[4])-nligation	#VAR POS
 			varlist[var][6] = True	#VAR DEL
-			varlist[var][7] = int(line[1])-int(line[4]) #VAR DEL SIZE
-			varlist[var][8] = False	#VAR INS
-			varlist[var][9] = (ref.name,	line[0], int(line[4]), int(line[1]), 2, False)	#VAR INS SIZE
+			varlist[var][7] = int(line[1])-int(line[4])+1 #VAR DEL SIZE
+			varlist[var][8] = True	#VAR INS
+			varlist[var][9] = (ref.name,	line[0], int(line[4]), int(line[1])-int(line[4])+1, 2, False)	#VAR INS SIZE
 		if line[10] == "TYPE:TRANSLOCATION":
-			line2 = bp.next()
+			line2 = bp.next() #this can be ingnored
+			if int(line[2])-int(line[1])==1:
+				delst=int(line[4]); deled=int(line[5]); delchr=line[3]; insst=int(line[1]); insted=int(line[2]); inschr=line[0]
+			else:
+				delst=int(line[1]); deled=int(line[2]); delchr=line[0]; insst=int(line[4]); insted=int(line[5]); inschr=line[3]
+			#do insertion
 			mid="TRA_"+str(traidx); var="VAR_"+str(idx); idx+=1; traidx+=1
 			varlist[var]=[None] * 10
 			varlist[var][0] = var	#VID
 			varlist[var][1] = mid	#MID
 			varlist[var][2] = 1.0 #VAR FREQ
 			varlist[var][3] = 0		#VAR HAP
-			varlist[var][4] = line[0]		#VAR CHR
-			varlist[var][5] = int(line[1])-nligation	#VAR POS
+			varlist[var][4] = inschr		#VAR CHR
+			varlist[var][5] = insst-nligation	#VAR POS
 			varlist[var][6] = False	#VAR DEL
 			varlist[var][7] = 0 #VAR DEL SIZE
 			varlist[var][8] = True	#VAR INS
-			varlist[var][9] = (ref.name,	line[3], int(line[4]), int(line[5]), 1, False)	#VAR INS SIZE
+			varlist[var][9] = (ref.name,	delchr, delst, deled-delst+1, 1, False)	#VAR INS SIZE
 			mid="TRA_"+str(traidx); var="VAR_"+str(idx); idx+=1;
+			#do deletion
 			varlist[var]=[None] * 10
 			varlist[var][0] = var	#VID
 			varlist[var][1] = mid	#MID
 			varlist[var][2] = 1.0 #VAR FREQ
 			varlist[var][3] = 0		#VAR HAP
-			varlist[var][4] = line[3]		#VAR CHR
-			varlist[var][5] = int(line[4]) - nligation	#VAR POS
+			varlist[var][4] = delchr		#VAR CHR
+			varlist[var][5] = delst-nligation	#VAR POS
 			varlist[var][6] = True	#VAR DEL
-			varlist[var][7] = int(line[5])-int(line[4]) #VAR DEL SIZE
+			varlist[var][7] = deled-delst+1 #VAR DEL SIZE
 			varlist[var][8] = False	#VAR INS
 			varlist[var][9] = None	#VAR INS SIZE
 	return varlist
@@ -135,7 +141,7 @@ def main(args):
 	if varfile!=None and metafile!=None:
 		runmode=3;
 		oname=varfile.name.rsplit(".")[0]	
-	elif varfile!=None and metaile==None:
+	elif varfile!=None and metafile==None:
 		runmode=2;
 		oname=varfile.name.rsplit(".")[0]	
 	elif metafile!=None and varfile==None:
@@ -181,7 +187,7 @@ def main(args):
 
 	if runmode%2 == 1:	
 		dic['hapseq']=[pysam.Fastafile(reffile.name)];
-		metatab=csv.reader(metafile,delimiter='\t')
+		metatab = csv.reader(metafile,delimiter='\t')
 		varlist = mf.makevar(mf.Bunch(dic),metatab)
 		dic['varlist'] = varlist
 		varbed = mf.var2bed(mf.Bunch(dic))
@@ -196,7 +202,7 @@ def main(args):
 		if brpt.get(var[4],None) == None:
 			brpt[var[4]] = collections.OrderedDict({var[5]:var})
 		else:
-			brpt[var[4]][var[5]]=var
+			brpt[var[4]][var[5]]=var  #brpt[chr][pos]
 	ref = pysam.Fastafile(reffile.name)
 	seq0 = [ SeqRecord(Seq(ref.fetch(ref.references[i],0,ref.lengths[i]) ),id=ref.references[i],name=ref.references[i],description=ref.references[i]) for i in xrange(0,ref.nreferences) ]
 	seq1 = var2seq(brpt,reffile,nligation,oprefix)
@@ -207,7 +213,6 @@ def main(args):
 		bam0 = mf.runwgs(parlist,nligation,reffile.name,nploid,seq0,lib,freq0)
 		bam1 = mf.runwgs(parlist,nligation,reffile.name,nploid,seq1,lib,freq1)
 		bams[lib] = mf.mergebam([bam0,bam1],oprefix+"."+libnames[lib])
-	#print bams
 	return bams
 
 def run():
