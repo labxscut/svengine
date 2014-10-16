@@ -244,6 +244,7 @@ def main(args):
 	seq1 = var2seq(brpt,reffile,nligation,oprefix)
 	nlibrary=parlist.getint('xwgsim', 'nlibrary')
 	bams = [None] * nlibrary
+	print "OK5"
 	
 	pariter=[]
 	for lib in range(0,nlibrary):
@@ -253,6 +254,7 @@ def main(args):
 	pool = Pool(processes=int(nprocs))
 	bedbams=[]
 	bedbams=pool.map(makebam,pariter,1)
+	print "OK6"
 	
 	print bedbams
 	return None
