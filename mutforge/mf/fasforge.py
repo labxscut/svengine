@@ -63,7 +63,7 @@ def lumpy2var(bp,ref,nligation):
 			else:
 				delst=int(line[1]); deled=int(line[2]); delchr=line[0]; insst=int(line[4]); insted=int(line[5]); inschr=line[3]
 			#do insertion
-			mid="TRA_"+str(traidx); var="VAR_"+str(idx); idx+=1; traidx+=1
+			mid="TRA_"+str(traidx); var="VAR_"+str(idx); idx+=1; 
 			varlist[var]=[None] * 10
 			varlist[var][0] = var	#VID
 			varlist[var][1] = mid	#MID
@@ -75,7 +75,7 @@ def lumpy2var(bp,ref,nligation):
 			varlist[var][7] = 0 #VAR DEL SIZE
 			varlist[var][8] = True	#VAR INS
 			varlist[var][9] = (ref.name,	delchr, delst, deled-delst+1, 1, False)	#VAR INS SIZE
-			mid="TRA_"+str(traidx); var="VAR_"+str(idx); idx+=1;
+			mid="TRA_"+str(traidx); var="VAR_"+str(idx); idx+=1; traidx+=1
 			#do deletion
 			varlist[var]=[None] * 10
 			varlist[var][0] = var	#VID
@@ -165,9 +165,10 @@ def main(args):
 	#metastr='\n'.join([ "\t".join(['FINS',str(2),'adeno.fna,'+inssize,'fix_1','fix_1','fix_1','fix_1','fix_1' ]),
 	#					"\t".join(['DINS',str(2),'fix_100_200','fix_1','fix_1','fix_1','fix_1','fix_1' ]) ])
 	varlist = collections.OrderedDict()
-	dic={'nligation':nligation,'varlist':varlist,'oprefix':oprefix,'reffile':reffile,'nploid':nploid,'plansize':plansize}
+	dic={'nligation':nligation,'varlist':varlist,'oprefix':oprefix,'reffile':reffile,'nploid':nploid,'plansize':plansize,'varcnt':0}
 	print "runmode=", runmode
-	if runmode > 1:
+
+	if runmode > 1: #have var input
 		varintype = varfile.name.split(".")[-1]
 		if varintype == 'lumpy':
 			bp=csv.reader(varfile,delimiter="\t")
@@ -177,7 +178,8 @@ def main(args):
 			varlist=lumpy2var(bp,reffile,nligation)
 		else:
 			raise Exception("varintype %s hasn't been implemented" % varintype)
-		dic['varlist']=varlist #this is needed for vartab
+		dic['varcnt']=len(varlist) #this is needed for continuously counting
+		dic['varlist']=varlist #this is needed for continuously counting
 		vartab=mf.var2bed(mf.Bunch(dic))
 		#d.iloc[0:1,0:1]
 		ovlptab=vartab.intersect(vartab,c=True).to_dataframe()
@@ -193,7 +195,6 @@ def main(args):
 		print "input vars after deovlapping", len(vartab)
 		assert mf.chkvar(vartab) == True, "==Warn: varfile contains self overlaps, which is not allowed"
 		gaptab=vartab.cat(gaptab)
-		
 
 	print "OK0"
 	gaptab=gaptab.sort()
@@ -204,12 +205,15 @@ def main(args):
 		dic['hapseq']=[pysam.Fastafile(reffile.name)];
 		metatab = csv.reader(metafile,delimiter='\t')
 		print "OK2"
-		varlist = mf.makevar(mf.Bunch(dic),metatab)
+		print dic["varlist"]
+		varlist,varcnt = mf.makevar(mf.Bunch(dic),metatab)
 		print "OK3"
 		dic['varlist'] = varlist
+		print dic["varlist"]
+		dic['varcnt'] = varcnt
 		vartab = mf.var2bed(mf.Bunch(dic))
 		print "OK4"
-		print "all output vars", len(vartab)
+		print "all output vars", len(varlist)
 		assert mf.chkvar(vartab) == True, "varfile contains self overlaps, which is not allowed"
 
 	print "OK4"
