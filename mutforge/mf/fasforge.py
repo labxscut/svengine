@@ -207,11 +207,10 @@ def main(args):
 		varlist = mf.makevar(mf.Bunch(dic),metatab)
 		print "OK3"
 		dic['varlist'] = varlist
-		varbed = mf.var2bed(mf.Bunch(dic))
-		print varbed
+		vartab = mf.var2bed(mf.Bunch(dic))
 		print "OK4"
 		print "all output vars", len(vartab)
-		assert mf.chkvar(varbed) == True, "varfile contains self overlaps, which is not allowed"
+		assert mf.chkvar(vartab) == True, "varfile contains self overlaps, which is not allowed"
 
 	print "OK4"
 	mf.var2file(mf.Bunch(dic))
