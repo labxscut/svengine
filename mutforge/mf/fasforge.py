@@ -210,7 +210,7 @@ def main(args):
 		varbed = mf.var2bed(mf.Bunch(dic))
 		print varbed
 		print "OK4"
-		print "all output vars", len(vartab)
+		print "all output vars", len(varbed)
 		assert mf.chkvar(varbed) == True, "varfile contains self overlaps, which is not allowed"
 
 	print "OK4"
