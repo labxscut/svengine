@@ -227,7 +227,7 @@ def main(args):
 		print "input vars after deovlapping", len(vartab)
 		assert mf.chkvar(vartab) == True, "==Warn: varfile contains self overlaps, which is not allowed"
 
-	print "OK4"
+	print "OK5"
 	mf.var2file(mf.Bunch(dic))
 	#read in bedpe to generate varlist
 	#now we need to check whether the  sv has been correctly inserted
@@ -244,7 +244,7 @@ def main(args):
 	seq1 = var2seq(brpt,reffile,nligation,oprefix)
 	nlibrary=parlist.getint('xwgsim', 'nlibrary')
 	bams = [None] * nlibrary
-	print "OK5"
+	print "OK6"
 	
 	pariter=[]
 	for lib in range(0,nlibrary):
@@ -254,17 +254,19 @@ def main(args):
 	pool = Pool(processes=int(nprocs))
 	bedbams=[]
 	bedbams=pool.map(makebam,pariter,1)
-	print "OK6"
+	print "OK7"
 	
 	print bedbams
 	return None
 
 def makebam(parit):		
+	print "processing lib %s freq %s regions" % (str(parit[5]),str(parit[6]))
 	parlist=parit[0]; nligation=parit[1]; rname=parit[2]; nploid=parit[3]; seq0=parit[4]; lib=parit[5]; fq1=parit[6]; fq0=1-fq1; seq0=parit[7]; seq1=parit[8]; lib=parit[9]; oprefix=parit[10]
 	libnames=json.loads(parlist.get('xwgsim', 'libnames'))
 	bam0 = mf.runwgs(parlist,nligation,rname,nploid,seq0,lib,fq0)
 	bam1 = mf.runwgs(parlist,nligation,rname,nploid,seq1,lib,fq1)
-	bam = mf.mergebam([bam0,bam1],oprefix+"."+libnames[lib]+"."+str(int(fq1*100)))
+	bam = mf.mergebam([bam0,bam1],oprefix+"."+libnames[lib]+".f"+str(int(fq1*100)))
+	print "done lib %s freq %s regions" % (str(parit[5]),str(parit[6]))
 	return bam
 
 def run():
