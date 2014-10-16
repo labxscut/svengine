@@ -129,15 +129,11 @@ def main(args):
 
 	if runmode==1 or runmode==2:
 		metatab = CommentedFile(metafile)
-		#dic['metatab']=metatab
 		dic['varlist']=collections.OrderedDict()
 		varlist = makevar(Bunch(dic),metatab)
-		#print "done makevar"
 		dic['varlist']=varlist
 		
-		#print "before", varlist
 		var2file(Bunch(dic))
-		#print "after", varlist
 		print "done var2file"
 
 
@@ -183,7 +179,7 @@ def fas2size(fasfile):
 	return sizefile.name
 
 def chkvar(varbed):
-	print varbed
+	#print varbed
 	if varbed.sort().merge().count() == varbed.sort().count(): return True;
 	else: return False
 
@@ -221,26 +217,10 @@ def var2wgs(bun):
 		assert chkvar(hapvar[hap]) == True, "varfile contains self overlaps, which is not allowed"
 	for hap in hapvar.keys():
 		sizefile = fas2size(hapseq[hap].filename)												 #create genome size file
-		#if hap==0:
-			#print "varing region: for hap", hap
-			#print hapbed[hap].truncate_to_chrom({"22":(0,51304567)})
-			#print hapvar[hap]
 		hapbed[hap] = hapvar[hap].complement(g=sizefile) #create complementary blocks
-		#if hap==0:
-			#print "complement region: for hap", hap
-			#print hapbed[hap].truncate_to_chrom({"22":(0,51304567)})
-			#print hapbed[hap]
 		hapbed[hap] = hapbed[hap].slop(g=sizefile,b=nligation)
-		if hap==0:
-			print "all dummy regions: for hap", hap
-			#print hapbed[hap].truncate_to_chrom({"22":(0,51304567)})
-			print hapbed[hap]
 		hapbed[hap] = pybedtools.BedTool('\n'.join([ f[0]+'\t'+str(f[1])+'\t'+str(f[2])+'\tNone\tNone\t0\t0\tNone' for f in hapbed[hap]]),from_string=True)
 		hapvar[hap] = hapvar[hap].cat(hapbed[hap],postmerge=False)
-		#if hap==0:
-			#print "all generating regions: for hap", hap
-			#print hapvar[hap]
-		#VID=None, MID=None, FREQ=0, DEL=0, INS=None
 
 	hapiter=[]
 	#print len(hapvar[0])
@@ -469,8 +449,10 @@ def makevar(bun,metatab):
 	nligation = bun.nligation
 	varlist = bun.varlist
 	trunks = maketrunks(bun)   													#trunks is in bed format
+	print "OK20"
 	trunks,stretches = blocktrunks(trunks,gaptab)  #block trunks that not usable
-	
+	trunks=trunks.to_dataframe()
+	print "OK21"
 	# seqfile,sizestring #random seq from seqfile using sizestring
 	# seqfile #use seqfile exactly
 	metacnt={}; delvec=set(); finsvec=set(); dinsvec=set(); dupvec=set(); travec=set(); idupvec=set(); invvec=set(); itravec=set(); 
@@ -629,6 +611,7 @@ def makevar(bun,metatab):
 			else:
 				raise Exception("unknown metatype %s" % metatype)
 
+	print "OK22"
 	return varlist #synonym to varlist
 
 def blocktrunks(trunks,gaptab):
