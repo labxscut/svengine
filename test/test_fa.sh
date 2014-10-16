@@ -15,4 +15,4 @@ PYTHONPATH=$HOME/setup/mutforge/mutforge/ python -m mf.fasforge -m fadins.meta e
 #test nprocs
 PYTHONPATH=$HOME/setup/mutforge/mutforge/ python -m mf.fasforge -n 2 -q 1,0.5 -m fadins.meta example.bed simple.par example.fna
 #test nprocs multilib multifreq
-PYTHONPATH=$HOME/setup/mutforge/mutforge/ python -m mf.fasforge -n 2 -q 1,0.5 -m fadins.meta example.bed first.par example.fna
+PYTHONPATH=$HOME/setup/mutforge/mutforge/ python -m mf.fasforge -n 10 -q 1,0.5 -m fadins.meta example.bed first.par example.fna
