@@ -4,17 +4,19 @@
 import copy, time, re, os, shutil, sys, random, csv, subprocess, traceback, argparse, tempfile, itertools, operator, collections, ConfigParser, json, imp, StringIO
 import pysam
 import pybedtools
-#import mutforge.mf.mutforge as mf
-import mf.mutforge as mf
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio.Alphabet import generic_dna
+#properly import muforge
+try:
+	import mf.mutforge as mf #in debugging
+except ImportError:
+	import mutforge as mf #in production
 
 def lumpy2var(bp,ref,nligation):
 	idx=1; delidx=1; insidx=1; traidx=1; invidx=1; dupidx=1; varlist=collections.OrderedDict()
 	for line in bp:
-		#print line
 		if line[10] == "TYPE:DELETION":
 			mid="DEL_"+str(delidx); var="VAR_"+str(idx); idx+=1; delidx+=1
 			varlist[var]=[None] * 10
@@ -90,7 +92,6 @@ def lumpy2var(bp,ref,nligation):
 
 def var2seq(brpt,reffile,nligation,oprefix): #assume varbed is checked for nonoverlapping
 	segst=0; ref=pysam.Fastafile(reffile.name); seq=[]
-	#print ref.references
 	for i in xrange(0,ref.nreferences):
 		rname=ref.references[i]; rlen=ref.lengths[i]
 		rseq=Seq(ref.fetch(rname,0,rlen), generic_dna)
@@ -99,7 +100,6 @@ def var2seq(brpt,reffile,nligation,oprefix): #assume varbed is checked for nonov
 		else:
 			brs = collections.OrderedDict(sorted(brpt[rname].items(), key=lambda t: t[0]))
 			seg = []; nbrs=len(brs) #member of seg are Seqs
-			print brs
 			for j in xrange(0,nbrs):
 				#VID MID VARFRQ VARHAP VARCHR VARPOS VARDEL VARDELSZ VARINS VARINSSZ
 				var=brs.values()[j]
@@ -109,12 +109,9 @@ def var2seq(brpt,reffile,nligation,oprefix): #assume varbed is checked for nonov
 					seged=brs.values()[j+1][5]
 				if j == 0: #first seg appended without var
 					seg.append(rseq[segst:var[5]]); segst=var[5] 
-					#print "nonchanged seq", rseq[segst:var[5]]
 				seq1 = rseq[segst:seged] #seg if connected is the new seq 
 				if var[6]: #work on deletion
-					#print "deletion:", len(seq1)
 					seq1 = seq1[:nligation]+seq1[nligation+var[7]:]
-					#print "=>", len(seq1)
 					segst = seged
 				if var[8]: #work on insertion
 					#['example.fasta', '22', 25202000, 1000, 2, False]
@@ -123,16 +120,12 @@ def var2seq(brpt,reffile,nligation,oprefix): #assume varbed is checked for nonov
 					if info[5]:
 						seqi = seqi.reverse_complement();
 					seqi = Seq(str(seqi)*info[4], generic_dna)
-					#print "insertion:", len(seq1)
 					seq1 = seq1[:nligation]+seqi+seq1[nligation:]
-					#print "=>", len(seq1)
 					segst = seged
-				#print seq1
 				seg.append(seq1)
 		#print "old:",len(rseq)
 		#print "new:",len(SeqRecord( Seq(''.join([str(s) for s in seg]), generic_dna), id=rname, name=rname, description=oprefix+"."+rname ) )
 		seq.append( SeqRecord( Seq(''.join([str(s) for s in seg]), generic_dna), id=rname, name=rname, description=oprefix+"."+rname ) )
-	#print seq
 	SeqIO.write(seq,oprefix+".fna",'fasta')
 	return seq
 
@@ -186,21 +179,41 @@ def main(args):
 			raise Exception("varintype %s hasn't been implemented" % varintype)
 		dic['varlist']=varlist #this is needed for vartab
 		vartab=mf.var2bed(mf.Bunch(dic))
-		#print "vartab=", vartab
-		assert mf.chkvar(vartab) == True, "varfile contains self overlaps, which is not allowed"
+		#d.iloc[0:1,0:1]
+		ovlptab=vartab.intersect(vartab,c=True).to_dataframe()
+		print "input vars before deovlapping", len(ovlptab)
+		assert len(ovlptab) == len(varlist), "assert the same set of vars in ovlptab and varlist"
+		#for j in xrange(0,len(ovlptab)-1):
+		#	print ovlptab[j][3]
+		ovlpkey=[ varlist.keys()[j] for j in range(0,len(ovlptab)) if int(ovlptab.iloc[j,3]) > 1 ]
+		for key in ovlpkey:
+			del varlist[key] #exclude these overlapping
+		dic['varlist']=varlist #this is needed for vartab
+		vartab=mf.var2bed(mf.Bunch(dic))
+		print "input vars after deovlapping", len(vartab)
+		assert mf.chkvar(vartab) == True, "==Warn: varfile contains self overlaps, which is not allowed"
 		gaptab=vartab.cat(gaptab)
+		
 
+	print "OK0"
 	gaptab=gaptab.sort()
 	dic['gaptab']=gaptab
 
+	print "OK1"
 	if runmode%2 == 1:	
 		dic['hapseq']=[pysam.Fastafile(reffile.name)];
 		metatab = csv.reader(metafile,delimiter='\t')
+		print "OK2"
 		varlist = mf.makevar(mf.Bunch(dic),metatab)
+		print "OK3"
 		dic['varlist'] = varlist
 		varbed = mf.var2bed(mf.Bunch(dic))
+		print varbed
+		print "OK4"
+		print "all output vars", len(vartab)
 		assert mf.chkvar(varbed) == True, "varfile contains self overlaps, which is not allowed"
 
+	print "OK4"
 	mf.var2file(mf.Bunch(dic))
 	#read in bedpe to generate varlist
 	#now we need to check whether the  sv has been correctly inserted
@@ -215,9 +228,9 @@ def main(args):
 	ref = pysam.Fastafile(reffile.name)
 	seq0 = [ SeqRecord(Seq(ref.fetch(ref.references[i],0,ref.lengths[i]) ),id=ref.references[i],name=ref.references[i],description=ref.references[i]) for i in xrange(0,ref.nreferences) ]
 	seq1 = var2seq(brpt,reffile,nligation,oprefix)
-	nlibrary=parlist.getint('wgsim', 'nlibrary')
+	nlibrary=parlist.getint('xwgsim', 'nlibrary')
 	bams = [None] * nlibrary
-	libnames=json.loads(parlist.get('wgsim', 'libnames'))
+	libnames=json.loads(parlist.get('xwgsim', 'libnames'))
 	for lib in range(0,nlibrary):
 		bam0 = mf.runwgs(parlist,nligation,reffile.name,nploid,seq0,lib,freq0)
 		bam1 = mf.runwgs(parlist,nligation,reffile.name,nploid,seq1,lib,freq1)
