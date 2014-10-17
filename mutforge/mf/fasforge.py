@@ -253,8 +253,10 @@ def main(args):
 
 	pool = Pool(processes=int(nprocs))
 	bedbams=[]
-	bedbams=pool.map(makebam,pariter,1)
+	print pariter
 	print "OK7"
+	bedbams=pool.map(makebam,pariter,1)
+	print "OK8"
 	
 	print bedbams
 	return None
