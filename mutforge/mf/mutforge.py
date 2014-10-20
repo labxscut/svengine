@@ -266,8 +266,12 @@ def var2wgs(bun):
 
 	fbam = [None] * nlibrary
 	for lib in range(0,nlibrary):
-		fbam[lib] = mergebam(libbams[lib],'.'.join([oprefix,libnames[lib]])) #post processing: librarywise merging bams
-	
+		sbam = '.'.join([oprefix,libnames[lib]])
+		tbam = tempfile.NamedTemporaryFile('w',delete=False).name
+		sort_cmd = "samtools sort %s %s" % (mergebam(libbams[lib],tbam), sbam)
+		print sort_cmd #
+		runcmd(sort_cmd)
+		fbam[lib] = sbam+".bam" #post processing: librarywise merging bams
 	return fbam
 
 def fakebam(hapit): # makebam from a pair of seqs of representing the original and sved haplotype
@@ -300,7 +304,6 @@ def fakebam(hapit): # makebam from a pair of seqs of representing the original a
 		bam0 = runwgs(parlist,nligation,reffile,nploid,[seq0],lib,freq0)
 		bam1 = runwgs(parlist,nligation,reffile,nploid,[seq1],lib,freq)
 		bams[lib] = mergebam([bam0,bam1],tempfile.NamedTemporaryFile('w',delete=False).name)
-
 	print "processed %d out of %d regions" % (hapit[6],hapit[7])
 	return [hap,bams]
 
@@ -329,12 +332,12 @@ def runwgs(parlist,nligation,reffile,nploid,seq,lib,freq): #create bam file for 
 				fq2=tempfile.NamedTemporaryFile('w',delete=False).name
 				mbam=tempfile.NamedTemporaryFile('w',delete=False).name
 				#print (misize,misizesd,mnread,rl1[libn],rl2[libn],fa,fq1,fq2)
-				wgs_cmd="xwgsim -h -d %d -s %d -N %d -1 %d -2 %d -l %d %s %s %s > /dev/null 2>&1" % (misize,misizesd,mnread,rl1[libn],rl2[libn],nligation,fa,fq1,fq2)
+				wgs_cmd="xwgsim -h -d %d -s %d -N %d -1 %d -2 %d -l %d %s %s %s " % (misize,misizesd,mnread,rl1[libn],rl2[libn],nligation,fa,fq1,fq2)
 				print wgs_cmd
 				runcmd(wgs_cmd) #fastq file
 				#fq3,fq4=filterfq(fq1,fq2,nligation,len(seq)-nligation) #half ligation region reads
 				#print (fq1,fq2,fq3,fq4,nligation,len(seq)-nligation)
-				bwasw_cmd="bwa mem -t 4 %s %s %s | samtools view -bS -o %s - > /dev/null 2>&1" % (reffile,fq1,fq2,mbam+".bam") #it auto gives bam if not provided
+				bwasw_cmd="bwa mem -t 4 %s %s %s | samtools view -bS -o %s - " % (reffile,fq1,fq2,mbam+".bam") #it auto gives bam if not provided
 				print bwasw_cmd
 				runcmd(bwasw_cmd)
 				#TODO: for tmpfile in (fq1,fq2,fq3,fq4): os.remove(tmpfile)
@@ -382,8 +385,8 @@ def mergebam(bams,oprefix):
 			else:
 				cbam = mbam
 				mbam = tempfile.NamedTemporaryFile('w',delete=False).name
-			merge_cmd = "samtools merge -f %s %s %s > /dev/null 2>&1" % (mbam, cbam, " ".join([bam for bam in bams[i*4000:min((i+1)*4000,nbams)]]))
-			print merge_cmd
+			merge_cmd = "samtools merge -f %s %s %s " % (mbam, cbam, " ".join([bam for bam in bams[i*4000:min((i+1)*4000,nbams)]]))
+			print merge_cmd #unsorted
 			runcmd(merge_cmd)
 	#FIXME: who do we clean up this mess of temporary files here?
 	return fbam

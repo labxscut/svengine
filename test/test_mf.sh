@@ -2,8 +2,8 @@
 PYTHONPATH=$HOME/setup/mutforge/mutforge/ python -m mf.mutforge -n 16 -m example.meta example.fna example.gap.bed example.par example.fna
 samtools index example.lib1.bam
 samtools index example.lib2.bam
-plot_vcf.R example.gap.bed -o example.lib1 -f bed example.lib1.bam
-plot_vcf.R example.gap.bed -o example.lib2 -f bed example.lib2.bam
+plot_vcf.R example.bed -o example.lib1 -f bed example.lib1.bam
+plot_vcf.R example.bed -o example.lib2 -f bed example.lib2.bam
 swan_stat.R example.lib1.bam
 swan_stat.R example.lib2.bam
 PYTHONPATH=$HOME/setup/mutforge/mutforge/ python -m mf.mutforge --nprocs 16  -m deletion.meta example.fna example.gap.bed example.par example.fna
@@ -20,9 +20,29 @@ plot_vcf.R inversion.bed -o inversion.lib2 -f bed inversion.lib2.bam
 #above gonna generate deletion.var, deletion.lib1.bam, deleltion.lib2.bam and everything prefixed with inversion
 PYTHONPATH=$HOME/setup/mutforge/mutforge/ python -m mf.mutforge --nprocs 16  -m insertion.meta example.fna example.gap.bed example.par example.fna
 PYTHONPATH=$HOME/setup/mutforge/mutforge/ python -m mf.mutforge --nprocs 16  -m duplication.meta example.fna example.gap.bed example.par example.fna
-PYTHONPATH=$HOME/setup/mutforge/mutforge/ python -m mf.mutforge --nprocs 16  -m transposition.meta example.fna example.gap.bed example.par example.fna
+PYTHONPATH=$HOME/setup/mutforge/mutforge/ python -m mf.mutforge --nprocs 16  -m translocation.meta example.fna example.gap.bed example.par example.fna
 PYTHONPATH=$HOME/setup/mutforge/mutforge/ python -m mf.mutforge --nprocs 16  -m finsertion.meta example.fna example.gap.bed example.par example.fna
 PYTHONPATH=$HOME/setup/mutforge/mutforge/ python -m mf.mutforge --nprocs 16  -m iduplication.meta example.fna example.gap.bed example.par example.fna
+samtools index insertion.lib1.bam
+samtools index insertion.lib2.bam
+plot_vcf.R insertion.bed -o insertion.lib1 -f bed insertion.lib1.bam
+plot_vcf.R insertion.bed -o insertion.lib2 -f bed insertion.lib2.bam
+samtools index duplication.lib1.bam
+samtools index duplication.lib2.bam
+plot_vcf.R duplication.bed -o duplication.lib1 -f bed duplication.lib1.bam
+plot_vcf.R duplication.bed -o duplication.lib2 -f bed duplication.lib2.bam
+samtools index translocation.lib1.bam
+samtools index translocation.lib2.bam
+plot_vcf.R translocation.bed -o translocation.lib1 -f bed translocation.lib1.bam
+plot_vcf.R translocation.bed -o translocation.lib2 -f bed translocation.lib2.bam
+samtools index iduplication.lib1.bam
+samtools index iduplication.lib2.bam
+plot_vcf.R iduplication.bed -o iduplication.lib1 -f bed iduplication.lib1.bam
+plot_vcf.R iduplication.bed -o iduplication.lib2 -f bed iduplication.lib2.bam
+samtools index finsertion.lib1.bam
+samtools index finsertion.lib2.bam
+plot_vcf.R finsertion.bed -o finsertion.lib1 -f bed finsertion.lib1.bam
+plot_vcf.R finsertion.bed -o finsertion.lib2 -f bed finsertion.lib2.bam
 swan_stat.R iduplication.lib1.bam
 swan_stat.R iduplication.lib2.bam
 swan_stat.R duplication.lib1.bam
@@ -33,27 +53,7 @@ swan_stat.R insertion.lib1.bam
 swan_stat.R insertion.lib2.bam
 swan_stat.R finsertion.lib1.bam
 swan_stat.R finsertion.lib2.bam
-swan_stat.R transposition.lib1.bam
-swan_stat.R transposition.lib2.bam
+swan_stat.R translocation.lib1.bam
+swan_stat.R translocation.lib2.bam
 swan_stat.R deletion.lib1.bam
 swan_stat.R deletion.lib2.bam
-samtools index insertion.lib1.bam
-samtools index insertion.lib2.bam
-plot_vcf.R insertion.bed -o insertion.lib1 -f bed insertion.lib1.bam
-plot_vcf.R insertion.bed -o insertion.lib2 -f bed insertion.lib2.bam
-samtools index duplication.lib1.bam
-samtools index duplication.lib2.bam
-plot_vcf.R duplication.bed -o duplication.lib1 -f bed duplication.lib1.bam
-plot_vcf.R duplication.bed -o duplication.lib2 -f bed duplication.lib2.bam
-samtools index transposition.lib1.bam
-samtools index transposition.lib2.bam
-plot_vcf.R transposition.bed -o transposition.lib1 -f bed transposition.lib1.bam
-plot_vcf.R transposition.bed -o transposition.lib2 -f bed transposition.lib2.bam
-samtools index iduplication.lib1.bam
-samtools index iduplication.lib2.bam
-plot_vcf.R iduplication.bed -o iduplication.lib1 -f bed iduplication.lib1.bam
-plot_vcf.R iduplication.bed -o iduplication.lib2 -f bed iduplication.lib2.bam
-samtools index finsertion.lib1.bam
-samtools index finsertion.lib2.bam
-plot_vcf.R finsertion.bed -o finsertion.lib1 -f bed finsertion.lib1.bam
-plot_vcf.R finsertion.bed -o finsertion.lib2 -f bed finsertion.lib2.bam
