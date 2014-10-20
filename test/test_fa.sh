@@ -12,3 +12,7 @@ PYTHONPATH=$HOME/setup/mutforge/mutforge/ python -m mf.fasforge -v fainv.lumpy e
 PYTHONPATH=$HOME/setup/mutforge/mutforge/ python -m mf.fasforge -m fafins.meta example.bed simple.par example.fna
 #test dinsertion
 PYTHONPATH=$HOME/setup/mutforge/mutforge/ python -m mf.fasforge -m fadins.meta example.bed simple.par example.fna
+#test nprocs
+PYTHONPATH=$HOME/setup/mutforge/mutforge/ python -m mf.fasforge -n 2 -q 1,0.5 -m fadins.meta example.bed simple.par example.fna >simple.log
+#test scaling nprocs multilib multifreq
+PYTHONPATH=$HOME/setup/mutforge/mutforge/ python -m mf.fasforge -n 10 -q 1,0.5 -m fadins.meta example.bed first.par example.fna >scale.log
