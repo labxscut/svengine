@@ -17,20 +17,20 @@ PYTHONPATH=$HOME/setup/mutforge/mutforge/ python -m mf.mutforge --nprocs 16  -m 
 PYTHONPATH=$HOME/setup/mutforge/mutforge/ python -m mf.mutforge --nprocs 16  -m transposition.meta example.fna example.bed example.par example.fna
 PYTHONPATH=$HOME/setup/mutforge/mutforge/ python -m mf.mutforge --nprocs 16  -m finsertion.meta example.fna example.bed example.par example.fna
 PYTHONPATH=$HOME/setup/mutforge/mutforge/ python -m mf.mutforge --nprocs 16  -m iduplication.meta example.fna example.bed example.par example.fna
-#swan_stat.R iduplication.lib1.bam
-#swan_stat.R iduplication.lib2.bam
-#swan_stat.R duplication.lib1.bam
-#swan_stat.R duplication.lib2.bam
-#swan_stat.R inversion.lib1.bam
-#swan_stat.R inversion.lib2.bam
-#swan_stat.R insertion.lib1.bam
-#swan_stat.R insertion.lib2.bam
-#swan_stat.R finsertion.lib1.bam
-#swan_stat.R finsertion.lib2.bam
-#swan_stat.R transposition.lib1.bam
-#swan_stat.R transposition.lib2.bam
-#swan_stat.R deletion.lib1.bam
-#swan_stat.R deletion.lib2.bam
+swan_stat.R iduplication.lib1.bam
+swan_stat.R iduplication.lib2.bam
+swan_stat.R duplication.lib1.bam
+swan_stat.R duplication.lib2.bam
+swan_stat.R inversion.lib1.bam
+swan_stat.R inversion.lib2.bam
+swan_stat.R insertion.lib1.bam
+swan_stat.R insertion.lib2.bam
+swan_stat.R finsertion.lib1.bam
+swan_stat.R finsertion.lib2.bam
+swan_stat.R transposition.lib1.bam
+swan_stat.R transposition.lib2.bam
+swan_stat.R deletion.lib1.bam
+swan_stat.R deletion.lib2.bam
 samtools index insertion.lib1.bam
 samtools index insertion.lib2.bam
 plot_vcf.R insertion.bed -o insertion.lib1 -f bed insertion.lib1.bam
