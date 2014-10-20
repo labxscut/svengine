@@ -103,9 +103,10 @@ def main(args):
 	parlist.readfp(parfile)
 	metafile = args.metafile
 	varfile = args.varfile
-	oname = metafile.name.rstrip(".meta") if metafile else varfile.name.rstrip(".var")
+	if varfile != None: print varfile.name.rstrip("var").rstrip(".") #weird behavior of rstrip(".meta") -> exampl
+	if metafile != None: print metafile.name.rstrip("meta").rstrip(".")
+	oname = metafile.name.rstrip("meta").rstrip(".") if metafile != None else varfile.name.rstrip(".var").rstrip(".")
 	oprefix = oname if not args.oprefix else args.oprefix
-	
 
 	if len(hapfiles) == 1: #reuse hapfiles for haplotype
 		hapseq=[pysam.Fastafile(hapfiles[0])]*nploid
@@ -138,7 +139,6 @@ def main(args):
 		var2file(Bunch(dic))
 		print "done var2file"
 
-
 	if runmode==3 or runmode==4:
 		dic['varfile'] = varfile
 		varlist = file2var(Bunch(dic))
@@ -147,8 +147,6 @@ def main(args):
 	var2bed(Bunch(dic))
 	print "done var2bed"
 	
-	#quit()
-
 	if runmode==1 or runmode==3:
 		dic['parlist'] = parlist
 		fbam = var2wgs(Bunch(dic)) # run xwgsim + bwa + samtools to generate bamfiles
@@ -160,7 +158,6 @@ def main(args):
 		var2bs(Bunch(dic))
 
 	return None #done
-
 
 def var2bs(bun):
 	numinbamfiles = len(inbamfilenames)
@@ -192,6 +189,7 @@ def var2wgs(bun):
 	hapseq=bun.hapseq
 	nprocs=bun.nprocs
 	oprefix=bun.oprefix
+	print oprefix
 	parlist=bun.parlist
 	nploid=bun.nploid
 	nligation=bun.nligation
@@ -299,10 +297,8 @@ def fakebam(hapit): # makebam from a pair of seqs of representing the original a
 	bams = [None] * nlibrary
 	for lib in range(0,nlibrary):
 		freq0 = 1-freq
-		#print "-----"
 		bam0 = runwgs(parlist,nligation,reffile,nploid,[seq0],lib,freq0)
 		bam1 = runwgs(parlist,nligation,reffile,nploid,[seq1],lib,freq)
-		#print "-----"
 		bams[lib] = mergebam([bam0,bam1],tempfile.NamedTemporaryFile('w',delete=False).name)
 
 	print "processed %d out of %d regions" % (hapit[6],hapit[7])
@@ -338,7 +334,7 @@ def runwgs(parlist,nligation,reffile,nploid,seq,lib,freq): #create bam file for 
 				runcmd(wgs_cmd) #fastq file
 				#fq3,fq4=filterfq(fq1,fq2,nligation,len(seq)-nligation) #half ligation region reads
 				#print (fq1,fq2,fq3,fq4,nligation,len(seq)-nligation)
-				bwasw_cmd="bwa bwasw %s %s %s | samtools view -bS -o %s - > /dev/null 2>&1" % (reffile,fq1,fq2,mbam+".bam") #it auto gives bam if not provided
+				bwasw_cmd="bwa mem -t 4 %s %s %s | samtools view -bS -o %s - > /dev/null 2>&1" % (reffile,fq1,fq2,mbam+".bam") #it auto gives bam if not provided
 				print bwasw_cmd
 				runcmd(bwasw_cmd)
 				#TODO: for tmpfile in (fq1,fq2,fq3,fq4): os.remove(tmpfile)
@@ -454,10 +450,10 @@ def makevar(bun,metatab):
 	varcnt = bun.varcnt
 	print "input varcnt", varcnt
 	trunks = maketrunks(bun)   													#trunks is in bed format
-	print "OK20"
+	#print "OK20"
 	trunks,stretches = blocktrunks(trunks,gaptab)  #block trunks that not usable
 	trunks=trunks.to_dataframe()
-	print "OK21"
+	#print "OK21"
 	# seqfile,sizestring #random seq from seqfile using sizestring
 	# seqfile #use seqfile exactly
 	metacnt={}; delvec=set(); finsvec=set(); dinsvec=set(); dupvec=set(); travec=set(); idupvec=set(); invvec=set(); itravec=set(); 
@@ -615,7 +611,6 @@ def makevar(bun,metatab):
 			else:
 				raise Exception("unknown metatype %s" % metatype)
 
-	print "OK22"
 	print "output varcnt", varcnt
 	return varlist,varcnt #synonym to varlist
 
@@ -738,8 +733,8 @@ def run():
                         help="prefix for output files")
 	parser.add_argument('-y', '--nploid', dest='nploid', default=2,
                         help="genome ploidity (default=2)")
-	parser.add_argument('-f', '--plansize', dest='plansize', default=10000,
-                        help="palnsize + ligation*2 is the grain size for genome planning, (default=10000bp)")
+	parser.add_argument('-f', '--plansize', dest='plansize', default=100000,
+                        help="palnsize + ligation*2 is the grain size for genome planning, (default=100000bp)")
 	parser.add_argument('-g', '--nligation', dest='nligation', default=2000,
                         help="genome trunk ligation (default=2000bp)")
 	parser.add_argument('-n', '--nprocs', dest='nprocs', default=1,

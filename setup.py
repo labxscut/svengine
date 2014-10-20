@@ -18,6 +18,12 @@ doclines=__doc__.splitlines()
 #        ('build_clib', build.build.has_c_libraries), 
 #        ('build_scripts', build.build.has_scripts), ] 
 
+#install xwgsim
+os.chdir("xwgsim")
+os.system("gcc -g -O2 -Wall -o xwgsim xwgsim.c -lz -lm")
+os.system("mv xwgsim ~/scripts")
+os.chdir("..")
+
 setup(name="mutforge",
     version="0.0.1",
     description=doclines[0],
