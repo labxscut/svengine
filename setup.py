@@ -54,7 +54,9 @@ setup(name="mutforge",
             'addsv = mutforge.bs.addsv:run',
             'addsnv = mutforge.bs.addsnv:run',
 						'mutforge = mutforge.mf.mutforge:run',
-						'fasforge = mutforge.mf.fasforge:run'
+						'fasforge = mutforge.mf.fasforge:run',
+						'var2vcf = mutforge.mf.var2vcf:run',
+						'freqsim = mutforge.mf.freqsim:run'
       ]
    },
 )
