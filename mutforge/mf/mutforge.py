@@ -74,6 +74,7 @@ def main(args):
 	#NOTE: sequence position is always converted
 
 	nprocs = args.nprocs
+	layout = args.layout
 	print "successfully debugging loading"
 
 	runmode=0 #1 fasta+meta, 2 bam+meta, 3 fasta+var, 4 bam+var
@@ -145,6 +146,9 @@ def main(args):
   	# FIXME: file2var needs to be tested?
 
 	var2bed(Bunch(dic))
+	if layout:
+		print "done layout only"
+		quit()
 	print "done var2bed"
 	
 	if runmode==1 or runmode==3:
@@ -742,7 +746,7 @@ def run():
                         help="genome trunk ligation (default=2000bp)")
 	parser.add_argument('-n', '--nprocs', dest='nprocs', default=1,
                         help="split into multiple processes (default=1)")
-	parser.add_argument('--layout', action='store_true', default=False, help="dry run to layout")
+	parser.add_argument('--layout', action='store_true', dest='layout', default=False, help="dry run to layout")
 	args = parser.parse_args()
 	main(args)
 

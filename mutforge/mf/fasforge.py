@@ -140,6 +140,7 @@ def main(args):
 	parlist = ConfigParser.ConfigParser()
 	parlist.readfp(parfile)
 	plansize = args.plansize
+	layout = args.layout
 	runmode=0 #1 meta, 2 var, 3 var+meta
 	if varfile!=None and metafile!=None:
 		runmode=3;
@@ -245,6 +246,10 @@ def main(args):
 	nlibrary=parlist.getint('xwgsim', 'nlibrary')
 	bams = [None] * nlibrary
 	print "OK6"
+
+	if layout:
+		print "done layout and fas file generation"
+		quit()
 	
 	pariter=[]
 	for lib in range(0,nlibrary):
@@ -293,6 +298,8 @@ def run():
                         help="generated spikein-in mixing frequency, homozygous=1")
 	parser.add_argument('-n', '--nprocs', dest='nprocs', default=1,
                         help="split into multiple processes (default=1)")
+	parser.add_argument('-l', '--layout', dest='layout', action='store_true', default=False,
+                        help="only dry layout (default=False)")
 	args = parser.parse_args()
 	main(args)
 
