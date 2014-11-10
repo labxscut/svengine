@@ -37,6 +37,10 @@ EXECUTABLES:
 USAGE:
     (1) By default all above executables will be available from ~/scripts .
     Use '-h' to read script-wise usage.
+
+    (2) Do a Sanity check for installation
+    cd test
+    ./example2.sh
     
 WIKI:
     http://bitbucket.org/charade/mutforge/wiki/Home
