@@ -1,27 +1,19 @@
 README.txt
 
 INTRODUCTION:
-    SVengine(S2VAN, SWAN)
+    SVengine(Engineering Structural Variants)
     Currently the package works for Linux (tested for Ubuntu and CentOS) and Mac (with Macports).
     It might also work for Windows with Cygwin (not tested).
-    SWAN documentation is on wiki and it is available:
-    http://bitbucket.org/charade/swan/wiki
+    SVengine documentation is on wiki and it is available:
+    http://bitbucket.org/charade/mutforge/wiki
 
 DEPENDENCIES:
-    Samtools(>=0.1.19)
-        to support samtools view -s in subsampling
-    C++ build environment
-        e.g. build-essential and libstdc++ in Ubuntu 
     Python2(>=2.7) 
         download @ http://www.python.org/
-    Boost C++ Library
-        download @ http://www.boost.org/
-    R(>=3.0)
-        download @ http://www.r-project.org/
-    R Libraries:
-        ggplot2, gridExtra, stringr, data.table, Biostrings,
-        Rsamtools, optparse, GenomicRanges, multicore, BSgenome,
-        Rcpp, inline, IRanges, rbenchmark, RcppArmadillo, methods
+    Pysam
+        download @ http://pysam.readthedocs.org/en/latest/
+    Pybedtools(>=3.0)
+        download @ http://pythonhosted.org/pybedtools/
   
     To setup the dependencies, users may refer to the author's development document @
     http://dl.dropbox.com/u/35182955/Ubuntu_development_environment.html
@@ -29,40 +21,31 @@ DEPENDENCIES:
 INSTALL:
     
     [Dependencies]
-    Before install SWAN please install all above dependencies required.
+    Before install mutforge please install all above dependencies required.
    
     [Ubuntu]
-    Download the latest master of SWAN from https://bitbucket.org/charade/swan/downloads.
-    select branches and download the master branch in either .gz, .zip or .bz format
-    unzip the archive to a folder say swan, create the ~/scripts folder.
-    set BOOST_HOME to be your /boost/path/ and install the swan package
-    
     > mkdir ~/scripts
-    > R CMD INSTALL swan
-    > BOOST_HOME=/boost/path/ R CMD INSTALL swan --preclean
+    > git clone git@bitbucket.org:charade/mutforge.git
    
     Now the executables will be available from ~/scripts
 
 EXECUTABLES:
-    scan.R              --  genome-wide scan script
-    loadnplot.R         --  plotting raw scan scores
-    call2bed.R          --  making SV calls based on scan scores to BED format
-    bed2vcf.R           --  analyzing the break point and merge raw calls to VCF format
+		xwgsim							--  enhanced wgsim
+    mutforge            --  genome-wide scan script
+    fasforge            --  plotting raw scan scores
 
 USAGE:
     (1) By default all above executables will be available from ~/scripts .
     Use '-h' to read script-wise usage.
     
 WIKI:
-    http://bitbucket.org/charade/swan/wiki/Home
+    http://bitbucket.org/charade/mutforge/wiki/Home
     
 FAQ:
-    http://bitbucket.org/charade/swan/wiki/FAQ.wiki
+    http://bitbucket.org/charade/mutforge/wiki/FAQ.wiki
     
 BUG:
-    https://bitbucket.org/charade/swan/issues
+    https://bitbucket.org/charade/mutforge/issues
 
 CONTACT:
     lixia at stanford dot edu
-
-you need to replace Li Heng's wgsim by the xwgsim provided in this package
