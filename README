@@ -40,7 +40,8 @@ USAGE:
 
     (2) Do a Sanity check for installation
     cd test
-    ./example2.sh
+    ./test_mf.sh
+    ./test_fa.sh
     
 WIKI:
     http://bitbucket.org/charade/mutforge/wiki/Home
