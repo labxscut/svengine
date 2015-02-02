@@ -31,8 +31,8 @@ INSTALL:
 
 EXECUTABLES:
 		xwgsim							--  enhanced wgsim
-    mutforge            --  genome-wide scan script
-    fasforge            --  plotting raw scan scores
+    mutforge            --  engineer structure variants (sophisticated)
+    fasforge            --  engineer structure variants (straightforward)
 
 USAGE:
     (1) By default all above executables will be available from ~/scripts .
