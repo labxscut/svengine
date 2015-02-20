@@ -193,7 +193,6 @@ def var2wgs(bun):
 	hapseq=bun.hapseq
 	nprocs=bun.nprocs
 	oprefix=bun.oprefix
-	print oprefix
 	parlist=bun.parlist
 	nploid=bun.nploid
 	nligation=bun.nligation
@@ -205,6 +204,11 @@ def var2wgs(bun):
 	#parfile in python ConfigParser format
 	#LibraryNumber = 3
 	#Have to use very complex merging
+
+	#0, if no variant to be inserted, bail out. If some control is needed, try use fasforge for now
+	if len(varlist)==0: #control case, this has to be implemented
+		print >>sys.stderr, "no variant specified, use fasforge/wgsim directly, bail out..."
+		quit()
 	
 	#1, construct continuous contig sets with ligations (nploid)*(variant/non-variant)
 	#hapvar{0: bed_features}
@@ -267,6 +271,7 @@ def var2wgs(bun):
 	#print  libcnt0,libcnt1
 	#print bedbams
 	#print libbams
+	#quit()
 
 	fbam = [None] * nlibrary
 	for lib in range(0,nlibrary):
@@ -455,10 +460,10 @@ def makevar(bun,metatab):
 	nligation = bun.nligation
 	varlist = bun.varlist
 	varcnt = bun.varcnt
-	print "input varcnt", varcnt
+	print "input varcnt", varcnt												#total number of input vars
 	trunks = maketrunks(bun)   													#trunks is in bed format
 	#print "OK20"
-	trunks,stretches = blocktrunks(trunks,gaptab)  #block trunks that not usable
+	trunks,stretches = blocktrunks(trunks,gaptab)				#block trunks that not usable
 	trunks=trunks.to_dataframe()
 	#print "OK21"
 	# seqfile,sizestring #random seq from seqfile using sizestring
@@ -495,6 +500,7 @@ def makevar(bun,metatab):
 	for row in metatab:
 		rows.append(row)
 	rowix=range(0,len(rows))
+	print rowix, rows
 	#random.shuffle(rowix) #randomized between metatypes
 	
 	for r in rowix:

@@ -176,7 +176,8 @@ def main(args):
 	if runmode > 1: #have var input
 		varintype = varfile.name.split(".")[-1]
 		if varintype == 'lumpy':
-			bp=csv.reader(varfile,delimiter="\t")
+			bp=CommentedFile(varfile)
+			#bp=csv.reader(varfile,delimiter="\t")
 			#somehow we need to set ligation setting 
 			#assume that every true var pos out of program is true position
 			#every true var pos inside the program is position+nligation
@@ -199,36 +200,38 @@ def main(args):
 		assert mf.chkvar(vartab) == True, "==Warn: varfile contains self overlaps, which is not allowed"
 		gaptab=vartab.cat(gaptab)
 
-	print "OK0"
+	#print "OK0"
 	gaptab=gaptab.sort()
 	dic['gaptab']=gaptab
 
-	print "OK1"
+	#print "OK1"
 	if runmode%2 == 1:	
 		dic['hapseq']=[pysam.Fastafile(reffile.name)];
-		metatab = csv.reader(metafile,delimiter='\t')
-		print "OK2"
+		metatab = mf.CommentedFile(metafile)
+		#metatab = csv.reader(metafile,delimiter='\t')
+		#print "OK2"
 		#print dic["varlist"]
 		varlist,varcnt = mf.makevar(mf.Bunch(dic),metatab)
-		print "OK3"
+		#print "OK3"
 		dic['varlist'] = varlist
 		#print dic["varlist"]
 		dic['varcnt'] = varcnt
 		vartab = mf.var2bed(mf.Bunch(dic))
-		print "OK4"
-		print "all output vars", len(varlist)
-		ovlptab=vartab.intersect(vartab,c=True).to_dataframe()
-		print "input vars before deovlapping", len(ovlptab)
-		assert len(ovlptab) == len(varlist), "assert the same set of vars in ovlptab and varlist"
-		ovlpkey=[ varlist.keys()[j] for j in range(0,len(ovlptab)) if int(ovlptab.iloc[j,3]) > 1 ]
-		for key in ovlpkey:
-			del varlist[key] #exclude these overlapping
-		dic['varlist']=varlist #this is needed for vartab
-		vartab=mf.var2bed(mf.Bunch(dic))
-		print "input vars after deovlapping", len(vartab)
-		assert mf.chkvar(vartab) == True, "==Warn: varfile contains self overlaps, which is not allowed"
+		#print "OK4"
+		if len(vartab)>0:
+			print "all output vars", len(varlist)
+			ovlptab=vartab.intersect(vartab,c=True).to_dataframe()
+			print "input vars before deovlapping", len(ovlptab)
+			assert len(ovlptab) == len(varlist), "assert the same set of vars in ovlptab and varlist"
+			ovlpkey=[ varlist.keys()[j] for j in range(0,len(ovlptab)) if int(ovlptab.iloc[j,3]) > 1 ]
+			for key in ovlpkey:
+				del varlist[key] #exclude these overlapping
+			dic['varlist']=varlist #this is needed for vartab
+			vartab=mf.var2bed(mf.Bunch(dic))
+			print "input vars after deovlapping", len(vartab)
+			assert mf.chkvar(vartab) == True, "==Warn: varfile still contains self overlaps, which is not allowed"
 
-	print "OK5"
+	#print "OK5"
 	mf.var2file(mf.Bunch(dic))
 	#read in bedpe to generate varlist
 	#now we need to check whether the  sv has been correctly inserted
@@ -245,7 +248,7 @@ def main(args):
 	seq1 = var2seq(brpt,reffile,nligation,oprefix)
 	nlibrary=parlist.getint('xwgsim', 'nlibrary')
 	bams = [None] * nlibrary
-	print "OK6"
+	#print "OK6"
 
 	if layout:
 		print "done layout and fas file generation"
