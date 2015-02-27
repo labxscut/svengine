@@ -10,6 +10,8 @@ INTRODUCTION:
 DEPENDENCIES:
     Python2(>=2.7) 
         download @ http://www.python.org/
+    Pandas
+        download @ http://pandas.pydata.org
     Pysam
         download @ http://pysam.readthedocs.org/en/latest/
     Pybedtools(>=3.0)
