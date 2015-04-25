@@ -45,18 +45,18 @@ setup(name="svengine",
     #                sources = ['lsa/compcore_wrap.cpp', 'lsa/compcore.cpp'],
     #                                          depends = ['lsa/compcore.hpp'],
     #               )],
-    py_modules = ['svengine.bs.asmregion','svengine.bs.mutableseq','svengine.bs.parseamos','svengine.bs.replacereads','svengine.mf.svengine'],
+    py_modules = ['mutforge.bs.asmregion','mutforge.bs.mutableseq','mutforge.bs.parseamos','mutforge.bs.replacereads','mutforge.mf.mutforge'],
     #cmdclass = {'build': my_build},
     data_files = [('',['README','LICENSE.txt'])],
     entry_points = { 
       'console_scripts': [
-            'addindel = svengine.bs.addindel:run',
-            'addsv = svengine.bs.addsv:run',
-            'addsnv = svengine.bs.addsnv:run',
-						'svengine = svengine.mf.svengine:run',
-						'fasforge = svengine.mf.fasforge:run',
-						'var2vcf = svengine.mf.var2vcf:run',
-						'freqsim = svengine.mf.freqsim:run'
+            'addindel = mutforge.bs.addindel:run',
+            'addsv = mutforge.bs.addsv:run',
+            'addsnv = mutforge.bs.addsnv:run',
+						'mutforge = mutforge.mf.mutforge:run',
+						'fasforge = mutforge.mf.fasforge:run',
+						'var2vcf = mutforge.mf.var2vcf:run',
+						'freqsim = mutforge.mf.freqsim:run'
       ]
    },
 )
