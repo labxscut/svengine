@@ -127,7 +127,7 @@ def var2seq(brpt,reffile,nligation,oprefix): #assume varbed is checked for nonov
 		#print "old:",len(rseq)
 		#print "new:",len(SeqRecord( Seq(''.join([str(s) for s in seg]), generic_dna), id=rname, name=rname, description=oprefix+"."+rname ) )
 		seq.append( SeqRecord( Seq(''.join([str(s) for s in seg]), generic_dna), id=rname, name=rname, description=oprefix+"."+rname ) )
-	SeqIO.write(seq,oprefix+".fna",'fasta')
+	SeqIO.write(seq,oprefix+".fnv",'fasta')
 	return seq
 
 def main(args):
@@ -276,6 +276,7 @@ def makebam(parit):
 	bam0 = mf.runwgs(parlist,nligation,rname,nploid,seq0,lib,fq0)
 	bam1 = mf.runwgs(parlist,nligation,rname,nploid,seq1,lib,fq1)
 	print [bam0,bam1]
+	print "OK7.5"
 	bam = mf.mergebam([bam0,bam1],oprefix+"."+libnames[lib])
 	print "done lib %s freq %s regions" % (str(parit[5]),str(parit[6]))
 	return bam
