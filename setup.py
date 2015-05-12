@@ -24,13 +24,13 @@ os.system("gcc -g -O2 -Wall -o xwgsim xwgsim.c -lz -lm")
 os.system("mv xwgsim ~/scripts")
 os.chdir("..")
 
-setup(name="mutforge",
+setup(name="svengine",
     version="0.0.1",
     description=doclines[0],
     long_description="\n".join(doclines[2:]),
     author="Li Xia",
     author_email="li.xia@stanford.edu",
-    url="https://bitbuket.com/mutforge",
+    url="https://bitbuket.com/svengine",
     license="TBD",
     platforms=["Linux"],
     packages=find_packages(exclude=['ez_setup', 'test', 'doc']),
@@ -38,8 +38,8 @@ setup(name="mutforge",
     #packages=['lsa'],
     #requires=['numpy(>=1.1)','scipy(>=0.6)','python(>=2.5)','matplotlib(>=0.98)'],
     zip_safe=False,
-    install_requires=["python >= 2.7","pysam >= 0.7","pybedtools >= 0.1","biopython >= 0.1","pandas >= 0.1"],
-    provides=['mutforge'],
+    install_requires=["python >= 2.7","pysam >= 0.7","pybedtools >= 0.1","biopython >= 0.1","pandas >= 0.1","cython >= 0.22"],
+    provides=['svengine'],
     #can insert C++ extension when needed
     #ext_modules = [ Extension('lsa._compcore', 
     #                sources = ['lsa/compcore_wrap.cpp', 'lsa/compcore.cpp'],
