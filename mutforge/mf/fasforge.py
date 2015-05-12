@@ -275,6 +275,7 @@ def makebam(parit):
 	libnames=json.loads(parlist.get('xwgsim', 'libnames'))
 	bam0 = mf.runwgs(parlist,nligation,rname,nploid,seq0,lib,fq0)
 	bam1 = mf.runwgs(parlist,nligation,rname,nploid,seq1,lib,fq1)
+	print [bam0,bam1]
 	bam = mf.mergebam([bam0,bam1],oprefix+"."+libnames[lib])
 	print "done lib %s freq %s regions" % (str(parit[5]),str(parit[6]))
 	return bam
