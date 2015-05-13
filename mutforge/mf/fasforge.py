@@ -59,7 +59,7 @@ def lumpy2var(bp,ref,nligation):
 			varlist[var][9] = (ref.name,	line[0], int(line[4]), int(line[1])-int(line[4])+1, 2, False)	#VAR INS SIZE
 		if line[10] == "TYPE:TRANSLOCATION":
 			line2 = bp.next() #this can be ingnored
-			if int(line[2])-int(line[1])==1:  #where insertion happens
+			if int(line[2])-int(line[1])==1:#where insertion happens
 				delst=int(line[4]); deled=int(line[5]); delchr=line[3]; insst=int(line[1]); insted=int(line[2]); inschr=line[0]
 			else:
 				delst=int(line[1]); deled=int(line[2]); delchr=line[0]; insst=int(line[4]); insted=int(line[5]); inschr=line[3]
@@ -140,6 +140,7 @@ def main(args):
 	parlist = ConfigParser.ConfigParser()
 	parlist.readfp(parfile)
 	plansize = args.plansize
+	edgesize = 1000000
 	layout = args.layout
 	runmode=0 #1 meta, 2 var, 3 var+meta
 	if varfile!=None and metafile!=None:
@@ -160,7 +161,9 @@ def main(args):
 		assert f>=0 and f<=1, "mixfreq must be a float between 0 and 1" 
 
 	try:
+		sizefile = mf.fas2size(reffile.name) #create genome size file
 		gaptab=pybedtools.BedTool(gapfile.read(),from_string=True)
+		gaptab=gaptab.flank(g=sizefile, b=edgesize)
 	except pybedtools.cbedtools.BedToolsFileError:
 		raise Exception("incorrect gapfile provided, must in BED format")
 	#create a string meta file:
@@ -170,13 +173,13 @@ def main(args):
 	#metastr='\n'.join([ "\t".join(['FINS',str(2),'adeno.fna,'+inssize,'fix_1','fix_1','fix_1','fix_1','fix_1' ]),
 	#					"\t".join(['DINS',str(2),'fix_100_200','fix_1','fix_1','fix_1','fix_1','fix_1' ]) ])
 	varlist = collections.OrderedDict()
-	dic={'nligation':nligation,'varlist':varlist,'oprefix':oprefix,'reffile':reffile,'nploid':nploid,'plansize':plansize,'varcnt':0}
+	dic={'nligation':nligation,'varlist':varlist,'oprefix':oprefix,'reffile':reffile,'nploid':nploid,'plansize':plansize,'varcnt':0,'edgesize':edgesize}
 	print "runmode=", runmode
 
 	if runmode > 1: #have var input
 		varintype = varfile.name.split(".")[-1]
 		if varintype == 'lumpy':
-			bp=CommentedFile(varfile)
+			bp=mf.CommentedFile(varfile)
 			#bp=csv.reader(varfile,delimiter="\t")
 			#somehow we need to set ligation setting 
 			#assume that every true var pos out of program is true position
@@ -204,7 +207,6 @@ def main(args):
 	gaptab=gaptab.sort()
 	dic['gaptab']=gaptab
 
-	#print "OK1"
 	if runmode%2 == 1:	
 		dic['hapseq']=[pysam.Fastafile(reffile.name)];
 		metatab = mf.CommentedFile(metafile)

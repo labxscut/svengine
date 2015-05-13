@@ -29,8 +29,8 @@ class CommentedFile:
 		return self
 
 class Bunch(object):
-  def __init__(self, adict):
-    self.__dict__.update(adict)
+	def __init__(self, adict):
+		self.__dict__.update(adict)
 
 #paradigm to make dictionary from local variables
 #for i in ('apple', 'banana', 'carrot'):
@@ -104,6 +104,7 @@ def main(args):
 	parlist.readfp(parfile)
 	metafile = args.metafile
 	varfile = args.varfile
+	edgesize = 1000000
 	if varfile != None: print varfile.name.rstrip("var").rstrip(".") #weird behavior of rstrip(".meta") -> exampl
 	if metafile != None: print metafile.name.rstrip("meta").rstrip(".")
 	oname = metafile.name.rstrip("meta").rstrip(".") if metafile != None else varfile.name.rstrip(".var").rstrip(".")
@@ -119,12 +120,14 @@ def main(args):
 		raise Exception("incorrect number of hapfiles provided")
 
 	try:
+		sizefile = fas2size(hapseq[hap].filename)		 #create genome size file
 		gaptab=pybedtools.BedTool(gapfile.read(),from_string=True)
+		gaptab=gaptab.flank(g=sizefile, b=edgesize)
 	except pybedtools.cbedtools.BedToolsFileError:
 		raise Exception("incorrect gapfile provided, must in BED format")
 
 	dic={} #common dictionary interface for passing parameters
-	for i in ('hapseq','gaptab','reffile','plansize','nligation','nploid','oprefix','nprocs'):
+	for i in ('hapseq','gaptab','reffile','plansize','nligation','nploid','oprefix','nprocs','edgesize'):
 		dic[i] = locals()[i]
 
 	print "entering runmode", runmode
@@ -143,7 +146,7 @@ def main(args):
 	if runmode==3 or runmode==4:
 		dic['varfile'] = varfile
 		varlist = file2var(Bunch(dic))
-  	# FIXME: file2var needs to be tested?
+		# FIXME: file2var needs to be tested?
 
 	var2bed(Bunch(dic))
 	if layout:
@@ -224,7 +227,7 @@ def var2wgs(bun):
 		hapvar[hap] = pybedtools.BedTool('\n'.join([ '\t'.join([str(c) for c in x]) for x in hapvar[hap] ]), from_string=True)
 		assert chkvar(hapvar[hap]) == True, "varfile contains self overlaps, which is not allowed"
 	for hap in hapvar.keys():
-		sizefile = fas2size(hapseq[hap].filename)												 #create genome size file
+		sizefile = fas2size(hapseq[hap].filename)		 #create genome size file
 		hapbed[hap] = hapvar[hap].complement(g=sizefile) #create complementary blocks
 		hapbed[hap] = hapbed[hap].slop(g=sizefile,b=nligation)
 		hapbed[hap] = pybedtools.BedTool('\n'.join([ f[0]+'\t'+str(f[1])+'\t'+str(f[2])+'\tNone\tNone\t0\t0\tNone' for f in hapbed[hap]]),from_string=True)
@@ -457,6 +460,7 @@ def makevar(bun,metatab):
 	hapseq = bun.hapseq
 	nploid = bun.nploid
 	plansize = bun.plansize
+	edgesize = bun.edgesize
 	nligation = bun.nligation
 	varlist = bun.varlist
 	varcnt = bun.varcnt
