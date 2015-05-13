@@ -104,7 +104,7 @@ def main(args):
 	parlist.readfp(parfile)
 	metafile = args.metafile
 	varfile = args.varfile
-	edgesize = 1000000
+	edgesize = 100000
 	if varfile != None: print varfile.name.rstrip("var").rstrip(".") #weird behavior of rstrip(".meta") -> exampl
 	if metafile != None: print metafile.name.rstrip("meta").rstrip(".")
 	oname = metafile.name.rstrip("meta").rstrip(".") if metafile != None else varfile.name.rstrip(".var").rstrip(".")

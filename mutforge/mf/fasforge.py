@@ -140,7 +140,7 @@ def main(args):
 	parlist = ConfigParser.ConfigParser()
 	parlist.readfp(parfile)
 	plansize = args.plansize
-	edgesize = 1000000
+	edgesize = 100000
 	layout = args.layout
 	runmode=0 #1 meta, 2 var, 3 var+meta
 	if varfile!=None and metafile!=None:

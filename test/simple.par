@@ -4,7 +4,7 @@
 nlibrary=1
 #library-wise option=optbam"lib1":optbam2
 libnames=["lib1"]
-coverage: {"lib1":2}
+coverage: {"lib1":30}
 # for the tuple in isize, [mode_weight, mode_mean, mode_sd]
 isize: {"lib1":[[1,300,30]]}
 read1: {"lib1":100}
