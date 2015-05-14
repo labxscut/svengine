@@ -444,15 +444,18 @@ def var2file(bun):
 
 def var2bed(bun):
 	#IMPORTANT: OrderedDict and List are all mutable
-	varcopy=copy.deepcopy(bun.varlist); nligation=bun.nligation; ofile=csv.writer(open(bun.oprefix+'.bed','w'),delimiter='\t')
-	ofile.writerow(['#CHROM','START','END','VID','MID','VARFREQ','VARHAP','VARCHR','VARPOS','VARDEL','VARDELSIZE','VARINS','VARINSSEQ(HAP/SEQFILE,CHR:START-END,COPY,REVCOMP)'])
+	varcopy=copy.deepcopy(bun.varlist); nligation=bun.nligation; 
 	for var in varcopy.keys():
-		#print varcopy[var]
 		varcopy[var][9]=formatins(varcopy[var][9])
-	for var in varcopy.keys():
 		varcopy[var][5]=varcopy[var][5]+nligation #actual site
-		ofile.writerow([varcopy[var][4],varcopy[var][5],varcopy[var][5]+varcopy[var][7]+1]+varcopy[var])
-	return pybedtools.BedTool("\n".join([ str(varcopy[var][4])+"\t"+str(varcopy[var][5])+"\t"+str(varcopy[var][5]+varcopy[var][7]) for var in varcopy.keys() ]), from_string=True) 
+	varbed=pybedtools.BedTool("\n".join([ str(varcopy[var][4])+"\t"+str(varcopy[var][5])+"\t"+str(varcopy[var][5]+varcopy[var][7])+"\t"+"\t".join([str(x) for x in varcopy[var]]) for var in varcopy.keys() ]), from_string=True)
+	varbed=varbed.sort()
+	varbed.saveas(bun.oprefix+'.bed',trackline='\t'.join(['#CHROM','START','END','VID','MID','VARFREQ','VARHAP','VARCHR','VARPOS','VARDEL','VARDELSIZE','VARINS','VARINSSEQ(HAP/SEQFILE,CHR:START-END,COPY,REVCOMP)']))
+	#ofile=csv.writer(open(bun.oprefix+'.bed','w'),delimiter='\t')
+	#ofile.writerow(['#CHROM','START','END','VID','MID','VARFREQ','VARHAP','VARCHR','VARPOS','VARDEL','VARDELSIZE','VARINS','VARINSSEQ(HAP/SEQFILE,CHR:START-END,COPY,REVCOMP)'])
+	#for var in varcopy.keys():
+	#	ofile.writerow([varcopy[var][4],varcopy[var][5],varcopy[var][5]+varcopy[var][7]+1]+varcopy[var])
+	return varbed
 
 def makevar(bun,metatab):
 	#metatab = bun.metatab
