@@ -15,6 +15,8 @@ io_quote = "this is for end user"
 code_quote = 'this is for program'
 maxrefnum = 24 		  #for debugging and human, should set to a big number afterwards
 burnin = 100000		#burnin region for each chromosome
+varfile_names = ['#VID','MID','VARFREQ','VARHAP','VARCHR','VARPOS','VARDEL','VARDELSIZE','VARINS','VARINSSEQ(HAP/SEQFILE,CHR:START-END,COPY,REVCOMP)']
+varbed_names = ['#CHROM','START','END','VID','MID','VARFREQ','VARHAP','VARCHR','VARPOS','VARDEL','VARDELSIZE','VARINS','VARINSSEQ(HAP/SEQFILE,CHR:START-END,COPY,REVCOMP)']
 
 class CommentedFile:
 	def __init__(self, f, commentstring="#"):
@@ -122,7 +124,7 @@ def main(args):
 	try:
 		sizefile = fas2size(hapseq[hap].filename)		 #create genome size file
 		gaptab=pybedtools.BedTool(gapfile.read(),from_string=True)
-		gaptab=gaptab.flank(g=sizefile, b=edgesize)
+		gaptab=gaptab.flank(g=sizefile, b=edgesize)              #need to merge
 	except pybedtools.cbedtools.BedToolsFileError:
 		raise Exception("incorrect gapfile provided, must in BED format")
 
@@ -434,7 +436,7 @@ def formatins(cell):
 def var2file(bun):
 	#IMPORTANT: OrderedDict and List are all mutable
 	varcopy=copy.deepcopy(bun.varlist); nligation=bun.nligation; ofile=csv.writer(open(bun.oprefix+'.var','w'),delimiter='\t')
-	ofile.writerow(['#VID','MID','VARFREQ','VARHAP','VARCHR','VARPOS','VARDEL','VARDELSIZE','VARINS','VARINSSEQ(HAP/SEQFILE,CHR:START-END,COPY,REVCOMP)'])
+	ofile.writerow(varfile_names)
 	for var in varcopy.keys():
 		varcopy[var][9]=formatins(varcopy[var][9])
 	for var in varcopy.keys():
@@ -450,7 +452,8 @@ def var2bed(bun):
 		varcopy[var][5]=varcopy[var][5]+nligation #actual site
 	varbed=pybedtools.BedTool("\n".join([ str(varcopy[var][4])+"\t"+str(varcopy[var][5])+"\t"+str(varcopy[var][5]+varcopy[var][7])+"\t"+"\t".join([str(x) for x in varcopy[var]]) for var in varcopy.keys() ]), from_string=True)
 	varbed=varbed.sort()
-	varbed.saveas(bun.oprefix+'.bed',trackline='\t'.join(['#CHROM','START','END','VID','MID','VARFREQ','VARHAP','VARCHR','VARPOS','VARDEL','VARDELSIZE','VARINS','VARINSSEQ(HAP/SEQFILE,CHR:START-END,COPY,REVCOMP)']))
+	varbed.saveas(bun.oprefix+'.bed',trackline='\t'.join(varbed_names))
+	#varbed.saveas(bun.oprefix+'.bed',trackline='\t'.join(['#CHROM','START','END','VID','MID','VARFREQ','VARHAP','VARCHR','VARPOS','VARDEL','VARDELSIZE','VARINS','VARINSSEQ(HAP/SEQFILE,CHR:START-END,COPY,REVCOMP)']))
 	#ofile=csv.writer(open(bun.oprefix+'.bed','w'),delimiter='\t')
 	#ofile.writerow(['#CHROM','START','END','VID','MID','VARFREQ','VARHAP','VARCHR','VARPOS','VARDEL','VARDELSIZE','VARINS','VARINSSEQ(HAP/SEQFILE,CHR:START-END,COPY,REVCOMP)'])
 	#for var in varcopy.keys():
@@ -568,68 +571,71 @@ def makevar(bun,metatab):
 			dpick = random.sample(donor,1)[0] #have to randomly choose a donor sequence
 			vartag = 'VAR'
 			
-			if metatype == 'DEL':    #this should be only operations to donors
-				dtid,stretches=maketid(stretches,sizevec[i]/(plansize+2*nligation)+1)
-				for d in donor:
-					varcnt+=1
-					varid = vartag+"_"+str(varcnt)
-					varlist[varid]=[varid,mid,donorfreq[i],d,str(trunks.iloc[dtid,0]),trunks.iloc[dtid,1],True,sizevec[i],False,None]
-			elif metatype == 'TRA' or metatype == 'ITRA':  #one deletion at donor followed by a insertion at recepient
-				rc = True if metatype == 'ITRA' else False
-				dtid,stretches=maketid(stretches,sizevec[i]/(plansize+2*nligation)+1)
-				for d in donor:
-					varcnt+=1
-					varid = vartag+"_"+str(varcnt)
-					varlist[varid]=[varid,mid,donorfreq[i],d,str(trunks.iloc[dtid,0]),trunks.iloc[dtid,1],True,sizevec[i],False,None]
-				rtid,stretches=maketid(stretches,1)
-				for r in recpt:    #inserting sequence: [ filename, chr, start, size, copy, rc=True/False ]
-					varcnt+=1
-					varid = vartag+"_"+str(varcnt)
-					varlist[varid]=[varid,mid,recptfreq[i],r,str(trunks.iloc[rtid,0]),trunks.iloc[rtid,1],False,0,True,\
-						[hapseq[dpick].filename,str(trunks.iloc[dtid,0]),trunks.iloc[dtid,1]+nligation,sizevec[i],copyvec[i],rc]]
-			elif metatype == 'INV' or metatype == 'IDUP':  #one deletion at donor followed by insertion of reverse
-				dtid,stretches=maketid(stretches,sizevec[i]/(plansize+2*nligation)+1)
-				for d in donor:
-					varcnt+=1
-					varid = vartag+"_"+str(varcnt)
-					varlist[varid]=[varid,mid,donorfreq[i],d,str(trunks.iloc[dtid,0]),trunks.iloc[dtid,1],True,sizevec[i],True,
-						[hapseq[dpick].filename,str(trunks.iloc[dtid,0]),trunks.iloc[dtid,1]+nligation,sizevec[i],copyvec[i],True]]
-			elif metatype == 'DINS':
-				dtid,stretches=maketid(stretches,sizevec[i]/(plansize+2*nligation)+1)
-				rtid,stretches=maketid(stretches,1)
-				for r in recpt:    #inserting sequence: [ filename, chr, start, size, copy, rc=True/False ]
-					varcnt+=1
-					varid = vartag+"_"+str(varcnt)
-					varlist[varid]=[varid,mid,recptfreq[i],r,str(trunks.iloc[rtid,0]),trunks.iloc[rtid,1],False,0,True,\
-						[hapseq[dpick].filename,str(trunks.iloc[dtid,0]),trunks.iloc[dtid,1]+nligation,sizevec[i],copyvec[i],False]]
-			elif metatype == 'DUP':
-				rtid,stretches=maketid(stretches,sizevec[i]/(plansize+2*nligation)+1)
-				for r in recpt:    #inserting sequence: [ filename, chr, start, size, copy, rc=True/False ]
-					varcnt+=1
-					varid = vartag+"_"+str(varcnt)
-					varlist[varid]=[varid,mid,recptfreq[i],r,str(trunks.iloc[rtid,0]),trunks.iloc[rtid,1],True,sizevec[i],True,\
-						[hapseq[r].filename,str(trunks.iloc[rtid,0]),trunks.iloc[rtid,1]+nligation,sizevec[i],copyvec[i],False]]
-			elif metatype == 'FINS':
-				#print donor, recpt, dpick
-				rtid,stretches=maketid(stretches,1)
-				#print foreignseq.filename
-				#print foreignseq.references[i]
-				for r in recpt:    #inserting sequence: [ filename, chr, start, size, copy, rc=True/False ]
-					varcnt+=1
-					varid = vartag+"_"+str(varcnt)
-					#print foreignseq[i]
-					if randseq == False:
+			try:
+				if metatype == 'DEL':    #this should be only operations to donors
+					dtid,stretches=maketid(stretches,sizevec[i]/(plansize+2*nligation)+1)
+					for d in donor:
+						varcnt+=1
+						varid = vartag+"_"+str(varcnt)
+						varlist[varid]=[varid,mid,donorfreq[i],d,str(trunks.iloc[dtid,0]),trunks.iloc[dtid,1],True,sizevec[i],False,None]
+				elif metatype == 'TRA' or metatype == 'ITRA':  #one deletion at donor followed by a insertion at recepient
+					rc = True if metatype == 'ITRA' else False
+					dtid,stretches=maketid(stretches,sizevec[i]/(plansize+2*nligation)+1)
+					for d in donor:
+						varcnt+=1
+						varid = vartag+"_"+str(varcnt)
+						varlist[varid]=[varid,mid,donorfreq[i],d,str(trunks.iloc[dtid,0]),trunks.iloc[dtid,1],True,sizevec[i],False,None]
+					rtid,stretches=maketid(stretches,1)
+					for r in recpt:    #inserting sequence: [ filename, chr, start, size, copy, rc=True/False ]
+						varcnt+=1
+						varid = vartag+"_"+str(varcnt)
 						varlist[varid]=[varid,mid,recptfreq[i],r,str(trunks.iloc[rtid,0]),trunks.iloc[rtid,1],False,0,True,\
-							[foreignseq.filename,foreignseq.references[i],0,foreignseq.lengths[i],copyvec[i],False]]
-					else:
-						rvec = [ j for j in xrange(0,len(foreignseq.references)) if foreignseq.lengths[j] > sizevec[i] ]
-						ri = random.sample( rvec, 1 )[0]
-						si = random.sample( xrange(0,foreignseq.lengths[ri]-sizevec[i]), 1 )[0]
-						rc = random.sample( [True, False], 1 )[0]
+							[hapseq[dpick].filename,str(trunks.iloc[dtid,0]),trunks.iloc[dtid,1]+nligation,sizevec[i],copyvec[i],rc]]
+				elif metatype == 'INV' or metatype == 'IDUP':  #one deletion at donor followed by insertion of reverse
+					dtid,stretches=maketid(stretches,sizevec[i]/(plansize+2*nligation)+1)
+					for d in donor:
+						varcnt+=1
+						varid = vartag+"_"+str(varcnt)
+						varlist[varid]=[varid,mid,donorfreq[i],d,str(trunks.iloc[dtid,0]),trunks.iloc[dtid,1],True,sizevec[i],True,
+							[hapseq[dpick].filename,str(trunks.iloc[dtid,0]),trunks.iloc[dtid,1]+nligation,sizevec[i],copyvec[i],True]]
+				elif metatype == 'DINS':
+					dtid,stretches=maketid(stretches,sizevec[i]/(plansize+2*nligation)+1)
+					rtid,stretches=maketid(stretches,1)
+					for r in recpt:    #inserting sequence: [ filename, chr, start, size, copy, rc=True/False ]
+						varcnt+=1
+						varid = vartag+"_"+str(varcnt)
 						varlist[varid]=[varid,mid,recptfreq[i],r,str(trunks.iloc[rtid,0]),trunks.iloc[rtid,1],False,0,True,\
-							[foreignseq.filename,foreignseq.references[ri],si,sizevec[i],copyvec[i],rc]]
-			else:
-				raise Exception("unknown metatype %s" % metatype)
+							[hapseq[dpick].filename,str(trunks.iloc[dtid,0]),trunks.iloc[dtid,1]+nligation,sizevec[i],copyvec[i],False]]
+				elif metatype == 'DUP':
+					rtid,stretches=maketid(stretches,sizevec[i]/(plansize+2*nligation)+1)
+					for r in recpt:    #inserting sequence: [ filename, chr, start, size, copy, rc=True/False ]
+						varcnt+=1
+						varid = vartag+"_"+str(varcnt)
+						varlist[varid]=[varid,mid,recptfreq[i],r,str(trunks.iloc[rtid,0]),trunks.iloc[rtid,1],True,sizevec[i],True,\
+							[hapseq[r].filename,str(trunks.iloc[rtid,0]),trunks.iloc[rtid,1]+nligation,sizevec[i],copyvec[i],False]]
+				elif metatype == 'FINS':
+					#print donor, recpt, dpick
+					rtid,stretches=maketid(stretches,1)
+					#print foreignseq.filename
+					#print foreignseq.references[i]
+					for r in recpt:    #inserting sequence: [ filename, chr, start, size, copy, rc=True/False ]
+						varcnt+=1
+						varid = vartag+"_"+str(varcnt)
+						#print foreignseq[i]
+						if randseq == False:
+							varlist[varid]=[varid,mid,recptfreq[i],r,str(trunks.iloc[rtid,0]),trunks.iloc[rtid,1],False,0,True,\
+								[foreignseq.filename,foreignseq.references[i],0,foreignseq.lengths[i],copyvec[i],False]]
+						else:
+							rvec = [ j for j in xrange(0,len(foreignseq.references)) if foreignseq.lengths[j] > sizevec[i] ]
+							ri = random.sample( rvec, 1 )[0]
+							si = random.sample( xrange(0,foreignseq.lengths[ri]-sizevec[i]), 1 )[0]
+							rc = random.sample( [True, False], 1 )[0]
+							varlist[varid]=[varid,mid,recptfreq[i],r,str(trunks.iloc[rtid,0]),trunks.iloc[rtid,1],False,0,True,\
+								[foreignseq.filename,foreignseq.references[ri],si,sizevec[i],copyvec[i],rc]]
+				else:
+					raise Exception("unknown metatype %s" % metatype)
+			except IndexError:
+				raise Exception("index out of boundry, best bet: insufficient haplo sequences provided than specified in .meta/.var")
 
 	print "output varcnt", varcnt
 	return varlist,varcnt #synonym to varlist
