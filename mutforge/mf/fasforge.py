@@ -283,7 +283,7 @@ def run():
                         help="inputfile of variant specification") # prespecified variants, bedpe format or others
 	parser.add_argument('-o', '--oprefix', dest='oprefix', default=None, #output1,output2,output3,...
                         help="prefix for output files")
-	parser.add_argument('-f', '--plansize', dest='plansize', default=100,
+	parser.add_argument('-f', '--plansize', dest='plansize', type=int, default=100,
                         help="palnsize is the grain size for genome planning, nligation=0 here (default=100bp)")
 	parser.add_argument('-q', '--mixfreq', dest='mixfreq', default="1",
                         help="generated spikein-in mixing frequency, homozygous=1")
