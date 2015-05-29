@@ -1,6 +1,8 @@
-README.txt
+README
+--------
 
 INTRODUCTION:
+========
     SVengine(Engineering Structural Variants)
     Currently the package works for Linux (tested for Ubuntu and CentOS) and Mac (with Macports).
     It might also work for Windows with Cygwin (not tested).
