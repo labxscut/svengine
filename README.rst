@@ -22,7 +22,7 @@ DEPENDENCIES
 INSTALL
 ========
    
-    code::
+    ::
     
         > mkdir ~/scripts
         > git clone git@bitbucket.org:charade/mutforge.git
@@ -46,7 +46,7 @@ USAGE
     Use '-h' to read script-wise usage.
 
     (2) Do a Sanity check for installation
-    code::
+    ::
         
         cd test
         ./test_mf.sh
