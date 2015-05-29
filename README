@@ -23,39 +23,44 @@ INSTALL
 ========
    
     [Ubuntu]
-    > mkdir ~/scripts
-    > git clone git@bitbucket.org:charade/mutforge.git
+    ::code
+    
+        > mkdir ~/scripts
+        > git clone git@bitbucket.org:charade/mutforge.git
    
     Now the executables will be available from ~/scripts.
     You can switch this executable path by change it within setup.py .
 
 EXECUTABLES
 ========
-		xwgsim							--  enhanced wgsim
+	
+    xwgsim				--  enhanced wgsim
     mutforge            --  engineer structure variants (sophisticated)
     fasforge            --  engineer structure variants (straightforward)
 
 USAGE
 ========
+    
     (1) By default all above executables will be available from ~/scripts .
     Use '-h' to read script-wise usage.
 
     (2) Do a Sanity check for installation
-    cd test
-    ./test_mf.sh
-    ./test_fa.sh
+    ::code
+        cd test
+        ./test_mf.sh
+        ./test_fa.sh
     
 WIKI
 ========
-    http://bitbucket.org/charade/mutforge/wiki/Home
+    http://bitbucket.org/charade/svengine/wiki/Home
     
 FAQ
 ========
-    http://bitbucket.org/charade/mutforge/wiki/FAQ.wiki
+    http://bitbucket.org/charade/svengine/wiki/FAQ.wiki
     
 BUG
 ========
-    https://bitbucket.org/charade/mutforge/issues
+    https://bitbucket.org/charade/svengine/issues
 
 CONTACT
 ========
