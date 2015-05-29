@@ -46,6 +46,7 @@ USAGE
 
     (2) Do a Sanity check for installation
     code::
+        
         cd test
         ./test_mf.sh
         ./test_fa.sh
