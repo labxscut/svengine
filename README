@@ -1,15 +1,17 @@
 README
 --------
 
-INTRODUCTION:
+INTRODUCTION
 ========
-    SVengine(Engineering Structural Variants)
+    
+    SVEngine(Structural Variants Engine)
     Currently the package works for Linux (tested for Ubuntu and CentOS) and Mac (with Macports).
     It might also work for Windows with Cygwin (not tested).
-    SVengine documentation is on wiki and it is available:
-    http://bitbucket.org/charade/mutforge/wiki
+    SVEngine documentation is on wiki and it is available:
+    http://bitbucket.org/charade/svengine/wiki
 
-DEPENDENCIES:
+DEPENDENCIES
+========
     Python2(>=2.7) 
         download @ http://www.python.org/
     Pysam
