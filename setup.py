@@ -24,13 +24,13 @@ os.system("gcc -g -O2 -Wall -o xwgsim xwgsim.c -lz -lm")
 os.system("mv xwgsim ~/scripts")
 os.chdir("..")
 
-setup(name="mutforge",
+setup(name="svengine",
     version="0.0.1",
     description=doclines[0],
     long_description="\n".join(doclines[2:]),
     author="Li Xia",
     author_email="li.xia@stanford.edu",
-    url="https://bitbuket.com/mutforge",
+    url="https://bitbuket.com/svengine",
     license="TBD",
     platforms=["Linux"],
     packages=find_packages(exclude=['ez_setup', 'test', 'doc']),
@@ -38,25 +38,25 @@ setup(name="mutforge",
     #packages=['lsa'],
     #requires=['numpy(>=1.1)','scipy(>=0.6)','python(>=2.5)','matplotlib(>=0.98)'],
     zip_safe=False,
-    install_requires=["python >= 2.7","pysam >= 0.7","pybedtools >= 0.1","biopython >= 0.1","pandas >= 0.1"],
-    provides=['mutforge'],
+    install_requires=["python >= 2.7","pysam >= 0.7","pybedtools >= 0.1","biopython >= 0.1","pandas >= 0.1","cython >= 0.22"],
+    provides=['svengine'],
     #can insert C++ extension when needed
     #ext_modules = [ Extension('lsa._compcore', 
     #                sources = ['lsa/compcore_wrap.cpp', 'lsa/compcore.cpp'],
     #                                          depends = ['lsa/compcore.hpp'],
     #               )],
-    py_modules = ['mutforge.bs.asmregion','mutforge.bs.mutableseq','mutforge.bs.parseamos','mutforge.bs.replacereads','mutforge.mf.mutforge'],
+    py_modules = ['svengine.bs.asmregion','svengine.bs.mutableseq','svengine.bs.parseamos','svengine.bs.replacereads','svengine.mf.svengine'],
     #cmdclass = {'build': my_build},
     data_files = [('',['README','LICENSE.txt'])],
     entry_points = { 
       'console_scripts': [
-            'addindel = mutforge.bs.addindel:run',
-            'addsv = mutforge.bs.addsv:run',
-            'addsnv = mutforge.bs.addsnv:run',
-						'mutforge = mutforge.mf.mutforge:run',
-						'fasforge = mutforge.mf.fasforge:run',
-						'var2vcf = mutforge.mf.var2vcf:run',
-						'freqsim = mutforge.mf.freqsim:run'
+            'addindel = svengine.bs.addindel:run',
+            'addsv = svengine.bs.addsv:run',
+            'addsnv = svengine.bs.addsnv:run',
+						'svengine = svengine.mf.svengine:run',
+						'fasforge = svengine.mf.fasforge:run',
+						'var2vcf = svengine.mf.var2vcf:run',
+						'freqsim = svengine.mf.freqsim:run'
       ]
    },
 )
