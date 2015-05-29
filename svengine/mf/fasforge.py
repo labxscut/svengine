@@ -9,6 +9,7 @@ from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio.Alphabet import generic_dna
+import pybedtools.featurefuncs
 #properly import muforge
 try:
 	import mf.mutforge as mf #in debugging
@@ -59,7 +60,7 @@ def lumpy2var(bp,ref,nligation):
 			varlist[var][9] = (ref.name,	line[0], int(line[4]), int(line[1])-int(line[4])+1, 2, False)	#VAR INS SIZE
 		if line[10] == "TYPE:TRANSLOCATION":
 			line2 = bp.next() #this can be ingnored
-			if int(line[2])-int(line[1])==1:  #where insertion happens
+			if int(line[2])-int(line[1])==1:#where insertion happens
 				delst=int(line[4]); deled=int(line[5]); delchr=line[3]; insst=int(line[1]); insted=int(line[2]); inschr=line[0]
 			else:
 				delst=int(line[1]); deled=int(line[2]); delchr=line[0]; insst=int(line[4]); insted=int(line[5]); inschr=line[3]
@@ -127,7 +128,7 @@ def var2seq(brpt,reffile,nligation,oprefix): #assume varbed is checked for nonov
 		#print "old:",len(rseq)
 		#print "new:",len(SeqRecord( Seq(''.join([str(s) for s in seg]), generic_dna), id=rname, name=rname, description=oprefix+"."+rname ) )
 		seq.append( SeqRecord( Seq(''.join([str(s) for s in seg]), generic_dna), id=rname, name=rname, description=oprefix+"."+rname ) )
-	SeqIO.write(seq,oprefix+".fna",'fasta')
+	SeqIO.write(seq,oprefix+".fnv",'fasta')
 	return seq
 
 def main(args):
@@ -140,6 +141,7 @@ def main(args):
 	parlist = ConfigParser.ConfigParser()
 	parlist.readfp(parfile)
 	plansize = args.plansize
+	edgesize = 100000
 	layout = args.layout
 	runmode=0 #1 meta, 2 var, 3 var+meta
 	if varfile!=None and metafile!=None:
@@ -158,9 +160,10 @@ def main(args):
 	freq1 = [ float(f) for f in args.mixfreq.split(",") ]
 	for f in freq1:
 		assert f>=0 and f<=1, "mixfreq must be a float between 0 and 1" 
-
 	try:
+		sizefile = mf.fas2size(reffile.name) #create genome size file
 		gaptab=pybedtools.BedTool(gapfile.read(),from_string=True)
+		gaptab=gaptab.slop(g=sizefile, b=edgesize)
 	except pybedtools.cbedtools.BedToolsFileError:
 		raise Exception("incorrect gapfile provided, must in BED format")
 	#create a string meta file:
@@ -170,13 +173,13 @@ def main(args):
 	#metastr='\n'.join([ "\t".join(['FINS',str(2),'adeno.fna,'+inssize,'fix_1','fix_1','fix_1','fix_1','fix_1' ]),
 	#					"\t".join(['DINS',str(2),'fix_100_200','fix_1','fix_1','fix_1','fix_1','fix_1' ]) ])
 	varlist = collections.OrderedDict()
-	dic={'nligation':nligation,'varlist':varlist,'oprefix':oprefix,'reffile':reffile,'nploid':nploid,'plansize':plansize,'varcnt':0}
+	dic={'nligation':nligation,'varlist':varlist,'oprefix':oprefix,'reffile':reffile,'nploid':nploid,'plansize':plansize,'varcnt':0,'edgesize':edgesize,'gaptab':gaptab}
 	print "runmode=", runmode
 
 	if runmode > 1: #have var input
 		varintype = varfile.name.split(".")[-1]
 		if varintype == 'lumpy':
-			bp=CommentedFile(varfile)
+			bp=mf.CommentedFile(varfile)
 			#bp=csv.reader(varfile,delimiter="\t")
 			#somehow we need to set ligation setting 
 			#assume that every true var pos out of program is true position
@@ -188,42 +191,32 @@ def main(args):
 		dic['varlist']=varlist #this is needed for continuously counting
 		#d.iloc[0:1,0:1]; deoverlapping
 		vartab=mf.var2bed(mf.Bunch(dic))
-		ovlptab=vartab.intersect(vartab,c=True).to_dataframe()
+		ovlptab=vartab.intersect(vartab,c=True).to_dataframe(names=mf.varbed_names+["ovlap"])
 		print "input vars before deovlapping", len(ovlptab)
 		assert len(ovlptab) == len(varlist), "assert the same set of vars in ovlptab and varlist"
-		ovlpkey=[ varlist.keys()[j] for j in range(0,len(ovlptab)) if int(ovlptab.iloc[j,3]) > 1 ]
+		ovlpkey=[ varlist.keys()[j] for j in range(0,len(ovlptab)) if int(ovlptab.iloc[j,len(mf.varbed_names)]) > 1 ]
 		for key in ovlpkey:
 			del varlist[key] #exclude these overlapping
 		dic['varlist']=varlist #this is needed for vartab
 		vartab=mf.var2bed(mf.Bunch(dic))
 		print "input vars after deovlapping", len(vartab)
 		assert mf.chkvar(vartab) == True, "==Warn: varfile contains self overlaps, which is not allowed"
-		gaptab=vartab.cat(gaptab)
+		gaptab=vartab.cat(gaptab.each(pybedtools.featurefuncs.extend_fields,n=vartab.field_count()).saveas())
+		dic['gaptab']=gaptab
 
-	#print "OK0"
-	gaptab=gaptab.sort()
-	dic['gaptab']=gaptab
-
-	#print "OK1"
 	if runmode%2 == 1:	
 		dic['hapseq']=[pysam.Fastafile(reffile.name)];
 		metatab = mf.CommentedFile(metafile)
-		#metatab = csv.reader(metafile,delimiter='\t')
-		#print "OK2"
-		#print dic["varlist"]
 		varlist,varcnt = mf.makevar(mf.Bunch(dic),metatab)
-		#print "OK3"
 		dic['varlist'] = varlist
-		#print dic["varlist"]
 		dic['varcnt'] = varcnt
 		vartab = mf.var2bed(mf.Bunch(dic))
-		#print "OK4"
 		if len(vartab)>0:
 			print "all output vars", len(varlist)
-			ovlptab=vartab.intersect(vartab,c=True).to_dataframe()
+			ovlptab=vartab.intersect(vartab,c=True).to_dataframe(names=mf.varbed_names+["ovlap"])
 			print "input vars before deovlapping", len(ovlptab)
 			assert len(ovlptab) == len(varlist), "assert the same set of vars in ovlptab and varlist"
-			ovlpkey=[ varlist.keys()[j] for j in range(0,len(ovlptab)) if int(ovlptab.iloc[j,3]) > 1 ]
+			ovlpkey=[ varlist.keys()[j] for j in range(0,len(ovlptab)) if int(ovlptab.iloc[j,len(mf.varbed_names)]) > 1 ]
 			for key in ovlpkey:
 				del varlist[key] #exclude these overlapping
 			dic['varlist']=varlist #this is needed for vartab
@@ -231,7 +224,6 @@ def main(args):
 			print "input vars after deovlapping", len(vartab)
 			assert mf.chkvar(vartab) == True, "==Warn: varfile still contains self overlaps, which is not allowed"
 
-	#print "OK5"
 	mf.var2file(mf.Bunch(dic))
 	#read in bedpe to generate varlist
 	#now we need to check whether the  sv has been correctly inserted
@@ -248,7 +240,6 @@ def main(args):
 	seq1 = var2seq(brpt,reffile,nligation,oprefix)
 	nlibrary=parlist.getint('xwgsim', 'nlibrary')
 	bams = [None] * nlibrary
-	#print "OK6"
 
 	if layout:
 		print "done layout and fas file generation"
@@ -261,12 +252,8 @@ def main(args):
 
 	pool = Pool(processes=int(nprocs))
 	bedbams=[]
-	print pariter
-	print "OK7"
 	bedbams=pool.map(makebam,pariter,1)
-	print "OK8"
 	
-	print bedbams
 	return None
 
 def makebam(parit):		
@@ -275,6 +262,7 @@ def makebam(parit):
 	libnames=json.loads(parlist.get('xwgsim', 'libnames'))
 	bam0 = mf.runwgs(parlist,nligation,rname,nploid,seq0,lib,fq0)
 	bam1 = mf.runwgs(parlist,nligation,rname,nploid,seq1,lib,fq1)
+	#print [bam0,bam1]
 	bam = mf.mergebam([bam0,bam1],oprefix+"."+libnames[lib])
 	print "done lib %s freq %s regions" % (str(parit[5]),str(parit[6]))
 	return bam
@@ -295,8 +283,8 @@ def run():
                         help="inputfile of variant specification") # prespecified variants, bedpe format or others
 	parser.add_argument('-o', '--oprefix', dest='oprefix', default=None, #output1,output2,output3,...
                         help="prefix for output files")
-	parser.add_argument('-f', '--plansize', dest='plansize', default=100000,
-                        help="palnsize + ligation*2 is the grain size for genome planning, (default=10000bp)")
+	parser.add_argument('-f', '--plansize', dest='plansize', type=int, default=100,
+                        help="palnsize is the grain size for genome planning, nligation=0 here (default=100bp)")
 	parser.add_argument('-q', '--mixfreq', dest='mixfreq', default="1",
                         help="generated spikein-in mixing frequency, homozygous=1")
 	parser.add_argument('-n', '--nprocs', dest='nprocs', default=1,

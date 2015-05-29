@@ -35,28 +35,29 @@ setup(name="svengine",
     platforms=["Linux"],
     packages=find_packages(exclude=['ez_setup', 'test', 'doc']),
     include_package_data=True,
-    #packages=['lsa'],
-    #requires=['numpy(>=1.1)','scipy(>=0.6)','python(>=2.5)','matplotlib(>=0.98)'],
     zip_safe=False,
-    install_requires=["python >= 2.7","pysam >= 0.7","pybedtools >= 0.1","biopython >= 0.1","pandas >= 0.1","cython >= 0.22"],
+    install_requires=["python >= 2.7","pysam >= 0.7","pybedtools >= 0.6.9","biopython >= 0.1","pandas >= 0.16","cython >= 0.22"],
     provides=['svengine'],
-    #can insert C++ extension when needed
+    #can insert C++ extension here when needed
     #ext_modules = [ Extension('lsa._compcore', 
     #                sources = ['lsa/compcore_wrap.cpp', 'lsa/compcore.cpp'],
     #                                          depends = ['lsa/compcore.hpp'],
     #               )],
-    py_modules = ['svengine.bs.asmregion','svengine.bs.mutableseq','svengine.bs.parseamos','svengine.bs.replacereads','svengine.mf.svengine'],
+    py_modules = [
+	#'svengine.bs.asmregion','svengine.bs.mutableseq','svengine.bs.parseamos',
+	#'svengine.bs.replacereads',
+	'svengine.mf.mutforge'],
     #cmdclass = {'build': my_build},
     data_files = [('',['README','LICENSE.txt'])],
     entry_points = { 
       'console_scripts': [
-            'addindel = svengine.bs.addindel:run',
-            'addsv = svengine.bs.addsv:run',
-            'addsnv = svengine.bs.addsnv:run',
-						'svengine = svengine.mf.svengine:run',
-						'fasforge = svengine.mf.fasforge:run',
-						'var2vcf = svengine.mf.var2vcf:run',
-						'freqsim = svengine.mf.freqsim:run'
+	#'addindel = svengine.bs.addindel:run',
+	#'addsv = svengine.bs.addsv:run',
+	#'addsnv = svengine.bs.addsnv:run',
+	'svengine = svengine.mf.svengine:run',
+	'fasforge = svengine.mf.fasforge:run',
+	'var2vcf = svengine.mf.var2vcf:run',
+	'freqsim = svengine.mf.freqsim:run'
       ]
    },
 )
