@@ -22,7 +22,6 @@ DEPENDENCIES
 INSTALL
 ========
    
-    [Ubuntu]
     code::
     
         > mkdir ~/scripts
