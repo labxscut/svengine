@@ -35,7 +35,9 @@ EXECUTABLES
 ========
 	
     xwgsim				--  enhanced wgsim
+    
     mutforge            --  engineer structure variants (sophisticated)
+    
     fasforge            --  engineer structure variants (straightforward)
 
 USAGE
