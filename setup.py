@@ -48,7 +48,7 @@ setup(name="svengine",
 	#'svengine.bs.replacereads',
 	'svengine.mf.mutforge'],
     #cmdclass = {'build': my_build},
-    data_files = [('',['README','LICENSE.txt'])],
+    data_files = [('',['README.rst','LICENSE.txt'])],
     entry_points = { 
       'console_scripts': [
 	#'addindel = svengine.bs.addindel:run',
