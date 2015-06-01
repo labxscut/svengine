@@ -43,7 +43,7 @@ INSTALL
     Change your PYTHONPATH to include "your/own/prefix" i.e.
     ::
     
-      export PYTHONPATH="PYTHONPATH:your/own/prefix"
+      export PYTHONPATH="PYTHONPATH:your/own/prefixe/lib/python2.7/site-packages/"
     
     please consult the author's development document to setup a working environment:
     http://dl.dropbox.com/u/35182955/Development_environment.html
@@ -76,7 +76,7 @@ WIKI
     
 FAQ
 ========
-    http://bitbucket.org/charade/svengine/wiki/FAQ.wiki
+    http://bitbucket.org/charade/svengine/wiki/FAQ
     
 BUG
 ========
