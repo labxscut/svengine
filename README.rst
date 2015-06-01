@@ -29,19 +29,18 @@ INSTALL
       > sudo pip install -U Pysam
       > sudo pip install -U Pybedtools
       > sudo pip install -U Cython
-      > python setup.py install --prefix="your/own/path"
+      > sudo python setup.py install 
       
     Or if You are using your local python distribution, these dependencies shall be automatically setup during SVEngine installation in:
     
     ::
       
-      python setup.py install
+      python setup.py install --prefix="your/own/path"
+    
+    Now the executables will be available from "your/own/path/bin", remember to add it to your PATH.
     
     Or if you are using system python without root, please consult the author's development document to setup a working environment:
     http://dl.dropbox.com/u/35182955/Development_environment.html
-   
-    Now the executables will be available from "your/own/path/bin", remember to add it to your PATH.
-    
 
 EXECUTABLES
 ========
