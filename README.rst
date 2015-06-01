@@ -20,6 +20,8 @@ DEPENDENCIES
         download @ http://pysam.readthedocs.org/en/latest/
     Pybedtools(>=3.0)
         download @ http://pythonhosted.org/pybedtools/
+    Cython (>=2.2)
+        download @ http://cython.org/
   
     Python pakcage dependencies (pysam, pybedtools, Cython, Pandas) shall be automatically setup during installation.  
     If encountering difficulties, users may refer to the author's development document @
