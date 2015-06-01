@@ -10,33 +10,38 @@ INTRODUCTION
     SVEngine documentation is on wiki and it is available:
     http://bitbucket.org/charade/svengine/wiki
 
-DEPENDENCIES
-========
-    Python2(>=2.7) 
-        download @ http://www.python.org/
-    Pandas
-        download @ http://pandas.pydata.org
-    Pysam
-        download @ http://pysam.readthedocs.org/en/latest/
-    Pybedtools(>=3.0)
-        download @ http://pythonhosted.org/pybedtools/
-    Cython (>=2.2)
-        download @ http://cython.org/
-  
-    Python pakcage dependencies (pysam, pybedtools, Cython, Pandas) shall be automatically setup during installation.  
-    If encountering difficulties, users may refer to the author's development document @
-    http://dl.dropbox.com/u/35182955/Development_environment.html
-
 INSTALL
 ========
-   
-    ::
     
-        > mkdir ~/scripts
-        > git clone git@bitbucket.org:charade/mutforge.git
+    Dependencies:
+    
+    Python2(>=2.7)  http://www.python.org/
+    Pandas http://pandas.pydata.org
+    Pysam  http://pysam.readthedocs.org/en/latest/
+    Pybedtools(>=3.0) http://pythonhosted.org/pybedtools/
+    Cython (>=2.2) http://cython.org/
+  
+    If you have root, these can be easily installed using:
+    
+    ::
+      
+      > sudo pip install -U Pandas
+      > sudo pip install -U Pysam
+      > sudo pip install -U Pybedtools
+      > sudo pip install -U Cython
+      > python setup.py install --prefix="your/own/path"
+      
+    Or if You are using your local python distribution, these dependencies shall be automatically setup during SVEngine installation in:
+    
+    ::
+      
+      python setup.py install
+    
+    Or if you are using system python without root, please consult the author's development document to setup a working environment:
+    http://dl.dropbox.com/u/35182955/Development_environment.html
    
-    Now the executables will be available from ~/scripts.
-    You can switch this executable path by change it within setup.py .
+    Now the executables will be available from "your/own/path/bin", remember to add it to your PATH.
+    
 
 EXECUTABLES
 ========
