@@ -5,6 +5,7 @@ INTRODUCTION
 ========
     
     SVEngine(Structural Variants Engine)
+    
     Currently the package works for Linux (tested with Ubuntu) and Mac (tested with Macports).
     It might also work for Windows with Cygwin (not tested).
     SVEngine documentation is on wiki and it is available:
