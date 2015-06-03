@@ -10,6 +10,7 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio.Alphabet import generic_dna
 import pybedtools.featurefuncs
+import shelve
 #properly import muforge
 try:
 	import mf.mutforge as mf #in debugging
@@ -173,18 +174,21 @@ def main(args):
 	#metastr='\n'.join([ "\t".join(['FINS',str(2),'adeno.fna,'+inssize,'fix_1','fix_1','fix_1','fix_1','fix_1' ]),
 	#					"\t".join(['DINS',str(2),'fix_100_200','fix_1','fix_1','fix_1','fix_1','fix_1' ]) ])
 	varlist = collections.OrderedDict()
-	dic={'nligation':nligation,'varlist':varlist,'oprefix':oprefix,'reffile':reffile,'nploid':nploid,'plansize':plansize,'varcnt':0,'edgesize':edgesize,'gaptab':gaptab}
+	dic={'nligation':nligation,'varlist':varlist,'oprefix':oprefix,'reffile':reffile,'nploid':nploid,'plansize':plansize,'varcnt':0,'edgesize':edgesize,'gaptab':gaptab,'varfile':varfile}
 	print "runmode=", runmode
+	dic['hapseq']=[pysam.Fastafile(reffile.name)];
 
 	if runmode > 1: #have var input
 		varintype = varfile.name.split(".")[-1]
 		if varintype == 'lumpy':
-			bp=mf.CommentedFile(varfile)
+			bp=mf.CommentedFile(varfile) #blue print
 			#bp=csv.reader(varfile,delimiter="\t")
 			#somehow we need to set ligation setting 
 			#assume that every true var pos out of program is true position
 			#every true var pos inside the program is position+nligation
 			varlist=lumpy2var(bp,reffile,nligation)
+		elif varintype == 'var':
+			varlist=mf.file2var(mf.Bunch(dic))
 		else:
 			raise Exception("varintype %s hasn't been implemented" % varintype)
 		dic['varcnt']=len(varlist) #this is needed for continuously counting
@@ -205,7 +209,7 @@ def main(args):
 		dic['gaptab']=gaptab
 
 	if runmode%2 == 1:	
-		dic['hapseq']=[pysam.Fastafile(reffile.name)];
+		#dic['hapseq']=[pysam.Fastafile(reffile.name)];
 		metatab = mf.CommentedFile(metafile)
 		varlist,varcnt = mf.makevar(mf.Bunch(dic),metatab)
 		dic['varlist'] = varlist
@@ -213,6 +217,7 @@ def main(args):
 		vartab = mf.var2bed(mf.Bunch(dic))
 		if len(vartab)>0:
 			print "all output vars", len(varlist)
+			print vartab.intersect(vartab,c=True)
 			ovlptab=vartab.intersect(vartab,c=True).to_dataframe(names=mf.varbed_names+["ovlap"])
 			print "input vars before deovlapping", len(ovlptab)
 			assert len(ovlptab) == len(varlist), "assert the same set of vars in ovlptab and varlist"

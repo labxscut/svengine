@@ -10,6 +10,7 @@ from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio.Alphabet import generic_dna
+import shelve
 
 io_quote = "this is for end user"
 code_quote = 'this is for program'
@@ -406,9 +407,21 @@ def mergebam(bams,oprefix):
 	return fbam
 
 def file2var(bun):
-	ifile=csv.reader(CommentedFile(bun.varfile)); hapseq=bun.hapseq; nligation=bun.nligation
-	varlist=OrderedDict()
-	for row in ifile: valist[row[0]]=row[0];
+	#print bun.varfile
+	#print CommentedFile(bun.varfile)
+	ifile=CommentedFile(bun.varfile); hapseq=bun.hapseq; nligation=bun.nligation
+	#print str(ifile)
+	#print str(ifile.line_num)
+	varlist=collections.OrderedDict()
+	for row in ifile:
+		print row
+	#filename='/tmp/shelve.out'
+	#my_shelf=shelve.open(filename,'n')
+	#for key in dir():
+	#	my_shelf[key] = globals()[key]
+	#my_shelf.close()
+	for row in ifile: print str(row[0]);
+	for row in ifile: varlist[row[0]]=row[0];
 	for var in varlist.keys():
 		varlist[var][2] = float(varlist[var][2])
 		varlist[var][3] = int(varlist[var][3])
