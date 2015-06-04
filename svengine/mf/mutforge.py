@@ -44,7 +44,7 @@ class Bunch(object):
 #pysam.Fastafile('example.fna').lengths
 #fas2bed(fasfile)
 
-def deovlptab(dic,maxdeovlp=2):
+def deovlpvar(dic,maxdeovlp=2):
 	nowdeovlp=0; 
 	varlist=copy.deepcopy(dic['varlist'])
 	vartab=var2bed(Bunch(dic)) #vartab is a BedTool
@@ -159,7 +159,7 @@ def main(args):
 
 	print "entering runmode", runmode
 
-	if runmode==1 or runmode==2:
+	if runmode==1 or runmode==2: #have meta input
 		metatab = CommentedFile(metafile)
 		dic['varlist']=collections.OrderedDict()
 		dic['varcnt']=0
@@ -170,12 +170,15 @@ def main(args):
 		var2file(Bunch(dic))
 		print "done var2file"
 
-	if runmode==3 or runmode==4:
+	if runmode==3 or runmode==4: #have var input
 		dic['varfile'] = varfile
 		varlist = file2var(Bunch(dic))
 		dic['varlist'] = varlist
 
+	varlist=deovlpvar(dic); dic['varcnt']=len(varlist); dic['varlist']=varlist; vartab=var2bed(Bunch(dic))
+	assert chkvar(vartab) == True, "==Warn: varfile still contains self overlaps, which is not allowed, bail out"
 	var2bed(Bunch(dic))
+
 	if layout:
 		print "done layout only"
 		quit()
@@ -189,11 +192,12 @@ def main(args):
 
 	if runmode==2 or runmode==4:
 		inbamfilenames = args.inbamfilenames.split(':')
-		var2bs(Bunch(dic))
+		var2bs(Bunch(dic)) # use bam surgeon, not implemented yet
 
 	return None #done
 
 def var2bs(bun):
+	print "this part will use bamsurgeon, it has not been implemented yet"; quit()
 	numinbamfiles = len(inbamfilenames)
 	oprefix = args.oprefix.split(':') if args.oprefix!=None else args.oprefix.split(':')
 	return None
@@ -250,10 +254,9 @@ def var2wgs(bun):
 		#print [var[4],var[5],var[5]+var[7],var[0],var[1],var[2],var[6],var[8]]
 		#CHR ST	ED	VID	MID	FREQ	DEL	INS; adding one base size to ensure flanking regions are separate
 		hapvar[var[3]] = hapvar.get(var[3],[]) + [[var[4],var[5],var[5]+var[7]+2*nligation+1,var[0],var[1],var[2],var[7],formatins(var[9])]]
-	#print hapvar
 	for hap in hapvar.keys():
 		hapvar[hap] = pybedtools.BedTool('\n'.join([ '\t'.join([str(c) for c in x]) for x in hapvar[hap] ]), from_string=True)
-		assert chkvar(hapvar[hap]) == True, "varfile contains self overlaps, which is not allowed"
+		#assert chkvar(hapvar[hap]) == True, "varfile contains self overlaps, which is not allowed"
 	for hap in hapvar.keys():
 		sizefile = fas2size(hapseq[hap].filename)		 #create genome size file
 		hapbed[hap] = hapvar[hap].complement(g=sizefile) #create complementary blocks
@@ -864,13 +867,13 @@ def run():
                         help="inputfile of library-wise bam file(s)")
 	parser.add_argument('-o', '--oprefix', dest='oprefix', default=None, #output1,output2,output3,...
                         help="prefix for output files")
-	parser.add_argument('-y', '--nploid', dest='nploid', default=2,
+	parser.add_argument('-y', '--nploid', dest='nploid', default=2, type=int,
                         help="genome ploidity (default=2)")
-	parser.add_argument('-f', '--plansize', dest='plansize', default=100000,
+	parser.add_argument('-f', '--plansize', dest='plansize', default=100000, type=int,
                         help="palnsize + ligation*2 is the grain size for genome planning, (default=100000bp)")
-	parser.add_argument('-g', '--nligation', dest='nligation', default=2000,
+	parser.add_argument('-g', '--nligation', dest='nligation', default=2000, type=int,
                         help="genome trunk ligation (default=2000bp)")
-	parser.add_argument('-n', '--nprocs', dest='nprocs', default=1,
+	parser.add_argument('-n', '--nprocs', dest='nprocs', default=1, type=int,
                         help="split into multiple processes (default=1)")
 	parser.add_argument('--layout', action='store_true', dest='layout', default=False, help="dry run to layout")
 	args = parser.parse_args()

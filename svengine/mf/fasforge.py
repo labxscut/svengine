@@ -198,43 +198,17 @@ def main(args):
 		dic['varcnt']=len(varlist) #this is needed for continuously counting
 		dic['varlist']=varlist #this is needed for continuously counting
 		#d.iloc[0:1,0:1]; deoverlapping
-		varlist=mf.deovlptab(dic); dic['varcnt']=len(varlist); vartab=mf.var2bed(mf.Bunch(dic))
-		#maxdeovlp=10; nowdeovlp=0; vartab=mf.var2bed(mf.Bunch(dic))
-		#print vartab
-		#while mf.chkvar(vartab) != True and nowdeovlp<maxdeovlp: 
-		#	ovlptab=vartab.intersect(vartab,c=True).to_dataframe(names=mf.varbed_names+["ovlap"])
-		#	print "total vars before deovlapping", len(ovlptab)
-		#	ovlpkey=[ varlist.keys()[j] for j in range(0,len(ovlptab)) if int(ovlptab.iloc[j,len(mf.varbed_names)]) > 1 ]
-		#	for key in ovlpkey:
-		#		del varlist[key] #exclude these overlapping
-		#	dic['varlist']=varlist #this is needed for var2bed
-		#	dic['varcnt']=len(varlist) #this is needed for continuously counting
-		#	vartab=mf.var2bed(mf.Bunch(dic))
-		#	print "total vars after deovlapping", len(vartab)
-		#	nowdeovlp=nowdeovlp+1
+		varlist=mf.deovlpvar(dic); dic['varcnt']=len(varlist); dic['varlist']=varlist; vartab=mf.var2bed(mf.Bunch(dic))
 		assert mf.chkvar(vartab) == True, "==Warn: varfile still contains self overlaps, which is not allowed, bail out"
 		gaptab=vartab.cat(gaptab.each(pybedtools.featurefuncs.extend_fields,n=vartab.field_count()).saveas())
-		dic['gaptab']=gaptab
+		dic['gaptab']=gaptab #considerring var tab as pre-existing mask that works for meta-variant 
 
-	if runmode%2 == 1: #with meta, merge var with meta
-		#dic['hapseq']=[pysam.Fastafile(reffile.name)];
+	if runmode%2 == 1: #have meta input, merge var with meta
 		metatab = mf.CommentedFile(metafile)
 		varlist,varcnt = mf.makevar(mf.Bunch(dic),metatab)
 		dic['varlist'] = varlist
 		dic['varcnt'] = varcnt
-		varlist=mf.deovlptab(dic); dic['varcnt']=len(varlist); vartab=mf.var2bed(mf.Bunch(dic))
-		#maxdeovlp=10; nowdeovlp=0; vartab=mf.var2bed(mf.Bunch(dic))
-		#while mf.chkvar(vartab) != True and nowdeovlp<maxdeovlp: 
-		#	ovlptab=vartab.intersect(vartab,c=True).to_dataframe(names=mf.varbed_names+["ovlap"])
-		#	print "total vars before deovlapping", len(ovlptab)
-		#	ovlpkey=[ varlist.keys()[j] for j in range(0,len(ovlptab)) if int(ovlptab.iloc[j,len(mf.varbed_names)]) > 1 ]
-		#	for key in ovlpkey:
-		#		del varlist[key] #exclude these overlapping
-		#	dic['varlist']=varlist #this is needed for var2bed
-		#	dic['varcnt']=len(varlist) #this is needed for continuously counting
-		#	vartab=mf.var2bed(mf.Bunch(dic))
-		#	print "total vars after deovlapping", len(vartab)
-		#	nowdeovlp=nowdeovlp+1
+		varlist=mf.deovlpvar(dic); dic['varcnt']=len(varlist); dic['varlist']=varlist; vartab=mf.var2bed(mf.Bunch(dic))
 		assert mf.chkvar(vartab) == True, "==Warn: varfile still contains self overlaps, which is not allowed, bail out"
 
 	mf.var2file(mf.Bunch(dic))
@@ -300,7 +274,7 @@ def run():
                         help="palnsize is the grain size for genome planning, nligation=0 here (default=100bp)")
 	parser.add_argument('-q', '--mixfreq', dest='mixfreq', default="1",
                         help="generated spikein-in mixing frequency, homozygous=1")
-	parser.add_argument('-n', '--nprocs', dest='nprocs', default=1,
+	parser.add_argument('-n', '--nprocs', dest='nprocs', type=int, default=1,
                         help="split into multiple processes (default=1)")
 	parser.add_argument('-l', '--layout', dest='layout', action='store_true', default=False,
                         help="only dry layout (default=False)")
