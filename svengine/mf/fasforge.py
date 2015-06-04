@@ -17,81 +17,81 @@ try:
 except ImportError:
 	import mutforge as mf #in production
 
-def lumpy2var(bp,ref,nligation):
-	idx=1; delidx=1; insidx=1; traidx=1; invidx=1; dupidx=1; varlist=collections.OrderedDict()
-	for line in bp:
-		if line[10] == "TYPE:DELETION":
-			mid="DEL_"+str(delidx); var="VAR_"+str(idx); idx+=1; delidx+=1
-			varlist[var]=[None] * 10
-			varlist[var][0] = var	#VID
-			varlist[var][1] = mid	#MID
-			varlist[var][2] = 1.0 #VAR FREQ
-			varlist[var][3] = 0		#VAR HAP
-			varlist[var][4] = line[0]		#VAR CHR
-			varlist[var][5] = int(line[1])-nligation #VAR POS
-			varlist[var][6] = True	#VAR DEL
-			varlist[var][7] = int(line[4])-int(line[1])+1 #VAR DEL SIZE
-			varlist[var][8] = False	#VAR INS
-			varlist[var][9] = None	#VAR INS SIZE
-		if line[10] == "TYPE:INVERSION":
-			mid="INV_"+str(invidx); var="VAR_"+str(idx); idx+=1; invidx+=1
-			varlist[var]=[None] * 10
-			varlist[var][0] = var	#VID
-			varlist[var][1] = mid	#MID
-			varlist[var][2] = 1.0 #VAR FREQ
-			varlist[var][3] = 0		#VAR HAP
-			varlist[var][4] = line[0]		#VAR CHR
-			varlist[var][5] = int(line[1])-nligation	#VAR POS
-			varlist[var][6] = True	#VAR DEL
-			varlist[var][7] = int(line[4])-int(line[1])+1 #VAR DEL SIZE
-			varlist[var][8] = True	#VAR INS
-			varlist[var][9] = (ref.name,	line[0], int(line[1]), int(line[4])-int(line[1])+1, 1, True)	#VAR INS SIZE
-		if line[10] == "TYPE:DUPLICATION": #something weird with lumpy's output here, start is bigger than end
-			mid="DUP_"+str(dupidx); var="VAR_"+str(idx); idx+=1; dupidx+=1
-			varlist[var]=[None] * 10
-			varlist[var][0] = var	#VID
-			varlist[var][1] = mid	#MID
-			varlist[var][2] = 1.0 #VAR FREQ
-			varlist[var][3] = 0		#VAR HAP
-			varlist[var][4] = line[0]		#VAR CHR
-			varlist[var][5] = int(line[4])-nligation	#VAR POS
-			varlist[var][6] = True	#VAR DEL
-			varlist[var][7] = int(line[1])-int(line[4])+1 #VAR DEL SIZE
-			varlist[var][8] = True	#VAR INS
-			varlist[var][9] = (ref.name,	line[0], int(line[4]), int(line[1])-int(line[4])+1, 2, False)	#VAR INS SIZE
-		if line[10] == "TYPE:TRANSLOCATION":
-			line2 = bp.next() #this can be ingnored
-			if int(line[2])-int(line[1])==1:#where insertion happens
-				delst=int(line[4]); deled=int(line[5]); delchr=line[3]; insst=int(line[1]); insted=int(line[2]); inschr=line[0]
-			else:
-				delst=int(line[1]); deled=int(line[2]); delchr=line[0]; insst=int(line[4]); insted=int(line[5]); inschr=line[3]
-			#do insertion
-			mid="TRA_"+str(traidx); var="VAR_"+str(idx); idx+=1; 
-			varlist[var]=[None] * 10
-			varlist[var][0] = var	#VID
-			varlist[var][1] = mid	#MID
-			varlist[var][2] = 1.0 #VAR FREQ
-			varlist[var][3] = 0		#VAR HAP
-			varlist[var][4] = inschr		#VAR CHR
-			varlist[var][5] = insst-nligation	#VAR POS
-			varlist[var][6] = False	#VAR DEL
-			varlist[var][7] = 0 #VAR DEL SIZE
-			varlist[var][8] = True	#VAR INS
-			varlist[var][9] = (ref.name,	delchr, delst, deled-delst+1, 1, False)	#VAR INS SIZE
-			mid="TRA_"+str(traidx); var="VAR_"+str(idx); idx+=1; traidx+=1
-			#do deletion
-			varlist[var]=[None] * 10
-			varlist[var][0] = var	#VID
-			varlist[var][1] = mid	#MID
-			varlist[var][2] = 1.0 #VAR FREQ
-			varlist[var][3] = 0		#VAR HAP
-			varlist[var][4] = delchr		#VAR CHR
-			varlist[var][5] = delst-nligation	#VAR POS
-			varlist[var][6] = True	#VAR DEL
-			varlist[var][7] = deled-delst+1 #VAR DEL SIZE
-			varlist[var][8] = False	#VAR INS
-			varlist[var][9] = None	#VAR INS SIZE
-	return varlist
+#def lumpy2var(bp,ref,nligation):
+#	idx=1; delidx=1; insidx=1; traidx=1; invidx=1; dupidx=1; varlist=collections.OrderedDict()
+#	for line in bp:
+#		if line[10] == "TYPE:DELETION":
+#			mid="DEL_"+str(delidx); var="VAR_"+str(idx); idx+=1; delidx+=1
+#			varlist[var]=[None] * 10
+#			varlist[var][0] = var	#VID
+#			varlist[var][1] = mid	#MID
+#			varlist[var][2] = 1.0 #VAR FREQ
+#			varlist[var][3] = 0		#VAR HAP
+#			varlist[var][4] = line[0]		#VAR CHR
+#			varlist[var][5] = int(line[1])-nligation #VAR POS
+#			varlist[var][6] = True	#VAR DEL
+#			varlist[var][7] = int(line[4])-int(line[1])+1 #VAR DEL SIZE
+#			varlist[var][8] = False	#VAR INS
+#			varlist[var][9] = None	#VAR INS SIZE
+#		if line[10] == "TYPE:INVERSION":
+#			mid="INV_"+str(invidx); var="VAR_"+str(idx); idx+=1; invidx+=1
+#			varlist[var]=[None] * 10
+#			varlist[var][0] = var	#VID
+#			varlist[var][1] = mid	#MID
+#			varlist[var][2] = 1.0 #VAR FREQ
+#			varlist[var][3] = 0		#VAR HAP
+#			varlist[var][4] = line[0]		#VAR CHR
+#			varlist[var][5] = int(line[1])-nligation	#VAR POS
+#			varlist[var][6] = True	#VAR DEL
+#			varlist[var][7] = int(line[4])-int(line[1])+1 #VAR DEL SIZE
+#			varlist[var][8] = True	#VAR INS
+#			varlist[var][9] = (ref.name,	line[0], int(line[1]), int(line[4])-int(line[1])+1, 1, True)	#VAR INS SIZE
+#		if line[10] == "TYPE:DUPLICATION": #something weird with lumpy's output here, start is bigger than end
+#			mid="DUP_"+str(dupidx); var="VAR_"+str(idx); idx+=1; dupidx+=1
+#			varlist[var]=[None] * 10
+#			varlist[var][0] = var	#VID
+#			varlist[var][1] = mid	#MID
+#			varlist[var][2] = 1.0 #VAR FREQ
+#			varlist[var][3] = 0		#VAR HAP
+#			varlist[var][4] = line[0]		#VAR CHR
+#			varlist[var][5] = int(line[4])-nligation	#VAR POS
+#			varlist[var][6] = True	#VAR DEL
+#			varlist[var][7] = int(line[1])-int(line[4])+1 #VAR DEL SIZE
+#			varlist[var][8] = True	#VAR INS
+#			varlist[var][9] = (ref.name,	line[0], int(line[4]), int(line[1])-int(line[4])+1, 2, False)	#VAR INS SIZE
+#		if line[10] == "TYPE:TRANSLOCATION":
+#			line2 = bp.next() #this can be ingnored
+#			if int(line[2])-int(line[1])==1:#where insertion happens
+#				delst=int(line[4]); deled=int(line[5]); delchr=line[3]; insst=int(line[1]); insted=int(line[2]); inschr=line[0]
+#			else:
+#				delst=int(line[1]); deled=int(line[2]); delchr=line[0]; insst=int(line[4]); insted=int(line[5]); inschr=line[3]
+#			#do insertion
+#			mid="TRA_"+str(traidx); var="VAR_"+str(idx); idx+=1; 
+#			varlist[var]=[None] * 10
+#			varlist[var][0] = var	#VID
+#			varlist[var][1] = mid	#MID
+#			varlist[var][2] = 1.0 #VAR FREQ
+#			varlist[var][3] = 0		#VAR HAP
+#			varlist[var][4] = inschr		#VAR CHR
+#			varlist[var][5] = insst-nligation	#VAR POS
+#			varlist[var][6] = False	#VAR DEL
+#			varlist[var][7] = 0 #VAR DEL SIZE
+#			varlist[var][8] = True	#VAR INS
+#			varlist[var][9] = (ref.name,	delchr, delst, deled-delst+1, 1, False)	#VAR INS SIZE
+#			mid="TRA_"+str(traidx); var="VAR_"+str(idx); idx+=1; traidx+=1
+#			#do deletion
+#			varlist[var]=[None] * 10
+#			varlist[var][0] = var	#VID
+#			varlist[var][1] = mid	#MID
+#			varlist[var][2] = 1.0 #VAR FREQ
+#			varlist[var][3] = 0		#VAR HAP
+#			varlist[var][4] = delchr		#VAR CHR
+#			varlist[var][5] = delst-nligation	#VAR POS
+#			varlist[var][6] = True	#VAR DEL
+#			varlist[var][7] = deled-delst+1 #VAR DEL SIZE
+#			varlist[var][8] = False	#VAR INS
+#			varlist[var][9] = None	#VAR INS SIZE
+#	return varlist
 
 def var2seq(brpt,reffile,nligation,oprefix): #assume varbed is checked for nonoverlapping
 	segst=0; ref=pysam.Fastafile(reffile.name); seq=[]
@@ -190,7 +190,7 @@ def main(args):
 			#somehow we need to set ligation setting 
 			#assume that every true var pos out of program is true position
 			#every true var pos inside the program is position+nligation
-			varlist=lumpy2var(bp,reffile,nligation)
+			varlist=mf.lumpy2var(bp,reffile,nligation)
 		elif varintype == 'var':
 			varlist=mf.file2var(mf.Bunch(dic))
 		else:
@@ -198,23 +198,23 @@ def main(args):
 		dic['varcnt']=len(varlist) #this is needed for continuously counting
 		dic['varlist']=varlist #this is needed for continuously counting
 		#d.iloc[0:1,0:1]; deoverlapping
-		maxdeovlp=10; nowdeovlp=0; vartab=mf.var2bed(mf.Bunch(dic))
-		while mf.chkvar(vartab) != True and nowdeovlp<maxdeovlp: 
-			ovlptab=vartab.intersect(vartab,c=True).to_dataframe(names=mf.varbed_names+["ovlap"])
-			print "total vars before deovlapping", len(ovlptab)
-			ovlpkey=[ varlist.keys()[j] for j in range(0,len(ovlptab)) if int(ovlptab.iloc[j,len(mf.varbed_names)]) > 1 ]
-			for key in ovlpkey:
-				del varlist[key] #exclude these overlapping
-			dic['varlist']=varlist #this is needed for var2bed
-			dic['varcnt']=len(varlist) #this is needed for continuously counting
-			vartab=mf.var2bed(mf.Bunch(dic))
-			print "total vars after deovlapping", len(vartab)
-			nowdeovlp=nowdeovlp+1
+		varlist=mf.deovlptab(dic); dic['varcnt']=len(varlist); vartab=mf.var2bed(mf.Bunch(dic))
+		#maxdeovlp=10; nowdeovlp=0; vartab=mf.var2bed(mf.Bunch(dic))
+		#print vartab
+		#while mf.chkvar(vartab) != True and nowdeovlp<maxdeovlp: 
+		#	ovlptab=vartab.intersect(vartab,c=True).to_dataframe(names=mf.varbed_names+["ovlap"])
+		#	print "total vars before deovlapping", len(ovlptab)
+		#	ovlpkey=[ varlist.keys()[j] for j in range(0,len(ovlptab)) if int(ovlptab.iloc[j,len(mf.varbed_names)]) > 1 ]
+		#	for key in ovlpkey:
+		#		del varlist[key] #exclude these overlapping
+		#	dic['varlist']=varlist #this is needed for var2bed
+		#	dic['varcnt']=len(varlist) #this is needed for continuously counting
+		#	vartab=mf.var2bed(mf.Bunch(dic))
+		#	print "total vars after deovlapping", len(vartab)
+		#	nowdeovlp=nowdeovlp+1
 		assert mf.chkvar(vartab) == True, "==Warn: varfile still contains self overlaps, which is not allowed, bail out"
 		gaptab=vartab.cat(gaptab.each(pybedtools.featurefuncs.extend_fields,n=vartab.field_count()).saveas())
 		dic['gaptab']=gaptab
-
-	#print dic['varlist']
 
 	if runmode%2 == 1: #with meta, merge var with meta
 		#dic['hapseq']=[pysam.Fastafile(reffile.name)];
@@ -222,18 +222,19 @@ def main(args):
 		varlist,varcnt = mf.makevar(mf.Bunch(dic),metatab)
 		dic['varlist'] = varlist
 		dic['varcnt'] = varcnt
-		maxdeovlp=10; nowdeovlp=0; vartab=mf.var2bed(mf.Bunch(dic))
-		while mf.chkvar(vartab) != True and nowdeovlp<maxdeovlp: 
-			ovlptab=vartab.intersect(vartab,c=True).to_dataframe(names=mf.varbed_names+["ovlap"])
-			print "total vars before deovlapping", len(ovlptab)
-			ovlpkey=[ varlist.keys()[j] for j in range(0,len(ovlptab)) if int(ovlptab.iloc[j,len(mf.varbed_names)]) > 1 ]
-			for key in ovlpkey:
-				del varlist[key] #exclude these overlapping
-			dic['varlist']=varlist #this is needed for var2bed
-			dic['varcnt']=len(varlist) #this is needed for continuously counting
-			vartab=mf.var2bed(mf.Bunch(dic))
-			print "total vars after deovlapping", len(vartab)
-			nowdeovlp=nowdeovlp+1
+		varlist=mf.deovlptab(dic); dic['varcnt']=len(varlist); vartab=mf.var2bed(mf.Bunch(dic))
+		#maxdeovlp=10; nowdeovlp=0; vartab=mf.var2bed(mf.Bunch(dic))
+		#while mf.chkvar(vartab) != True and nowdeovlp<maxdeovlp: 
+		#	ovlptab=vartab.intersect(vartab,c=True).to_dataframe(names=mf.varbed_names+["ovlap"])
+		#	print "total vars before deovlapping", len(ovlptab)
+		#	ovlpkey=[ varlist.keys()[j] for j in range(0,len(ovlptab)) if int(ovlptab.iloc[j,len(mf.varbed_names)]) > 1 ]
+		#	for key in ovlpkey:
+		#		del varlist[key] #exclude these overlapping
+		#	dic['varlist']=varlist #this is needed for var2bed
+		#	dic['varcnt']=len(varlist) #this is needed for continuously counting
+		#	vartab=mf.var2bed(mf.Bunch(dic))
+		#	print "total vars after deovlapping", len(vartab)
+		#	nowdeovlp=nowdeovlp+1
 		assert mf.chkvar(vartab) == True, "==Warn: varfile still contains self overlaps, which is not allowed, bail out"
 
 	mf.var2file(mf.Bunch(dic))
@@ -295,7 +296,7 @@ def run():
                         help="inputfile of variant specification") # prespecified variants, bedpe format or others
 	parser.add_argument('-o', '--oprefix', dest='oprefix', default=None, #output1,output2,output3,...
                         help="prefix for output files")
-	parser.add_argument('-f', '--plansize', dest='plansize', type=int, default=100,
+	parser.add_argument('-f', '--plansize', dest='plansize', type=int, default=100000,
                         help="palnsize is the grain size for genome planning, nligation=0 here (default=100bp)")
 	parser.add_argument('-q', '--mixfreq', dest='mixfreq', default="1",
                         help="generated spikein-in mixing frequency, homozygous=1")

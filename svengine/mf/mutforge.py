@@ -44,6 +44,29 @@ class Bunch(object):
 #pysam.Fastafile('example.fna').lengths
 #fas2bed(fasfile)
 
+def deovlptab(dic,maxdeovlp=2):
+	nowdeovlp=0; 
+	varlist=copy.deepcopy(dic['varlist'])
+	vartab=var2bed(Bunch(dic)) #vartab is a BedTool
+	while chkvar(vartab) != True and nowdeovlp<maxdeovlp: 
+		varlist=copy.deepcopy(dic['varlist'])
+		ovlptab=vartab.intersect(vartab,c=True,f=0).to_dataframe(names=varbed_names+["ovlap"]) 
+		#NOTE: f=0 is important so that simple touching is considerred an overlap, which make chkvar work
+		#print ovlptab
+		#print varlist.keys()
+		print "total vars before deovlapping", len(ovlptab); assert len(ovlptab)==len(varlist)
+		ovlpkey=[ ovlptab.iloc[j,3] for j in range(0,len(ovlptab)) if int(ovlptab.iloc[j,len(varbed_names)]) > 1 ]
+		print "Warn:", " overlapped events removed: ", ovlpkey 
+		print "Warn:", "complex events such as translocaitons maybe broken due to deovlapping"  
+		for key in ovlpkey:
+			del varlist[key] #exclude overlapping entries
+		dic['varlist']=varlist #this is needed for var2bed
+		dic['varcnt']=len(varlist) #this is needed for continuously counting
+		vartab=var2bed(Bunch(dic))
+		print "total vars after deovlapping", len(vartab); assert len(varlist)==len(vartab)
+		nowdeovlp=nowdeovlp+1
+	return varlist
+  
 def runcmd(cmd):
 	try:
 		subprocess.call(cmd,shell=True,stderr=open('./stderr.txt','a'),stdout=open('./stdout.txt','a'))
@@ -189,7 +212,8 @@ def fas2size(fasfile):
 	return sizefile.name
 
 def chkvar(varbed):
-	#print varbed
+	#print varbed.sort().merge()
+	#print varbed.sort()
 	if varbed.sort().merge().count() == varbed.sort().count(): return True;
 	else: return False
 
@@ -406,6 +430,82 @@ def mergebam(bams,oprefix):
 			runcmd(merge_cmd)
 	#FIXME: who do we clean up this mess of temporary files here?
 	return fbam
+
+def lumpy2var(bp,ref,nligation):
+	idx=1; delidx=1; insidx=1; traidx=1; invidx=1; dupidx=1; varlist=collections.OrderedDict()
+	for line in bp:
+		if line[10] == "TYPE:DELETION":
+			mid="DEL_"+str(delidx); var="VAR_"+str(idx); idx+=1; delidx+=1
+			varlist[var]=[None] * 10
+			varlist[var][0] = var	#VID
+			varlist[var][1] = mid	#MID
+			varlist[var][2] = 1.0 #VAR FREQ
+			varlist[var][3] = 0		#VAR HAP
+			varlist[var][4] = line[0]		#VAR CHR
+			varlist[var][5] = int(line[1])-nligation #VAR POS
+			varlist[var][6] = True	#VAR DEL
+			varlist[var][7] = int(line[4])-int(line[1])+1 #VAR DEL SIZE
+			varlist[var][8] = False	#VAR INS
+			varlist[var][9] = None	#VAR INS SIZE
+		if line[10] == "TYPE:INVERSION":
+			mid="INV_"+str(invidx); var="VAR_"+str(idx); idx+=1; invidx+=1
+			varlist[var]=[None] * 10
+			varlist[var][0] = var	#VID
+			varlist[var][1] = mid	#MID
+			varlist[var][2] = 1.0 #VAR FREQ
+			varlist[var][3] = 0		#VAR HAP
+			varlist[var][4] = line[0]		#VAR CHR
+			varlist[var][5] = int(line[1])-nligation	#VAR POS
+			varlist[var][6] = True	#VAR DEL
+			varlist[var][7] = int(line[4])-int(line[1])+1 #VAR DEL SIZE
+			varlist[var][8] = True	#VAR INS
+			varlist[var][9] = (ref.name,	line[0], int(line[1]), int(line[4])-int(line[1])+1, 1, True)	#VAR INS SIZE
+		if line[10] == "TYPE:DUPLICATION": #something weird with lumpy's output here, start is bigger than end
+			mid="DUP_"+str(dupidx); var="VAR_"+str(idx); idx+=1; dupidx+=1
+			varlist[var]=[None] * 10
+			varlist[var][0] = var	#VID
+			varlist[var][1] = mid	#MID
+			varlist[var][2] = 1.0 #VAR FREQ
+			varlist[var][3] = 0		#VAR HAP
+			varlist[var][4] = line[0]		#VAR CHR
+			varlist[var][5] = int(line[4])-nligation	#VAR POS
+			varlist[var][6] = True	#VAR DEL
+			varlist[var][7] = int(line[1])-int(line[4])+1 #VAR DEL SIZE
+			varlist[var][8] = True	#VAR INS
+			varlist[var][9] = (ref.name,	line[0], int(line[4]), int(line[1])-int(line[4])+1, 2, False)	#VAR INS SIZE
+		if line[10] == "TYPE:TRANSLOCATION":
+			line2 = bp.next() #this can be ingnored
+			if int(line[2])-int(line[1])==1:#where insertion happens
+				delst=int(line[4]); deled=int(line[5]); delchr=line[3]; insst=int(line[1]); insted=int(line[2]); inschr=line[0]
+			else:
+				delst=int(line[1]); deled=int(line[2]); delchr=line[0]; insst=int(line[4]); insted=int(line[5]); inschr=line[3]
+			#do insertion
+			mid="TRA_"+str(traidx); var="VAR_"+str(idx); idx+=1; 
+			varlist[var]=[None] * 10
+			varlist[var][0] = var	#VID
+			varlist[var][1] = mid	#MID
+			varlist[var][2] = 1.0 #VAR FREQ
+			varlist[var][3] = 0		#VAR HAP
+			varlist[var][4] = inschr		#VAR CHR
+			varlist[var][5] = insst-nligation	#VAR POS
+			varlist[var][6] = False	#VAR DEL
+			varlist[var][7] = 0 #VAR DEL SIZE
+			varlist[var][8] = True	#VAR INS
+			varlist[var][9] = (ref.name,	delchr, delst, deled-delst+1, 1, False)	#VAR INS SIZE
+			mid="TRA_"+str(traidx); var="VAR_"+str(idx); idx+=1; traidx+=1
+			#do deletion
+			varlist[var]=[None] * 10
+			varlist[var][0] = var	#VID
+			varlist[var][1] = mid	#MID
+			varlist[var][2] = 1.0 #VAR FREQ
+			varlist[var][3] = 0		#VAR HAP
+			varlist[var][4] = delchr		#VAR CHR
+			varlist[var][5] = delst-nligation	#VAR POS
+			varlist[var][6] = True	#VAR DEL
+			varlist[var][7] = deled-delst+1 #VAR DEL SIZE
+			varlist[var][8] = False	#VAR INS
+			varlist[var][9] = None	#VAR INS SIZE
+	return varlist
 
 def file2var(bun):
 	ifile=CommentedFile(bun.varfile); hapseq=bun.hapseq; nligation=bun.nligation
