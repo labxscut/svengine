@@ -124,6 +124,7 @@ def main(args):
 
 	try:
 		sizefile = fas2size(hapseq[0].filename)		 #require hap file to be the same size and gap applies to all
+		#FIXME: this sizefile has also to be hapseq dependent 
 		gaptab=pybedtools.BedTool(gapfile.read(),from_string=True)
 		gaptab=gaptab.flank(g=sizefile, b=edgesize)              #need to merge
 	except pybedtools.cbedtools.BedToolsFileError:
@@ -149,7 +150,7 @@ def main(args):
 	if runmode==3 or runmode==4:
 		dic['varfile'] = varfile
 		varlist = file2var(Bunch(dic))
-		# FIXME: file2var needs to be tested?
+		dic['varlist'] = varlist
 
 	var2bed(Bunch(dic))
 	if layout:
