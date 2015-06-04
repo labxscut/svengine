@@ -123,7 +123,7 @@ def main(args):
 		raise Exception("incorrect number of hapfiles provided")
 
 	try:
-		sizefile = fas2size(hapseq[hap].filename)		 #create genome size file
+		sizefile = fas2size(hapseq[0].filename)		 #require hap file to be the same size and gap applies to all
 		gaptab=pybedtools.BedTool(gapfile.read(),from_string=True)
 		gaptab=gaptab.flank(g=sizefile, b=edgesize)              #need to merge
 	except pybedtools.cbedtools.BedToolsFileError:
