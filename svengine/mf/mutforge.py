@@ -407,28 +407,18 @@ def mergebam(bams,oprefix):
 	return fbam
 
 def file2var(bun):
-	#print bun.varfile
-	#print CommentedFile(bun.varfile)
 	ifile=CommentedFile(bun.varfile); hapseq=bun.hapseq; nligation=bun.nligation
-	#print str(ifile)
-	#print str(ifile.line_num)
+	#NOTE: CommentedFile can only be iterated once. Need seek to reiterate
 	varlist=collections.OrderedDict()
-	for row in ifile:
-		print row
-	#filename='/tmp/shelve.out'
-	#my_shelf=shelve.open(filename,'n')
-	#for key in dir():
-	#	my_shelf[key] = globals()[key]
-	#my_shelf.close()
-	for row in ifile: print str(row[0]);
-	for row in ifile: varlist[row[0]]=row[0];
+	for row in ifile: 
+		varlist[row[0]]=row;
 	for var in varlist.keys():
 		varlist[var][2] = float(varlist[var][2])
 		varlist[var][3] = int(varlist[var][3])
 		varlist[var][5] = int(varlist[var][5])-nligation
-		varlist[var][6] = bool(varlist[var][6])
+		varlist[var][6] = varlist[var][6] in ['True']
 		varlist[var][7] = int(varlist[var][7])
-		varlist[var][8] = bool(varlist[var][8])
+		varlist[var][8] = varlist[var][8] in ['True']
 		varlist[var][9] = readins(varlist[var][9])
 	return varlist
 
@@ -448,7 +438,7 @@ def formatins(cell):
 
 def var2file(bun):
 	#IMPORTANT: OrderedDict and List are all mutable
-	varcopy=copy.deepcopy(bun.varlist); nligation=bun.nligation; ofile=csv.writer(open(bun.oprefix+'.var','w'),delimiter='\t')
+	varcopy=copy.deepcopy(bun.varlist); nligation=bun.nligation; ofile=csv.writer(open(bun.oprefix+'.out.var','w'),delimiter='\t')
 	ofile.writerow(varfile_names)
 	for var in varcopy.keys():
 		varcopy[var][9]=formatins(varcopy[var][9])
@@ -459,13 +449,16 @@ def var2file(bun):
 
 def var2bed(bun):
 	#IMPORTANT: OrderedDict and List are all mutable
+	if len(bun.varlist) == 0: return None
 	varcopy=copy.deepcopy(bun.varlist); nligation=bun.nligation; 
 	for var in varcopy.keys():
 		varcopy[var][9]=formatins(varcopy[var][9])
 		varcopy[var][5]=varcopy[var][5]+nligation #actual site
+	#print varcopy
 	varbed=pybedtools.BedTool("\n".join([ str(varcopy[var][4])+"\t"+str(varcopy[var][5])+"\t"+str(varcopy[var][5]+varcopy[var][7])+"\t"+"\t".join([str(x) for x in varcopy[var]]) for var in varcopy.keys() ]), from_string=True)
+	#print varbed
 	varbed=varbed.sort()
-	varbed.saveas(bun.oprefix+'.bed',trackline='\t'.join(varbed_names))
+	varbed.saveas(bun.oprefix+'.out.bed',trackline='\t'.join(varbed_names))
 	#varbed.saveas(bun.oprefix+'.bed',trackline='\t'.join(['#CHROM','START','END','VID','MID','VARFREQ','VARHAP','VARCHR','VARPOS','VARDEL','VARDELSIZE','VARINS','VARINSSEQ(HAP/SEQFILE,CHR:START-END,COPY,REVCOMP)']))
 	#ofile=csv.writer(open(bun.oprefix+'.bed','w'),delimiter='\t')
 	#ofile.writerow(['#CHROM','START','END','VID','MID','VARFREQ','VARHAP','VARCHR','VARPOS','VARDEL','VARDELSIZE','VARINS','VARINSSEQ(HAP/SEQFILE,CHR:START-END,COPY,REVCOMP)'])
@@ -523,7 +516,7 @@ def makevar(bun,metatab):
 	for row in metatab:
 		rows.append(row)
 	rowix=range(0,len(rows))
-	print rowix, rows
+	#print rowix, rows
 	#random.shuffle(rowix) #randomized between metatypes
 	
 	for r in rowix:

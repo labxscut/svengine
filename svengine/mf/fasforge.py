@@ -98,34 +98,38 @@ def var2seq(brpt,reffile,nligation,oprefix): #assume varbed is checked for nonov
 	for i in xrange(0,ref.nreferences):
 		rname=ref.references[i]; rlen=ref.lengths[i]
 		rseq=Seq(ref.fetch(rname,0,rlen), generic_dna)
-		if brpt.get(rname,None) == None: #non var at all
+		if brpt.get(rname,None) == None: #no var at all
 			seg = [ rseq ]
 		else:
 			brs = collections.OrderedDict(sorted(brpt[rname].items(), key=lambda t: t[0]))
 			seg = []; nbrs=len(brs) #member of seg are Seqs
 			for j in xrange(0,nbrs):
 				#VID MID VARFRQ VARHAP VARCHR VARPOS VARDEL VARDELSZ VARINS VARINSSZ
-				var=brs.values()[j]
-				if j == (nbrs-1): #last var
-					seged=rlen
-				else:
-					seged=brs.values()[j+1][5]
-				if j == 0: #first seg appended without var
-					seg.append(rseq[segst:var[5]]); segst=var[5] 
-				seq1 = rseq[segst:seged] #seg if connected is the new seq 
-				if var[6]: #work on deletion
-					seq1 = seq1[:nligation]+seq1[nligation+var[7]:]
-					segst = seged
-				if var[8]: #work on insertion
-					#['example.fasta', '22', 25202000, 1000, 2, False]
-					info = var[9]
-					seqi = Seq(pysam.Fastafile(info[0]).fetch(info[1],info[2],info[2]+info[3]), generic_dna) #st=0-based, ed=0-based+1
-					if info[5]:
-						seqi = seqi.reverse_complement();
-					seqi = Seq(str(seqi)*info[4], generic_dna)
-					seq1 = seq1[:nligation]+seqi+seq1[nligation:]
-					segst = seged
-				seg.append(seq1)
+				try:
+					var=brs.values()[j]
+					if j == (nbrs-1): #last var
+						seged=rlen
+					else:
+						seged=brs.values()[j+1][5]
+					if j == 0: #first seg appended without var
+						seg.append(rseq[segst:var[5]]); segst=var[5] 
+					seq1 = rseq[segst:seged] #seg if connected is the new seq 
+					if var[6]: #work on deletion
+						seq1 = seq1[:nligation]+seq1[nligation+var[7]:]
+						segst = seged
+					if var[8]: #work on insertion
+						#['example.fasta', '22', 25202000, 1000, 2, False]
+						info = var[9]
+						seqi = Seq(pysam.Fastafile(info[0]).fetch(info[1],info[2],info[2]+info[3]), generic_dna) #st=0-based, ed=0-based+1
+						if info[5]:
+							seqi = seqi.reverse_complement();
+						seqi = Seq(str(seqi)*info[4], generic_dna)
+						seq1 = seq1[:nligation]+seqi+seq1[nligation:]
+						segst = seged
+					seg.append(seq1)
+				except TypeError:
+					print var
+					print "most likely formatting wrong in provided .var file, ignore entry!"
 		#print "old:",len(rseq)
 		#print "new:",len(SeqRecord( Seq(''.join([str(s) for s in seg]), generic_dna), id=rname, name=rname, description=oprefix+"."+rname ) )
 		seq.append( SeqRecord( Seq(''.join([str(s) for s in seg]), generic_dna), id=rname, name=rname, description=oprefix+"."+rname ) )
@@ -194,40 +198,43 @@ def main(args):
 		dic['varcnt']=len(varlist) #this is needed for continuously counting
 		dic['varlist']=varlist #this is needed for continuously counting
 		#d.iloc[0:1,0:1]; deoverlapping
-		vartab=mf.var2bed(mf.Bunch(dic))
-		ovlptab=vartab.intersect(vartab,c=True).to_dataframe(names=mf.varbed_names+["ovlap"])
-		print "input vars before deovlapping", len(ovlptab)
-		assert len(ovlptab) == len(varlist), "assert the same set of vars in ovlptab and varlist"
-		ovlpkey=[ varlist.keys()[j] for j in range(0,len(ovlptab)) if int(ovlptab.iloc[j,len(mf.varbed_names)]) > 1 ]
-		for key in ovlpkey:
-			del varlist[key] #exclude these overlapping
-		dic['varlist']=varlist #this is needed for vartab
-		vartab=mf.var2bed(mf.Bunch(dic))
-		print "input vars after deovlapping", len(vartab)
-		assert mf.chkvar(vartab) == True, "==Warn: varfile contains self overlaps, which is not allowed"
+		maxdeovlp=10; nowdeovlp=0; vartab=mf.var2bed(mf.Bunch(dic))
+		while mf.chkvar(vartab) != True and nowdeovlp<maxdeovlp: 
+			ovlptab=vartab.intersect(vartab,c=True).to_dataframe(names=mf.varbed_names+["ovlap"])
+			print "total vars before deovlapping", len(ovlptab)
+			ovlpkey=[ varlist.keys()[j] for j in range(0,len(ovlptab)) if int(ovlptab.iloc[j,len(mf.varbed_names)]) > 1 ]
+			for key in ovlpkey:
+				del varlist[key] #exclude these overlapping
+			dic['varlist']=varlist #this is needed for var2bed
+			dic['varcnt']=len(varlist) #this is needed for continuously counting
+			vartab=mf.var2bed(mf.Bunch(dic))
+			print "total vars after deovlapping", len(vartab)
+			nowdeovlp=nowdeovlp+1
+		assert mf.chkvar(vartab) == True, "==Warn: varfile still contains self overlaps, which is not allowed, bail out"
 		gaptab=vartab.cat(gaptab.each(pybedtools.featurefuncs.extend_fields,n=vartab.field_count()).saveas())
 		dic['gaptab']=gaptab
 
-	if runmode%2 == 1:	
+	#print dic['varlist']
+
+	if runmode%2 == 1: #with meta, merge var with meta
 		#dic['hapseq']=[pysam.Fastafile(reffile.name)];
 		metatab = mf.CommentedFile(metafile)
 		varlist,varcnt = mf.makevar(mf.Bunch(dic),metatab)
 		dic['varlist'] = varlist
 		dic['varcnt'] = varcnt
-		vartab = mf.var2bed(mf.Bunch(dic))
-		if len(vartab)>0:
-			print "all output vars", len(varlist)
-			print vartab.intersect(vartab,c=True)
+		maxdeovlp=10; nowdeovlp=0; vartab=mf.var2bed(mf.Bunch(dic))
+		while mf.chkvar(vartab) != True and nowdeovlp<maxdeovlp: 
 			ovlptab=vartab.intersect(vartab,c=True).to_dataframe(names=mf.varbed_names+["ovlap"])
-			print "input vars before deovlapping", len(ovlptab)
-			assert len(ovlptab) == len(varlist), "assert the same set of vars in ovlptab and varlist"
+			print "total vars before deovlapping", len(ovlptab)
 			ovlpkey=[ varlist.keys()[j] for j in range(0,len(ovlptab)) if int(ovlptab.iloc[j,len(mf.varbed_names)]) > 1 ]
 			for key in ovlpkey:
 				del varlist[key] #exclude these overlapping
-			dic['varlist']=varlist #this is needed for vartab
+			dic['varlist']=varlist #this is needed for var2bed
+			dic['varcnt']=len(varlist) #this is needed for continuously counting
 			vartab=mf.var2bed(mf.Bunch(dic))
-			print "input vars after deovlapping", len(vartab)
-			assert mf.chkvar(vartab) == True, "==Warn: varfile still contains self overlaps, which is not allowed"
+			print "total vars after deovlapping", len(vartab)
+			nowdeovlp=nowdeovlp+1
+		assert mf.chkvar(vartab) == True, "==Warn: varfile still contains self overlaps, which is not allowed, bail out"
 
 	mf.var2file(mf.Bunch(dic))
 	#read in bedpe to generate varlist
