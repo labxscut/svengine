@@ -14,7 +14,7 @@ import shelve
 
 io_quote = "this is for end user"
 code_quote = 'this is for program'
-maxrefnum = 24 		  #for debugging and human, should set to a big number afterwards
+maxrefnum = 24 			#for debugging and human, should set to a big number afterwards
 burnin = 100000		#burnin region for each chromosome
 varfile_names = ['#VID','MID','VARFREQ','VARHAP','VARCHR','VARPOS','VARDEL','VARDELSIZE','VARINS','VARINSSEQ(HAP/SEQFILE,CHR:START-END,COPY,REVCOMP)']
 varbed_names = ['#CHROM','START','END','VID','MID','VARFREQ','VARHAP','VARCHR','VARPOS','VARDEL','VARDELSIZE','VARINS','VARINSSEQ(HAP/SEQFILE,CHR:START-END,COPY,REVCOMP)']
@@ -37,7 +37,7 @@ class Bunch(object):
 
 #paradigm to make dictionary from local variables
 #for i in ('apple', 'banana', 'carrot'):
-#    fruitdict[i] = locals()[i]
+#		fruitdict[i] = locals()[i]
 #paradigm to generate random sequence
 #''.join([random.choice('AGTC') for x in range(1200)])
 #paradigm to get fasta file size
@@ -58,7 +58,7 @@ def deovlpvar(dic,maxdeovlp=2):
 		print "total vars before deovlapping", len(ovlptab); assert len(ovlptab)==len(varlist)
 		ovlpkey=[ ovlptab.iloc[j,3] for j in range(0,len(ovlptab)) if int(ovlptab.iloc[j,len(varbed_names)]) > 1 ]
 		print "Warn:", " overlapped events removed: ", ovlpkey 
-		print "Warn:", "complex events such as translocaitons maybe broken due to deovlapping"  
+		print "Warn:", "complex events such as translocaitons maybe broken due to deovlapping"	
 		for key in ovlpkey:
 			del varlist[key] #exclude overlapping entries
 		dic['varlist']=varlist #this is needed for var2bed
@@ -67,7 +67,7 @@ def deovlpvar(dic,maxdeovlp=2):
 		print "total vars after deovlapping", len(vartab); assert len(varlist)==len(vartab)
 		nowdeovlp=nowdeovlp+1
 	return varlist
-  
+	
 def runcmd(cmd):
 	try:
 		subprocess.call(cmd,shell=True,stderr=open('./stderr.txt','a'),stdout=open('./stdout.txt','a'))
@@ -102,6 +102,7 @@ def main(args):
 
 	nprocs = args.nprocs
 	layout = args.layout
+	outbam = args.outbam
 	print "successfully debugging loading"
 
 	runmode=0 #1 fasta+meta, 2 bam+meta, 3 fasta+var, 4 bam+var
@@ -121,9 +122,9 @@ def main(args):
 													(1) fasta+meta, (2) bam+meta, (3) fasta+var, (4) bam+var")
 
 	hapfiles = args.hapfiles.split(':') 		#this is required input
-	gapfile = args.gapfile 							  #this is required input
+	gapfile = args.gapfile 								#this is required input
 	parfile = args.parfile								#parfile controls WGS
-	reffile = args.reffile 							  #this is required input
+	reffile = args.reffile 								#this is required input
 	nploid = args.nploid 									#this input has default
 	plansize = args.plansize							#this input has default
 	nligation = args.nligation						#this input has default
@@ -150,7 +151,7 @@ def main(args):
 		sizefile = fas2size(hapseq[0].filename)		 #require hap file to be the same size and gap applies to all
 		#FIXME: this sizefile has also to be hapseq dependent 
 		gaptab=pybedtools.BedTool(gapfile.read(),from_string=True)
-		gaptab=gaptab.flank(g=sizefile, b=edgesize)              #need to merge
+		gaptab=gaptab.flank(g=sizefile, b=edgesize)							#need to merge
 	except pybedtools.cbedtools.BedToolsFileError:
 		raise Exception("incorrect gapfile provided, must in BED format")
 
@@ -190,9 +191,13 @@ def main(args):
 	
 	if runmode==1 or runmode==3:
 		dic['parlist'] = parlist
-		fbam = var2wgs(Bunch(dic)) # run xwgsim + bwa + samtools to generate bamfiles
-		print fbam
-		print "done var2wgs"
+		ffq = var2fq(Bunch(dic))
+		print "done var2fq", time.time()-starttime, " seconds"
+
+		if outbam:
+			fbam = fq2bam(ffq,Bunch(dic)) #FIXME: this has to be implemented
+			print fbam
+			print "done fq2bam", time.time()-starttime, " seconds"
 
 	if runmode==2 or runmode==4:
 		inbamfilenames = args.inbamfilenames.split(':')
@@ -201,6 +206,22 @@ def main(args):
 	print "done mutforge"
 
 	return None #all done
+
+def fq2bam(ffq,bun):
+	reffile=bun.reffile.name
+	nlibrary=bun.parlist.getint('xwgsim', 'nlibrary')
+	libnames=json.loads(bun.parlist.get('xwgsim', 'libnames'))
+	nprocs=bun.nprocs
+	oprefix=bun.oprefix
+	fbam = [None] * nlibrary
+	for lib in range(0,nlibrary):
+		fq1 = ffq[lib][0]; fq2 =	ffq[lib][1]
+		sbam = '.'.join([oprefix,libnames[lib]])
+		bwasw_cmd="bwa mem -t %s %s %s %s | samtools view -bS -o %s - " % (nprocs,reffile,fq1,fq2,sbam) 
+		print >>sys.stderr, bwasw_cmd #
+		runcmd(bwasw_cmd)
+		fbam[lib] = sbam+".bam" #post processing: librarywise merging bams
+	return fbam
 
 def var2bs(bun):
 	print "this part will use bamsurgeon, it has not been implemented yet"; quit()
@@ -309,7 +330,7 @@ def var2wgs(bun):
 	#print "len bedbams:", len(bedbams)
 	#for lib in range(0,nlibrary):
 	#	print "len libbams:", len(libbams[lib])
-	#print  libcnt0,libcnt1
+	#print	libcnt0,libcnt1
 	#print bedbams
 	#print libbams
 	#quit()
@@ -326,6 +347,198 @@ def var2wgs(bun):
 	print "done merge to final bam"
 
 	return fbam
+
+def var2fq(bun):
+	hapseq=bun.hapseq
+	nprocs=bun.nprocs
+	oprefix=bun.oprefix
+	parlist=bun.parlist
+	nploid=bun.nploid
+	nligation=bun.nligation
+	nlibrary=bun.parlist.getint('xwgsim', 'nlibrary')
+	libnames=json.loads(parlist.get('xwgsim', 'libnames'))
+	varlist=bun.varlist
+	reffile = bun.reffile.name
+	parlist = bun.parlist
+	#parfile in python ConfigParser format
+	#LibraryNumber = 3
+	#Have to use very complex merging
+
+	#0, if no variant to be inserted, bail out. If some control is needed, try use fasforge for now
+	if len(varlist)==0: #control case, this has to be implemented
+		print >>sys.stderr, "no variant specified, use fasforge/wgsim directly, bail out..."
+		quit()
+	
+	#1, construct continuous contig sets with ligations (nploid)*(variant/non-variant)
+	#hapvar{0: bed_features}
+	hapvar = collections.OrderedDict(); hapbed = collections.OrderedDict();
+	#print varlist.values()
+	for var in varlist.values():
+		#print var
+		#print [var[4],var[5],var[5]+var[7],var[0],var[1],var[2],var[6],var[8]]
+		#CHR ST	ED	VID	MID	FREQ	DEL	INS; adding one base size to ensure flanking regions are separate
+		hapvar[var[3]] = hapvar.get(var[3],[]) + [[var[4],var[5],var[5]+var[7]+2*nligation+1,var[0],var[1],var[2],var[7],formatins(var[9])]]
+	for hap in hapvar.keys():
+		hapvar[hap] = pybedtools.BedTool('\n'.join([ '\t'.join([str(c) for c in x]) for x in hapvar[hap] ]), from_string=True)
+		#assert chkvar(hapvar[hap]) == True, "varfile contains self overlaps, which is not allowed"
+	for hap in hapvar.keys():
+		sizefile = fas2size(hapseq[hap].filename)		 #create genome size file
+		hapbed[hap] = hapvar[hap].complement(g=sizefile) #create complementary blocks
+		hapbed[hap] = hapbed[hap].slop(g=sizefile,b=nligation)
+		hapbed[hap] = pybedtools.BedTool('\n'.join([ f[0]+'\t'+str(f[1])+'\t'+str(f[2])+'\tNone\tNone\t0\t0\tNone' for f in hapbed[hap]]),from_string=True)
+		hapvar[hap] = hapvar[hap].cat(hapbed[hap],postmerge=False)
+
+	hapiter=[]
+	#print len(hapvar[0])
+	#print hapvar[0][0]
+
+	idx = 1; total = 0; 
+	for hap in hapvar.keys():
+		total += len(hapvar[hap])
+	for hap in hapvar.keys():
+		hapfas=bun.hapseq[hap].filename
+		for feat in hapvar[hap]:
+			hapiter.append([hap,hapfas,nligation,parlist,reffile,nploid,idx,total,feat])
+			idx += 1
+	#for it in hapiter:
+	#	print it
+
+	#NOTE: debug code for series execution
+	#for hapit in hapiter:
+	#	fakefq(hapit) 
+	#quit()
+
+	pool = Pool(processes=int(nprocs))
+	bedfqs = []
+	bedfqs = pool.map(fakefq,hapiter,1)
+	print "done fakefq"
+
+	libfqs = {} #fqfiles to be merged: [ [hap1lib1, hap1lib2, ...], [hap2lib1, hap2lib2, ...] ]
+	#hap1lib1=[hap1lib1fq1,hap1lib1fq2]
+	#libcnt0 = 0; libcnt1 = 0
+	for i in xrange(0,len(bedfqs)):
+		for lib in xrange(0,nlibrary):
+			if libfqs.get(lib,None) == None:
+				libfqs[lib]=[bedfqs[i][1][lib]]
+			else:
+				libfqs[lib].append(bedfqs[i][1][lib]) 
+
+	ffq = [None,None] * nlibrary
+	for lib in range(0,nlibrary): #each libfqs[lib] has everything to be merged to ffq[lib]
+		sfq = '.'.join([oprefix,libnames[lib]])
+		ffq[lib] = mergefq(libfqs[lib],sfq)
+
+	print "done merge to final fq"
+
+	return ffq
+
+
+def fakefq(hapit): # makebam from a pair of seqs of representing the original and sved haplotype
+	hap=hapit[0]; hapfas=hapit[1]; nligation=hapit[2]; parlist=hapit[3]; reffile=hapit[4]; nploid=hapit[5]; bed=hapit[8];
+	print >>sys.stderr, "processing %d out of %d regions" % (hapit[6],hapit[7])
+	seq0=SeqRecord(Seq(pysam.Fastafile(hapfas).fetch(bed[0],int(bed[1])+1,int(bed[2])), generic_dna),id=bed[0], name="", description="")
+	seq1=seq0
+	#CHR ST	ED	VID	MID	FREQ	DEL	INS
+	if int(bed[6])!=0: #work on deletion
+		seq1.seq=seq1.seq[:nligation]+seq1.seq[nligation+int(bed[6]):];
+	if bed[7]!="None": #work on insertion
+		info = readins(bed[7])
+		seqi = SeqRecord(Seq(pysam.Fastafile(info[0]).fetch(info[1],info[2],info[2]+info[3]), generic_dna),id=info[0], name="", description="")
+		#['example.fasta', '22', 25202000, 1000, 2, False]
+		if info[5]:
+			seqi.seq = seqi.seq.reverse_complement();
+		seqt=seqi
+		for i in range(1,info[4]):
+			seqi.seq += seqt.seq
+		seq1.seq=seq1.seq[:nligation]+seqi.seq+seq1.seq[nligation:]
+	nlibrary=parlist.getint('xwgsim', 'nlibrary')
+	libnames=json.loads(parlist.get('xwgsim', 'libnames'))
+	freq=float(bed[5])
+
+	fqs = [None] * nlibrary
+	for lib in range(0,nlibrary):
+		freq0 = 1-freq
+		wgs0 = fqwgs(parlist,nligation,reffile,nploid,[seq0],lib,freq0)
+		wgs1 = fqwgs(parlist,nligation,reffile,nploid,[seq1],lib,freq)
+		fqs[lib] = mergefq([wgs0,wgs1],tempfile.NamedTemporaryFile('w',delete=False).name)
+	print >>sys.stderr, "processed %d out of %d regions" % (hapit[6],hapit[7])
+	return [hap,fqs]
+
+def fqwgs(parlist,nligation,reffile,nploid,seq,lib,freq): #create bam file for 1 library given seq and freq
+	fa=tempfile.NamedTemporaryFile('w',delete=False).name
+	SeqIO.write(seq,fa,'fasta')
+	seql = sum( [ len(s) for s in seq ] ) #len of all seqs
+	libnames=json.loads(parlist.get('xwgsim', 'libnames'))
+	coverage=json.loads(parlist.get('xwgsim', 'coverage'))
+	isize=json.loads(parlist.get('xwgsim', 'isize'))
+	rl1=json.loads(parlist.get('xwgsim', 'read1'))
+	rl2=json.loads(parlist.get('xwgsim', 'read2'))
+	libn=libnames[lib]
+	nrdp = seql*coverage[libn]/nploid*freq/(rl1[libn]+rl2[libn])
+	nmode = len(isize[libn])
+	mode = [ None ] * nmode
+	#print "run wgs for:", libn, fa, coverage[libn], freq, nrdp
+	if freq == 0 or nrdp == 0:
+		return [ None, None ]
+	else:
+		for m in range(0,nmode):
+			mden=isize[libn][m][0]; mnread = int(nrdp * mden)
+			if mnread>0:
+				misize=isize[libn][m][1]; misizesd=isize[libn][m][2]
+				fq1=tempfile.NamedTemporaryFile('w',delete=False).name
+				fq2=tempfile.NamedTemporaryFile('w',delete=False).name
+				#mbam=tempfile.NamedTemporaryFile('w',delete=False).name
+				#print (misize,misizesd,mnread,rl1[libn],rl2[libn],fa,fq1,fq2)
+				wgs_cmd="xwgsim -h -d %d -s %d -N %d -1 %d -2 %d -l %d %s %s %s " % (misize,misizesd,mnread,rl1[libn],rl2[libn],nligation,fa,fq1,fq2)
+				print wgs_cmd
+				runcmd(wgs_cmd) #fastq file
+				#fq3,fq4=filterfq(fq1,fq2,nligation,len(seq)-nligation) #half ligation region reads
+				#print (fq1,fq2,fq3,fq4,nligation,len(seq)-nligation)
+				#bwasw_cmd="bwa mem -t 4 %s %s %s | samtools view -bS -o %s - " % (reffile,fq1,fq2,mbam+".bam") #it auto gives bam if not provided
+				#print bwasw_cmd
+				#runcmd(bwasw_cmd)
+				#TODO: for tmpfile in (fq1,fq2,fq3,fq4): os.remove(tmpfile)
+				#mode[m]=mbam+".bam"
+				mode[m]=[fq1,fq2]
+			else:
+				mode[m]=[None,None]
+	libfq = mergefq(mode,tempfile.NamedTemporaryFile('w',delete=False).name)
+	#TODO: for tmpfile in mode + [fa]: os.remove(tmpfile)
+	return libfq
+
+def mergefq(fqs,oprefix):
+	fq1s = [x[0] for x in fqs if x[0] is not None] #remove empty components
+	fq2s = [x[1] for x in fqs if x[1] is not None] #remove empty components
+	assert len(fq1s)==len(fq2s)	 #all reads have to be properly paired
+	nfqs = len(fq1s); ffq1=oprefix+".fq1"; ffq2=oprefix+".fq2";
+	if nfqs==1:
+		shutil.move(fq1s[0],ffq1) #if merge only one file, just move it to new name
+		shutil.move(fq2s[0],ffq2) #if merge only one file, just move it to new name
+	else:
+		for i in range(0,nfqs/4000+1):
+			if i == 0: #first iteration
+				cfq1 = ""
+				cfq2 = ""
+				mfq1 = tempfile.NamedTemporaryFile('w',delete=False).name
+				mfq2 = tempfile.NamedTemporaryFile('w',delete=False).name
+			if i == nfqs/4000: #last iteration
+				if cfq1 != "": cfq1 = mfq1
+				if cfq2 != "": cfq2 = mfq2
+				mfq1 = ffq1
+				mfq2 = ffq2
+			else:
+				cfq1 = mfq1
+				cfq2 = mfq2
+				mfq1 = tempfile.NamedTemporaryFile('w',delete=False).name
+				mfq2 = tempfile.NamedTemporaryFile('w',delete=False).name
+			merge1_cmd = "cat %s %s >%s " % ( cfq1, " ".join([fq1 for fq1 in fq1s[i*4000:min((i+1)*4000,nfqs)]]), mfq1 )
+			merge2_cmd = "cat %s %s >%s " % ( cfq2, " ".join([fq2 for fq2 in fq2s[i*4000:min((i+1)*4000,nfqs)]]), mfq2 )
+			print merge1_cmd #unsorted
+			print merge2_cmd #unsorted
+			runcmd(merge1_cmd)
+			runcmd(merge2_cmd)
+	#FIXME: who do we clean up this mess of temporary files here?
+	return [ffq1,ffq2]
 
 def fakebam(hapit): # makebam from a pair of seqs of representing the original and sved haplotype
 	hap=hapit[0]; hapfas=hapit[1]; nligation=hapit[2]; parlist=hapit[3]; reffile=hapit[4]; nploid=hapit[5]; bed=hapit[8];
@@ -591,7 +804,7 @@ def makevar(bun,metatab):
 	varlist = bun.varlist
 	varcnt = bun.varcnt
 	print "input varcnt", varcnt												#total number of input vars
-	trunks = maketrunks(bun)   													#trunks is in bed format
+	trunks = maketrunks(bun)	 													#trunks is in bed format
 	#print "OK20"
 	trunks,stretches = blocktrunks(trunks,gaptab)				#block trunks that not usable
 	trunks=trunks.to_dataframe()
@@ -692,13 +905,13 @@ def makevar(bun,metatab):
 			vartag = 'VAR'
 			
 			try:
-				if metatype == 'DEL':    #this should be only operations to donors
+				if metatype == 'DEL':		#this should be only operations to donors
 					dtid,stretches=maketid(stretches,sizevec[i]/(plansize+2*nligation)+1)
 					for d in donor:
 						varcnt+=1
 						varid = vartag+"_"+str(varcnt)
 						varlist[varid]=[varid,mid,donorfreq[i],d,str(trunks.iloc[dtid,0]),trunks.iloc[dtid,1],True,sizevec[i],False,None]
-				elif metatype == 'TRA' or metatype == 'ITRA':  #one deletion at donor followed by a insertion at recepient
+				elif metatype == 'TRA' or metatype == 'ITRA':	#one deletion at donor followed by a insertion at recepient
 					rc = True if metatype == 'ITRA' else False
 					dtid,stretches=maketid(stretches,sizevec[i]/(plansize+2*nligation)+1)
 					for d in donor:
@@ -706,12 +919,12 @@ def makevar(bun,metatab):
 						varid = vartag+"_"+str(varcnt)
 						varlist[varid]=[varid,mid,donorfreq[i],d,str(trunks.iloc[dtid,0]),trunks.iloc[dtid,1],True,sizevec[i],False,None]
 					rtid,stretches=maketid(stretches,1)
-					for r in recpt:    #inserting sequence: [ filename, chr, start, size, copy, rc=True/False ]
+					for r in recpt:		#inserting sequence: [ filename, chr, start, size, copy, rc=True/False ]
 						varcnt+=1
 						varid = vartag+"_"+str(varcnt)
 						varlist[varid]=[varid,mid,recptfreq[i],r,str(trunks.iloc[rtid,0]),trunks.iloc[rtid,1],False,0,True,\
 							[hapseq[dpick].filename,str(trunks.iloc[dtid,0]),trunks.iloc[dtid,1]+nligation,sizevec[i],copyvec[i],rc]]
-				elif metatype == 'INV' or metatype == 'IDUP':  #one deletion at donor followed by insertion of reverse
+				elif metatype == 'INV' or metatype == 'IDUP':	#one deletion at donor followed by insertion of reverse
 					dtid,stretches=maketid(stretches,sizevec[i]/(plansize+2*nligation)+1)
 					for d in donor:
 						varcnt+=1
@@ -721,14 +934,14 @@ def makevar(bun,metatab):
 				elif metatype == 'DINS':
 					dtid,stretches=maketid(stretches,sizevec[i]/(plansize+2*nligation)+1)
 					rtid,stretches=maketid(stretches,1)
-					for r in recpt:    #inserting sequence: [ filename, chr, start, size, copy, rc=True/False ]
+					for r in recpt:		#inserting sequence: [ filename, chr, start, size, copy, rc=True/False ]
 						varcnt+=1
 						varid = vartag+"_"+str(varcnt)
 						varlist[varid]=[varid,mid,recptfreq[i],r,str(trunks.iloc[rtid,0]),trunks.iloc[rtid,1],False,0,True,\
 							[hapseq[dpick].filename,str(trunks.iloc[dtid,0]),trunks.iloc[dtid,1]+nligation,sizevec[i],copyvec[i],False]]
 				elif metatype == 'DUP':
 					rtid,stretches=maketid(stretches,sizevec[i]/(plansize+2*nligation)+1)
-					for r in recpt:    #inserting sequence: [ filename, chr, start, size, copy, rc=True/False ]
+					for r in recpt:		#inserting sequence: [ filename, chr, start, size, copy, rc=True/False ]
 						varcnt+=1
 						varid = vartag+"_"+str(varcnt)
 						varlist[varid]=[varid,mid,recptfreq[i],r,str(trunks.iloc[rtid,0]),trunks.iloc[rtid,1],True,sizevec[i],True,\
@@ -738,7 +951,7 @@ def makevar(bun,metatab):
 					rtid,stretches=maketid(stretches,1)
 					#print foreignseq.filename
 					#print foreignseq.references[i]
-					for r in recpt:    #inserting sequence: [ filename, chr, start, size, copy, rc=True/False ]
+					for r in recpt:		#inserting sequence: [ filename, chr, start, size, copy, rc=True/False ]
 						varcnt+=1
 						varid = vartag+"_"+str(varcnt)
 						#print foreignseq[i]
@@ -776,10 +989,10 @@ def blocktrunks(trunks,gaptab):
 			j = j+1; pfeat=feat; continue
 		if feat.chrom == pfeat.chrom and feat.start == pfeat.end:
 			cnt+=1 #continue counting from j-1 to j
-		else:    #stop counting, j-1 in stretch starts from , j is not in
+		else:		#stop counting, j-1 in stretch starts from , j is not in
 			stretches[j-cnt]=cnt
 			for k in xrange(j-cnt+1,j): stretches[k] = 0
-			cnt=1  #start new counting
+			cnt=1	#start new counting
 		if j == nr-1 : #this is forced ending, we need to trace back (cnt-1)
 			stretches[j-cnt+1]=cnt
 			for k in xrange(j-cnt+2,j): stretches[k] = 0
@@ -812,7 +1025,7 @@ def maketid(stretches,varstretch):
 		mtids = locatemin([stretches[i] for i in tids]) #this is not currently used
 	#print tids
 	#print mtids
-	tid = random.sample(mtids[1],1)[0]   #locate the tid
+	tid = random.sample(mtids[1],1)[0]	 #locate the tid
 	vtid = stretches[tid]
 	#print tid
 	for i in xrange(tid,tid+varstretch): stretches[i]=0;						#mark head of stretch used
@@ -858,34 +1071,35 @@ def expanddist(diststring, cnt):
 
 def run():
 	parser = argparse.ArgumentParser(description="spike-in mutations to fasta/bam files, \
-                                                  for bam files first assemble haplo-types \
-                                                  for fasta files we segment fasta files \
-                                                  to confirm if the configuration is viable")
+																									for bam files first assemble haplo-types \
+																									for fasta files we segment fasta files \
+																									to confirm if the configuration is viable")
 	parser.add_argument('hapfiles', metavar='hapfiles', #example.fasta
-                        help="inputfile of hap file(s), required")
+												help="inputfile of hap file(s), required")
 	parser.add_argument('gapfile', metavar='gapfile', type=argparse.FileType('rU'), #example.bed
-                        help="inputfile of gap or other banned regions, required")
+												help="inputfile of gap or other banned regions, required")
 	parser.add_argument('parfile', metavar='parfile', type=argparse.FileType('rU'), #example.par
-                        help="inputfile of library-wise parameters, required"),
+												help="inputfile of library-wise parameters, required"),
 	parser.add_argument('reffile', metavar='reffile', type=argparse.FileType('rU'), #example.fasta
-                        help="inputfile of ref file(s), required"),
+												help="inputfile of ref file(s), required"),
 	parser.add_argument('-m', '--metafile', dest='metafile', type=argparse.FileType('rU'), #example.meta
-                        help="inputfile of meta specification")
-	parser.add_argument('-v', '--varfile', dest='varfile', type=argparse.FileType('rU'),  #example.var/op
-                        help="inputfile of variant specification")
+												help="inputfile of meta specification")
+	parser.add_argument('-v', '--varfile', dest='varfile', type=argparse.FileType('rU'),	#example.var/op
+												help="inputfile of variant specification")
 	parser.add_argument('-b', '--bamfile', dest='inbamfilenames', #in1.bam,in2.bam,in3.bam
-                        help="inputfile of library-wise bam file(s)")
+												help="inputfile of library-wise bam file(s)")
 	parser.add_argument('-o', '--oprefix', dest='oprefix', default=None, #output1,output2,output3,...
-                        help="prefix for output files")
+												help="prefix for output files")
 	parser.add_argument('-y', '--nploid', dest='nploid', default=2, type=int,
-                        help="genome ploidity (default=2)")
+												help="genome ploidity (default=2)")
 	parser.add_argument('-f', '--plansize', dest='plansize', default=100000, type=int,
-                        help="palnsize + ligation*2 is the grain size for genome planning, (default=100000bp)")
+												help="palnsize + ligation*2 is the grain size for genome planning, (default=100000bp)")
 	parser.add_argument('-g', '--nligation', dest='nligation', default=2000, type=int,
-                        help="genome trunk ligation (default=2000bp)")
+												help="genome trunk ligation (default=2000bp)")
 	parser.add_argument('-n', '--nprocs', dest='nprocs', default=1, type=int,
-                        help="split into multiple processes (default=1)")
+												help="split into multiple processes (default=1)")
 	parser.add_argument('--layout', action='store_true', dest='layout', default=False, help="dry run to layout")
+	parser.add_argument('--outbam', action='store_true', dest='outbam', default=False, help="wet run to bam")
 	args = parser.parse_args()
 	main(args)
 
@@ -996,14 +1210,14 @@ if __name__ == '__main__':
 #sv_values= info_values + format_values + alt_values + filter_values
 #
 #def sample_meta(id, genomes, mixture, desc):
-#  template=['##SAMPLE=<ID=%s,Genomes=%s,Mixture=%s,Description="%s">'] * len(id)
-#  return "\n".join( [ template[i] % (id[i], genomes[i], mixture[i], desc[i]) for i in range(0,len(id)) ] )
+#	template=['##SAMPLE=<ID=%s,Genomes=%s,Mixture=%s,Description="%s">'] * len(id)
+#	return "\n".join( [ template[i] % (id[i], genomes[i], mixture[i], desc[i]) for i in range(0,len(id)) ] )
 #
 #def contig_meta(id, length, md5, species):
-#  template=['##contig=<ID=%s,length=%s,md5=%s,species="%s">'] * len(id)
+#	template=['##contig=<ID=%s,length=%s,md5=%s,species="%s">'] * len(id)
 #	return "\n".join( [ template[i] % (id[i], length[i], md5[i], species[i]) for i in range(0,len(id)) ] )
 #
 #def call_meta(keys, values, program="mutforge"):
-#  keys.append(["fileformat","fileDate","source"])
+#	keys.append(["fileformat","fileDate","source"])
 #	values.append(["VCFv4.1",time.ctime(),program)])
-#  return "\n".join([ '##'+key+'='+value for key,value in izip(keys,values) ])
+#	return "\n".join([ '##'+key+'='+value for key,value in izip(keys,values) ])
