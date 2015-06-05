@@ -48,6 +48,7 @@ def deovlpvar(dic,maxdeovlp=2):
 	nowdeovlp=0; 
 	varlist=copy.deepcopy(dic['varlist'])
 	vartab=var2bed(Bunch(dic)) #vartab is a BedTool
+	print vartab
 	while chkvar(vartab) != True and nowdeovlp<maxdeovlp: 
 		varlist=copy.deepcopy(dic['varlist'])
 		ovlptab=vartab.intersect(vartab,c=True,f=0).to_dataframe(names=varbed_names+["ovlap"]) 
@@ -174,15 +175,18 @@ def main(args):
 		dic['varfile'] = varfile
 		varlist = file2var(Bunch(dic))
 		dic['varlist'] = varlist
+		dic['varlist'] = len(varlist)
 
-	varlist=deovlpvar(dic); dic['varcnt']=len(varlist); dic['varlist']=varlist; vartab=var2bed(Bunch(dic))
-	assert chkvar(vartab) == True, "==Warn: varfile still contains self overlaps, which is not allowed, bail out"
+	#NOTE: we cannot allow deovlpvar here bc. varlist may well contain overlaps due to hetero zygosity
+	#varlist=deovlpvar(dic); dic['varcnt']=len(varlist); dic['varlist']=varlist; vartab=var2bed(Bunch(dic))
+	#assert chkvar(vartab) == True, "==Warn: varfile still contains self overlaps, which is not allowed, bail out"
+	vartab=var2bed(Bunch(dic))
 	var2bed(Bunch(dic))
+	print "done var2bed"
 
 	if layout:
-		print "done layout only"
+		print "done layout only, now quit"
 		quit()
-	print "done var2bed"
 	
 	if runmode==1 or runmode==3:
 		dic['parlist'] = parlist
@@ -194,7 +198,9 @@ def main(args):
 		inbamfilenames = args.inbamfilenames.split(':')
 		var2bs(Bunch(dic)) # use bam surgeon, not implemented yet
 
-	return None #done
+	print "done mutforge"
+
+	return None #all done
 
 def var2bs(bun):
 	print "this part will use bamsurgeon, it has not been implemented yet"; quit()
@@ -282,6 +288,7 @@ def var2wgs(bun):
 	pool = Pool(processes=int(nprocs))
 	bedbams=[]
 	bedbams=pool.map(fakebam,hapiter,1)
+	print "done fakebam"
 	#for hapit in hapiter:
 	#	bedbams.append(fakebam(hapit))
 
@@ -312,14 +319,17 @@ def var2wgs(bun):
 		sbam = '.'.join([oprefix,libnames[lib]])
 		tbam = tempfile.NamedTemporaryFile('w',delete=False).name
 		sort_cmd = "samtools sort %s %s" % (mergebam(libbams[lib],tbam), sbam)
-		print sort_cmd #
+		print >>sys.stderr, sort_cmd #
 		runcmd(sort_cmd)
 		fbam[lib] = sbam+".bam" #post processing: librarywise merging bams
+
+	print "done merge to final bam"
+
 	return fbam
 
 def fakebam(hapit): # makebam from a pair of seqs of representing the original and sved haplotype
 	hap=hapit[0]; hapfas=hapit[1]; nligation=hapit[2]; parlist=hapit[3]; reffile=hapit[4]; nploid=hapit[5]; bed=hapit[8];
-	print "processing %d out of %d regions" % (hapit[6],hapit[7])
+	print >>sys.stderr, "processing %d out of %d regions" % (hapit[6],hapit[7])
 	seq0=SeqRecord(Seq(pysam.Fastafile(hapfas).fetch(bed[0],int(bed[1])+1,int(bed[2])), generic_dna),id=bed[0], name="", description="")
 	seq1=seq0
 	#CHR ST	ED	VID	MID	FREQ	DEL	INS
@@ -347,7 +357,7 @@ def fakebam(hapit): # makebam from a pair of seqs of representing the original a
 		bam0 = runwgs(parlist,nligation,reffile,nploid,[seq0],lib,freq0)
 		bam1 = runwgs(parlist,nligation,reffile,nploid,[seq1],lib,freq)
 		bams[lib] = mergebam([bam0,bam1],tempfile.NamedTemporaryFile('w',delete=False).name)
-	print "processed %d out of %d regions" % (hapit[6],hapit[7])
+	print >>sys.stderr, "processed %d out of %d regions" % (hapit[6],hapit[7])
 	return [hap,bams]
 
 def runwgs(parlist,nligation,reffile,nploid,seq,lib,freq): #create bam file for 1 library given seq and freq
