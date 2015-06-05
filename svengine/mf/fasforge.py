@@ -137,6 +137,7 @@ def var2seq(brpt,reffile,nligation,oprefix): #assume varbed is checked for nonov
 	return seq
 
 def main(args):
+	outbam = args.outbam
 	nprocs = args.nprocs
 	varfile = args.varfile
 	metafile = args.metafile
@@ -178,7 +179,7 @@ def main(args):
 	#metastr='\n'.join([ "\t".join(['FINS',str(2),'adeno.fna,'+inssize,'fix_1','fix_1','fix_1','fix_1','fix_1' ]),
 	#					"\t".join(['DINS',str(2),'fix_100_200','fix_1','fix_1','fix_1','fix_1','fix_1' ]) ])
 	varlist = collections.OrderedDict()
-	dic={'nligation':nligation,'varlist':varlist,'oprefix':oprefix,'reffile':reffile,'nploid':nploid,'plansize':plansize,'varcnt':0,'edgesize':edgesize,'gaptab':gaptab,'varfile':varfile}
+	dic={'nligation':nligation,'varlist':varlist,'oprefix':oprefix,'reffile':reffile,'nploid':nploid,'plansize':plansize,'varcnt':0,'edgesize':edgesize,'gaptab':gaptab,'varfile':varfile,'parfile':parfile,'parlist':parlist,'nprocs':nprocs}
 	print "runmode=", runmode
 	dic['hapseq']=[pysam.Fastafile(reffile.name)];
 
@@ -213,7 +214,7 @@ def main(args):
 
 	mf.var2file(mf.Bunch(dic))
 	#read in bedpe to generate varlist
-	#now we need to check whether the  sv has been correctly inserted
+	#now we need to check whether the	sv has been correctly inserted
 	#we also need to check whether the position is properly selected 
 	brpt=collections.OrderedDict()
 	for key in varlist.keys():
@@ -221,7 +222,7 @@ def main(args):
 		if brpt.get(var[4],None) == None:
 			brpt[var[4]] = collections.OrderedDict({var[5]:var})
 		else:
-			brpt[var[4]][var[5]]=var  #brpt[chr][pos]
+			brpt[var[4]][var[5]]=var	#brpt[chr][pos]
 	ref = pysam.Fastafile(reffile.name)
 	seq0 = [ SeqRecord(Seq(ref.fetch(ref.references[i],0,ref.lengths[i]) ),id=ref.references[i],name=ref.references[i],description=ref.references[i]) for i in xrange(0,ref.nreferences) ]
 	seq1 = var2seq(brpt,reffile,nligation,oprefix)
@@ -238,46 +239,70 @@ def main(args):
 			pariter.append([parlist,nligation,reffile.name,nploid,seq0,lib,freq1[fi],seq0,seq1,lib,oprefix])
 
 	pool = Pool(processes=int(nprocs))
-	bedbams=[]
-	bedbams=pool.map(makebam,pariter,1)
+	#bedbams=[]
+	#bedbams=pool.map(makebam,pariter,1)
+	ffq=[]
+	ffq=pool.map(makefq,pariter,1)
+	print ffq
+	print "done var2fq", time.time()-starttime, " seconds"
+
+	if outbam:
+		fbam = mf.fq2bam(ffq,mf.Bunch(dic)) #FIXME: this has to be implemented
+		print fbam
+		print "done fq2bam", time.time()-starttime, " seconds"
 	
 	return None
 
 def makebam(parit):		
 	print "processing lib %s freq %s regions" % (str(parit[5]),str(parit[6]))
-	parlist=parit[0]; nligation=parit[1]; rname=parit[2]; nploid=parit[3]; seq0=parit[4]; lib=parit[5]; fq1=parit[6]; fq0=1-fq1; seq0=parit[7]; seq1=parit[8]; lib=parit[9]; oprefix=parit[10]
+	parlist=parit[0]; nligation=parit[1]; rname=parit[2]; nploid=parit[3]; seq0=parit[4]; lib=parit[5]; freq1=parit[6]; freq0=1-freq1; seq0=parit[7]; seq1=parit[8]; lib=parit[9]; oprefix=parit[10]
 	libnames=json.loads(parlist.get('xwgsim', 'libnames'))
-	bam0 = mf.runwgs(parlist,nligation,rname,nploid,seq0,lib,fq0)
-	bam1 = mf.runwgs(parlist,nligation,rname,nploid,seq1,lib,fq1)
+	bam0 = mf.runwgs(parlist,nligation,rname,nploid,seq0,lib,freq0)
+	bam1 = mf.runwgs(parlist,nligation,rname,nploid,seq1,lib,freq1)
 	#print [bam0,bam1]
 	bam = mf.mergebam([bam0,bam1],oprefix+"."+libnames[lib])
 	print "done lib %s freq %s regions" % (str(parit[5]),str(parit[6]))
 	return bam
 
+def makefq(parit):		
+	print "processing lib %s freq %s regions" % (str(parit[5]),str(parit[6]))
+	parlist=parit[0]; nligation=parit[1]; rname=parit[2]; nploid=parit[3]; seq0=parit[4]; lib=parit[5]; freq1=parit[6]; freq0=1-freq1; seq0=parit[7]; seq1=parit[8]; lib=parit[9]; oprefix=parit[10]
+	libnames = json.loads(parlist.get('xwgsim', 'libnames'))
+	wgs0 = mf.fqwgs(parlist,nligation,rname,nploid,seq0,lib,freq0)
+	wgs1 = mf.fqwgs(parlist,nligation,rname,nploid,seq1,lib,freq1)
+	#bam0 = mf.runwgs(parlist,nligation,rname,nploid,seq0,lib,freq0)
+	#bam1 = mf.runwgs(parlist,nligation,rname,nploid,seq1,lib,freq1)
+	#print [bam0,bam1]
+	ffq = mf.mergefq([wgs0,wgs1],oprefix+"."+libnames[lib])
+	print "done lib %s freq %s regions" % (str(parit[5]),str(parit[6]))
+	return ffq
+
 def run():
 	parser = argparse.ArgumentParser(description="spike-in mutations to fasta files, \
-                                                  we insert mutations into a provided reference \
-                                                  this script is haplotype insensitive and ligation less")
+																									we insert mutations into a provided reference \
+																									this script is haplotype insensitive and ligation less")
 	parser.add_argument('gapfile', metavar='gapfile', type=argparse.FileType('rU'), #example.bed
-                        help="inputfile of gap or other banned regions, required")
+												help="inputfile of gap or other banned regions, required")
 	parser.add_argument('parfile', metavar='parfile', type=argparse.FileType('rU'), #example.par
-                        help="inputfile of library-wise parameters, required"),
+												help="inputfile of library-wise parameters, required"),
 	parser.add_argument('reffile', metavar='reffile', type=argparse.FileType('rU'), #example.fasta
-                        help="inputfile of ref file(s), required"),
+												help="inputfile of ref file(s), required"),
 	parser.add_argument('-m', '--metafile', dest='metafile', type=argparse.FileType('rU'), #example.meta
-                        help="inputfile of meta specification")  # variants to be randomly added
-	parser.add_argument('-v', '--varfile', dest='varfile', type=argparse.FileType('rU'),  #example.var/op
-                        help="inputfile of variant specification") # prespecified variants, bedpe format or others
+												help="inputfile of meta specification")	# variants to be randomly added
+	parser.add_argument('-v', '--varfile', dest='varfile', type=argparse.FileType('rU'),	#example.var/op
+												help="inputfile of variant specification") # prespecified variants, bedpe format or others
 	parser.add_argument('-o', '--oprefix', dest='oprefix', default=None, #output1,output2,output3,...
-                        help="prefix for output files")
+												help="prefix for output files")
 	parser.add_argument('-f', '--plansize', dest='plansize', type=int, default=100000,
-                        help="palnsize is the grain size for genome planning, nligation=0 here (default=100bp)")
+												help="palnsize is the grain size for genome planning, nligation=0 here (default=100bp)")
 	parser.add_argument('-q', '--mixfreq', dest='mixfreq', default="1",
-                        help="generated spikein-in mixing frequency, homozygous=1")
+												help="generated spikein-in mixing frequency, homozygous=1")
 	parser.add_argument('-n', '--nprocs', dest='nprocs', type=int, default=1,
-                        help="split into multiple processes (default=1)")
+												help="split into multiple processes (default=1)")
 	parser.add_argument('-l', '--layout', dest='layout', action='store_true', default=False,
-                        help="only dry layout (default=False)")
+												help="only dry layout (default=False)")
+	parser.add_argument('--outbam', action='store_true', dest='outbam', default=False, 
+												help="wet run to bam")
 	args = parser.parse_args()
 	main(args)
 

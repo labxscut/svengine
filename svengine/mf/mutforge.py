@@ -48,7 +48,7 @@ def deovlpvar(dic,maxdeovlp=2):
 	nowdeovlp=0; 
 	varlist=copy.deepcopy(dic['varlist'])
 	vartab=var2bed(Bunch(dic)) #vartab is a BedTool
-	print vartab
+	#print vartab
 	while chkvar(vartab) != True and nowdeovlp<maxdeovlp: 
 		varlist=copy.deepcopy(dic['varlist'])
 		ovlptab=vartab.intersect(vartab,c=True,f=0).to_dataframe(names=varbed_names+["ovlap"]) 
