@@ -299,7 +299,7 @@ def run():
 												help="generated spikein-in mixing frequency, homozygous=1")
 	parser.add_argument('-n', '--nprocs', dest='nprocs', type=int, default=1,
 												help="split into multiple processes (default=1)")
-	parser.add_argument('-l', '--layout', dest='layout', action='store_true', default=False,
+	parser.add_argument('--layout', dest='layout', action='store_true', default=False,
 												help="only dry layout (default=False)")
 	parser.add_argument('--outbam', action='store_true', dest='outbam', default=False, 
 												help="wet run to bam")
