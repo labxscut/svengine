@@ -135,7 +135,7 @@ def var2seq(brpt,reffile,nligation,oprefix): #assume varbed is checked for nonov
 		#print "new:",len(SeqRecord( Seq(''.join([str(s) for s in seg]), generic_dna), id=rname, name=rname, description=oprefix+"."+rname ) )
 		seq.append( SeqRecord( Seq(''.join([str(s) for s in seg]), generic_dna), id=rname, name=rname, description=oprefix+"."+rname ) )
 	SeqIO.write(seq,oprefix+".fnv",'fasta')
-	return seq
+	return { 'filename':oprefix+".fnv", 'seq':seq }
 
 def main(args):
 	outbam = args.outbam
@@ -225,8 +225,10 @@ def main(args):
 		else:
 			brpt[var[4]][var[5]]=var	#brpt[chr][pos]
 	ref = pysam.Fastafile(reffile.name)
-	seq0 = [ SeqRecord(Seq(ref.fetch(ref.references[i],0,ref.lengths[i]) ),id=ref.references[i],name=ref.references[i],description=ref.references[i]) for i in xrange(0,ref.nreferences) ]
+	seq0 = { 'filename':reffile.name, 'seq':[ SeqRecord(Seq(ref.fetch(ref.references[i],0,ref.lengths[i]) ),id=ref.references[i],name=ref.references[i],description=ref.references[i]) for i in xrange(0,ref.nreferences) ] }
 	seq1 = var2seq(brpt,reffile,nligation,oprefix)
+	print "done var2seq", time.time()-starttime, " seconds" 
+
 	nlibrary=parlist.getint('xwgsim', 'nlibrary')
 	bams = [None] * nlibrary
 
@@ -239,11 +241,14 @@ def main(args):
 		for fi in range(0,len(freq1)):
 			pariter.append([parlist,nligation,reffile.name,nploid,seq0,lib,freq1[fi],seq0,seq1,lib,oprefix])
 
-	pool = Pool(processes=int(nprocs))
-	#bedbams=[]
-	#bedbams=pool.map(makebam,pariter,1)
+	#NOTE: debug code
 	ffq=[]
-	ffq=pool.map(makefq,pariter,1)
+	if nprocs<2:
+		for parit in pariter:
+			ffq.append(makefq(parit))
+	else:
+		pool = Pool(processes=int(nprocs))
+		ffq=pool.map(makefq,pariter,1)
 	print ffq
 	print "done var2fq", time.time()-starttime, " seconds"
 
@@ -267,7 +272,7 @@ def makebam(parit):
 
 def makefq(parit):		
 	print "processing lib %s freq %s regions" % (str(parit[5]),str(parit[6]))
-	parlist=parit[0]; nligation=parit[1]; rname=parit[2]; nploid=parit[3]; seq0=parit[4]; lib=parit[5]; freq1=parit[6]; freq0=1-freq1; seq0=parit[7]; seq1=parit[8]; lib=parit[9]; oprefix=parit[10]
+	parlist=parit[0]; nligation=parit[1]; rname=parit[2]; nploid=parit[3]; lib=parit[5]; freq1=parit[6]; freq0=1-freq1; seq0=parit[7]; seq1=parit[8]; lib=parit[9]; oprefix=parit[10] #seq0=parit[4];
 	libnames = json.loads(parlist.get('xwgsim', 'libnames'))
 	wgs0 = mf.fqwgs(parlist,nligation,rname,nploid,seq0,lib,freq0)
 	wgs1 = mf.fqwgs(parlist,nligation,rname,nploid,seq1,lib,freq1)
@@ -275,7 +280,7 @@ def makefq(parit):
 	#bam1 = mf.runwgs(parlist,nligation,rname,nploid,seq1,lib,freq1)
 	#print [bam0,bam1]
 	ffq = mf.mergefq([wgs0,wgs1],oprefix+"."+libnames[lib])
-	print "done lib %s freq %s regions" % (str(parit[5]),str(parit[6]))
+	print "done lib %s freq %s" % (str(parit[5]+1),str(parit[6])), time.time()-starttime, " seconds"
 	return ffq
 
 def run():

@@ -169,6 +169,7 @@ def main(args):
 		varlist,varcnt = makevar(Bunch(dic),metatab)
 		dic['varlist']=varlist
 		dic['varcnt']=varcnt
+		#print "can get here"
 		
 		var2file(Bunch(dic))
 		print "done var2file"
@@ -193,6 +194,7 @@ def main(args):
 	if runmode==1 or runmode==3:
 		dic['parlist'] = parlist
 		ffq = var2fq(Bunch(dic))
+		print ffq
 		print "done var2fq", time.time()-starttime, " seconds"
 
 		if outbam:
@@ -307,10 +309,21 @@ def var2wgs(bun):
 	#for it in hapiter:
 	#	print it
 
-	pool = Pool(processes=int(nprocs))
-	bedbams=[]
-	bedbams=pool.map(fakebam,hapiter,1)
-	print "done fakebam"
+	#NOTE: debug code for series execution
+	bedbams = []
+	if nprocs<2:
+		for hapit in hapiter:
+			bedbams.append(fakebam(hapit))
+	else:
+		pool = Pool(processes=int(nprocs))
+		bedbams = pool.map(fakebam,hapiter,1)
+	print bedbams
+	print "done fakebam", 	time.time()-starttime, " seconds"	
+
+	#pool = Pool(processes=int(nprocs))
+	#bedbams=[]
+	#bedbams=pool.map(fakebam,hapiter,1)
+	#print "done fakebam"
 	#for hapit in hapiter:
 	#	bedbams.append(fakebam(hapit))
 
@@ -405,14 +418,15 @@ def var2fq(bun):
 	#	print it
 
 	#NOTE: debug code for series execution
-	#for hapit in hapiter:
-	#	fakefq(hapit) 
-	#quit()
-
-	pool = Pool(processes=int(nprocs))
 	bedfqs = []
-	bedfqs = pool.map(fakefq,hapiter,1)
-	print "done fakefq"
+	if nprocs<2:
+		for hapit in hapiter:
+			bedfqs.append(fakefq(hapit))
+	else:
+		pool = Pool(processes=int(nprocs))
+		bedfqs = pool.map(fakefq,hapiter,1)
+	print bedfqs
+	print "done fakefq", 	time.time()-starttime, " seconds"	
 
 	libfqs = {} #fqfiles to be merged: [ [hap1lib1, hap1lib2, ...], [hap2lib1, hap2lib2, ...] ]
 	#hap1lib1=[hap1lib1fq1,hap1lib1fq2]
@@ -466,9 +480,14 @@ def fakefq(hapit): # makebam from a pair of seqs of representing the original an
 	return [hap,fqs]
 
 def fqwgs(parlist,nligation,reffile,nploid,seq,lib,freq): #create bam file for 1 library given seq and freq
-	fa=tempfile.NamedTemporaryFile('w',delete=False).name
-	SeqIO.write(seq,fa,'fasta')
-	seql = sum( [ len(s) for s in seq ] ) #len of all seqs
+	#passing both filename and contents to save space
+	if(type(seq)==type({})):
+		fa=seq['filename']; seqs=seq['seq']
+	else:
+		fa=tempfile.NamedTemporaryFile('w',delete=False).name
+		SeqIO.write(seq,fa,'fasta')
+		seqs=seq
+	seql = sum( [ len(s) for s in seqs ] ) #len of all seqs
 	libnames=json.loads(parlist.get('xwgsim', 'libnames'))
 	coverage=json.loads(parlist.get('xwgsim', 'coverage'))
 	isize=json.loads(parlist.get('xwgsim', 'isize'))
@@ -812,10 +831,8 @@ def makevar(bun,metatab):
 	varcnt = bun.varcnt
 	print "input varcnt", varcnt												#total number of input vars
 	trunks = maketrunks(bun)	 													#trunks is in bed format
-	#print "OK20"
 	trunks,stretches = blocktrunks(trunks,gaptab)				#block trunks that not usable
 	trunks=trunks.to_dataframe()
-	#print "OK21"
 	# seqfile,sizestring #random seq from seqfile using sizestring
 	# seqfile #use seqfile exactly
 	metacnt={}; delvec=set(); finsvec=set(); dinsvec=set(); dupvec=set(); travec=set(); idupvec=set(); invvec=set(); itravec=set(); 
