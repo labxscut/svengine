@@ -16,6 +16,7 @@ try:
 	import mf.mutforge as mf #in debugging
 except ImportError:
 	import mutforge as mf #in production
+starttime=time.time()
 
 #def lumpy2var(bp,ref,nligation):
 #	idx=1; delidx=1; insidx=1; traidx=1; invidx=1; dupidx=1; varlist=collections.OrderedDict()
@@ -307,6 +308,5 @@ def run():
 	main(args)
 
 if __name__ == '__main__':
-	starttime=time.time()
 	run()
 	print "total runtime: ", time.time()-starttime, " seconds"

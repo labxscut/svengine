@@ -12,6 +12,7 @@ from Bio.SeqRecord import SeqRecord
 from Bio.Alphabet import generic_dna
 import shelve
 
+starttime=time.time()
 io_quote = "this is for end user"
 code_quote = 'this is for program'
 maxrefnum = 24 			#for debugging and human, should set to a big number afterwards
@@ -490,8 +491,14 @@ def fqwgs(parlist,nligation,reffile,nploid,seq,lib,freq): #create bam file for 1
 				#mbam=tempfile.NamedTemporaryFile('w',delete=False).name
 				#print (misize,misizesd,mnread,rl1[libn],rl2[libn],fa,fq1,fq2)
 				wgs_cmd="xwgsim -h -d %d -s %d -N %d -1 %d -2 %d -l %d %s %s %s " % (misize,misizesd,mnread,rl1[libn],rl2[libn],nligation,fa,fq1,fq2)
-				print wgs_cmd
+				print >>sys.stderr, wgs_cmd
 				runcmd(wgs_cmd) #fastq file
+				gzfq1_cmd="gzip %s" % fq1
+				gzfq2_cmd="gzip %s" % fq2
+				print >>sys.stderr, gzfq1_cmd
+				print >>sys.stderr, gzfq2_cmd
+				runcmd(gzfq1_cmd) #fastq file
+				runcmd(gzfq2_cmd) #fastq file
 				#fq3,fq4=filterfq(fq1,fq2,nligation,len(seq)-nligation) #half ligation region reads
 				#print (fq1,fq2,fq3,fq4,nligation,len(seq)-nligation)
 				#bwasw_cmd="bwa mem -t 4 %s %s %s | samtools view -bS -o %s - " % (reffile,fq1,fq2,mbam+".bam") #it auto gives bam if not provided
@@ -499,7 +506,7 @@ def fqwgs(parlist,nligation,reffile,nploid,seq,lib,freq): #create bam file for 1
 				#runcmd(bwasw_cmd)
 				#TODO: for tmpfile in (fq1,fq2,fq3,fq4): os.remove(tmpfile)
 				#mode[m]=mbam+".bam"
-				mode[m]=[fq1,fq2]
+				mode[m]=[fq1+".gz",fq2+".gz"]
 			else:
 				mode[m]=[None,None]
 	libfq = mergefq(mode,tempfile.NamedTemporaryFile('w',delete=False).name)
@@ -510,7 +517,7 @@ def mergefq(fqs,oprefix):
 	fq1s = [x[0] for x in fqs if x[0] is not None] #remove empty components
 	fq2s = [x[1] for x in fqs if x[1] is not None] #remove empty components
 	assert len(fq1s)==len(fq2s)	 #all reads have to be properly paired
-	nfqs = len(fq1s); ffq1=oprefix+".fq1"; ffq2=oprefix+".fq2";
+	nfqs = len(fq1s); ffq1=oprefix+".fq1.gz"; ffq2=oprefix+".fq2.gz";
 	if nfqs==1:
 		shutil.move(fq1s[0],ffq1) #if merge only one file, just move it to new name
 		shutil.move(fq2s[0],ffq2) #if merge only one file, just move it to new name
@@ -531,8 +538,8 @@ def mergefq(fqs,oprefix):
 				cfq2 = mfq2
 				mfq1 = tempfile.NamedTemporaryFile('w',delete=False).name
 				mfq2 = tempfile.NamedTemporaryFile('w',delete=False).name
-			merge1_cmd = "cat %s %s >%s " % ( cfq1, " ".join([fq1 for fq1 in fq1s[i*4000:min((i+1)*4000,nfqs)]]), mfq1 )
-			merge2_cmd = "cat %s %s >%s " % ( cfq2, " ".join([fq2 for fq2 in fq2s[i*4000:min((i+1)*4000,nfqs)]]), mfq2 )
+			merge1_cmd = "zcat %s %s | gzip -c >%s " % ( cfq1, " ".join([fq1 for fq1 in fq1s[i*4000:min((i+1)*4000,nfqs)]]), mfq1 )
+			merge2_cmd = "zcat %s %s | gzip -c >%s " % ( cfq2, " ".join([fq2 for fq2 in fq2s[i*4000:min((i+1)*4000,nfqs)]]), mfq2 )
 			print merge1_cmd #unsorted
 			print merge2_cmd #unsorted
 			runcmd(merge1_cmd)
@@ -1104,7 +1111,6 @@ def run():
 	main(args)
 
 if __name__ == '__main__':
-	starttime=time.time()
 	run()
 	print "total runtime: ", time.time()-starttime, " seconds"
 
