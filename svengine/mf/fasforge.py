@@ -150,6 +150,13 @@ def main(args):
 	plansize = args.plansize
 	edgesize = 100000
 	layout = args.layout
+	tempfile.tempdir = args.tmpdir
+	try:
+		os.mkdir(tempfile.tempdir)
+	except:
+		print >>sys.stderr, tempfile.tempdir, "error!, either it exists or cann't be created! please change path"
+	print "tmpdir=", tempfile.tempdir
+
 	runmode=0 #1 meta, 2 var, 3 var+meta
 	if varfile!=None and metafile!=None:
 		runmode=3;
@@ -256,6 +263,9 @@ def main(args):
 		fbam = mf.fq2bam(ffq,mf.Bunch(dic)) #FIXME: this has to be implemented
 		print fbam
 		print "done fq2bam", time.time()-starttime, " seconds"
+
+	shutil.rmtree(tempfile.tempdir) #clean temp files
+	print "done fasforge"
 	
 	return None
 
@@ -305,6 +315,8 @@ def run():
 												help="generated spikein-in mixing frequency, homozygous=1")
 	parser.add_argument('-n', '--nprocs', dest='nprocs', type=int, default=1,
 												help="split into multiple processes (default=1)")
+	parser.add_argument('-d', '--tmpdir', dest='tmpdir', default=os.path.join(os.environ['HOME'],'svetmp'),
+												help="root dir for keeping temporary files")
 	parser.add_argument('--layout', dest='layout', action='store_true', default=False,
 												help="only dry layout (default=False)")
 	parser.add_argument('--outbam', action='store_true', dest='outbam', default=False, 

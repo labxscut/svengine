@@ -104,7 +104,12 @@ def main(args):
 	nprocs = args.nprocs
 	layout = args.layout
 	outbam = args.outbam
-	print "successfully debugging loading"
+	tempfile.tempdir = args.tmpdir
+	try:
+		os.mkdir(tempfile.tempdir)
+	except:
+		print >>sys.stderr, tempfile.tempdir, "error!, either it exists or cann't be created! please change path"
+	print "tmpdir=", tempfile.tempdir
 
 	runmode=0 #1 fasta+meta, 2 bam+meta, 3 fasta+var, 4 bam+var
 	if args.inbamfilenames!=None and args.metafile!=None:
@@ -206,6 +211,7 @@ def main(args):
 		inbamfilenames = args.inbamfilenames.split(':')
 		var2bs(Bunch(dic)) # use bam surgeon, not implemented yet
 
+	shutil.rmtree(tempfile.tempdir) #clean temp files
 	print "done mutforge"
 
 	return None #all done
@@ -1122,6 +1128,8 @@ def run():
 												help="genome trunk ligation (default=2000bp)")
 	parser.add_argument('-n', '--nprocs', dest='nprocs', default=1, type=int,
 												help="split into multiple processes (default=1)")
+	parser.add_argument('-d', '--tmpdir', dest='tmpdir', default=os.path.join(os.environ['HOME'],'svetmp'),
+												help="root dir for keeping temporary files")
 	parser.add_argument('--layout', action='store_true', dest='layout', default=False, help="dry run to layout")
 	parser.add_argument('--outbam', action='store_true', dest='outbam', default=False, help="wet run to bam")
 	args = parser.parse_args()
