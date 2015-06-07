@@ -17,7 +17,7 @@ devnull=open(os.devnull, 'w')
 io_quote = "this is for end user"
 code_quote = 'this is for program'
 maxrefnum = 24 			#for debugging and human, should set to a big number afterwards
-burnin = 100000		#burnin region for each chromosome
+#burnin = 100000		  #burnin region for each chromosome, to avoid N rich regions
 varfile_names = ['#VID','MID','VARFREQ','VARHAP','VARCHR','VARPOS','VARDEL','VARDELSIZE','VARINS','VARINSSEQ(HAP/SEQFILE,CHR:START-END,COPY,REVCOMP)']
 varbed_names = ['#CHROM','START','END','VID','MID','VARFREQ','VARHAP','VARCHR','VARPOS','VARDEL','VARDELSIZE','VARINS','VARINSSEQ(HAP/SEQFILE,CHR:START-END,COPY,REVCOMP)']
 
@@ -134,6 +134,7 @@ def main(args):
 	nprocs = args.nprocs
 	layout = args.layout
 	outbam = args.outbam
+	burnin = args.burnin
 	tempfile.tempdir = args.tmpdir
 	try:
 		os.mkdir(tempfile.tempdir)
@@ -196,8 +197,10 @@ def main(args):
 	dic={} #common dictionary interface for passing parameters
 	for i in ('hapseq','gaptab','reffile','plansize','nligation','nploid','oprefix','nprocs','edgesize'):
 		dic[i] = locals()[i]
+	dic['burnin'] = burnin
 
 	print "entering runmode", runmode
+	print dic
 
 	if runmode==1 or runmode==2: #have meta input
 		metatab = CommentedFile(metafile)
@@ -215,7 +218,7 @@ def main(args):
 		dic['varfile'] = varfile
 		varlist = file2var(Bunch(dic))
 		dic['varlist'] = varlist
-		dic['varlist'] = len(varlist)
+		dic['varcnt'] = len(varlist)
 
 	#NOTE: we cannot allow deovlpvar here bc. varlist may well contain overlaps due to hetero zygosity
 	#varlist=deovlpvar(dic); dic['varcnt']=len(varlist); dic['varlist']=varlist; vartab=var2bed(Bunch(dic))
@@ -482,7 +485,6 @@ def var2fq(bun):
 def fakefq(hapit): # makebam from a pair of seqs of representing the original and sved haplotype
 	hap=hapit[0]; hapfas=hapit[1]; nligation=hapit[2]; parlist=hapit[3]; reffile=hapit[4]; nploid=hapit[5]; bed=hapit[8];
 	print >>sys.stderr, "processing %d out of %d regions" % (hapit[6],hapit[7])
-	print "OK0"
 	tmpfas=pysam.Fastafile(hapfas)
 	seq0=SeqRecord(Seq(tmpfas.fetch(bed[0],int(bed[1])+1,int(bed[2])), generic_dna),id=bed[0], name="", description="")
 	tmpfas.close()
@@ -507,7 +509,6 @@ def fakefq(hapit): # makebam from a pair of seqs of representing the original an
 	rl1=json.loads(parlist.get('xwgsim', 'read1'))
 	rl2=json.loads(parlist.get('xwgsim', 'read2'))
 	freq=float(bed[5])
-	print "OK1"
 
 	fqs = [None] * nlibrary
 	for lib in range(0,nlibrary):
@@ -524,7 +525,7 @@ def fakefq(hapit): # makebam from a pair of seqs of representing the original an
 		else:
 			wgs0 = fqwgs(parlist,nligation,reffile,nploid,[seq0],lib,freq0)
 		#print seq1.seq
-		if not goodseq(seq1.seq, nligation, rl): empty1=True #FIXME, these N regions has to be masked
+		if not goodseq(seq1.seq, nligation, rl): empty1=True #FIXME, these N regions has to be masked from input
 		#if len(seq1.seq)<2*nligation+: empty1=True #FIXME, need to force rl1==rl2
 		if empty1:
 			wgs1 = [None, None]
@@ -533,7 +534,6 @@ def fakefq(hapit): # makebam from a pair of seqs of representing the original an
 		fqopre = myTemporaryFile(prefix="fakefq_")
 		#only need the temporary filename here
 		fqs[lib] = mergefq([wgs0,wgs1],fqopre)
-	print "OK2"
 	print >>sys.stderr, "processed %d out of %d regions" % (hapit[6],hapit[7])
 	return [hap,fqs]
 
@@ -885,12 +885,14 @@ def var2bed(bun):
 
 def makevar(bun,metatab):
 	#metatab = bun.metatab
+	#FIXME: this has to be modified to disallow streteching Ns and random selection in similar size
 	gaptab = bun.gaptab
 	hapseq = bun.hapseq
 	nploid = bun.nploid
 	plansize = bun.plansize
 	edgesize = bun.edgesize
 	nligation = bun.nligation
+	burnin = bun.burnin
 	varlist = bun.varlist
 	varcnt = bun.varcnt
 	print "input varcnt", varcnt												#total number of input vars
@@ -1094,6 +1096,7 @@ def maketrunks(bun):
 	hapseq=bun.hapseq
 	plansize=bun.plansize
 	nligation=bun.nligation
+	burnin=bun.burnin
 	trunks = [] # trunk[i].start = sv[i].pos - nligation; trunk[i+1] = trunk[i].start + plansize + 2*ligation
 	for i in xrange(0,min(hapseq[0].nreferences,maxrefnum)):
 		pos=xrange(burnin,hapseq[0].lengths[i]-plansize-2*nligation-burnin,plansize+2*nligation)
@@ -1174,7 +1177,9 @@ def run():
 												help="inputfile of meta specification")
 	parser.add_argument('-v', '--varfile', dest='varfile', type=argparse.FileType('rU'),	#example.var/op
 												help="inputfile of variant specification")
-	parser.add_argument('-b', '--bamfile', dest='inbamfilenames', #in1.bam,in2.bam,in3.bam
+	parser.add_argument('-b', '--burnin', dest='burnin', type=int, default=1000000,
+                        help="burnin is the burnin size for genome planning, excluding ligation buffer (default=100bp)")
+	parser.add_argument('-i', '--bamfile', dest='inbamfilenames', #in1.bam,in2.bam,in3.bam
 												help="inputfile of library-wise bam file(s)")
 	parser.add_argument('-o', '--oprefix', dest='oprefix', default=None, #output1,output2,output3,...
 												help="prefix for output files")

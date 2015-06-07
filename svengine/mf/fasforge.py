@@ -138,6 +138,7 @@ def var2seq(brpt,reffile,nligation,oprefix): #assume varbed is checked for nonov
 	return { 'filename':oprefix+".fnv", 'seq':seq }
 
 def main(args):
+	burnin = args.burnin
 	outbam = args.outbam
 	nprocs = args.nprocs
 	varfile = args.varfile
@@ -189,7 +190,7 @@ def main(args):
 	#metastr='\n'.join([ "\t".join(['FINS',str(2),'adeno.fna,'+inssize,'fix_1','fix_1','fix_1','fix_1','fix_1' ]),
 	#					"\t".join(['DINS',str(2),'fix_100_200','fix_1','fix_1','fix_1','fix_1','fix_1' ]) ])
 	varlist = collections.OrderedDict()
-	dic={'nligation':nligation,'varlist':varlist,'oprefix':oprefix,'reffile':reffile,'nploid':nploid,'plansize':plansize,'varcnt':0,'edgesize':edgesize,'gaptab':gaptab,'varfile':varfile,'parfile':parfile,'parlist':parlist,'nprocs':nprocs}
+	dic={'nligation':nligation,'varlist':varlist,'oprefix':oprefix,'reffile':reffile,'nploid':nploid,'plansize':plansize,'varcnt':0,'edgesize':edgesize,'gaptab':gaptab,'varfile':varfile,'parfile':parfile,'parlist':parlist,'nprocs':nprocs,'burnin':burnin}
 	print "runmode=", runmode
 	dic['hapseq']=[pysam.Fastafile(reffile.name)];
 
@@ -312,7 +313,9 @@ def run():
 	parser.add_argument('-o', '--oprefix', dest='oprefix', default=None, #output1,output2,output3,...
 												help="prefix for output files")
 	parser.add_argument('-f', '--plansize', dest='plansize', type=int, default=100000,
-												help="palnsize is the grain size for genome planning, nligation=0 here (default=100bp)")
+												help="palnsize is the grain size for genome planning, exluding ligation buffer (default=100bp)")
+	parser.add_argument('-b', '--burnin', dest='burnin', type=int, default=1000000,
+												help="burnin is the burnin size for genome planning, excluding ligation buffer (default=100bp)")
 	parser.add_argument('-q', '--mixfreq', dest='mixfreq', default="1",
 												help="generated spikein-in mixing frequency, homozygous=1")
 	parser.add_argument('-n', '--nprocs', dest='nprocs', type=int, default=1,
