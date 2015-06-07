@@ -22,7 +22,8 @@ varfile_names = ['#VID','MID','VARFREQ','VARHAP','VARCHR','VARPOS','VARDEL','VAR
 varbed_names = ['#CHROM','START','END','VID','MID','VARFREQ','VARHAP','VARCHR','VARPOS','VARDEL','VARDELSIZE','VARINS','VARINSSEQ(HAP/SEQFILE,CHR:START-END,COPY,REVCOMP)']
 
 def myTemporaryFile(prefix): #this provides a unique temporary file name only
-	return os.path.join(tempfile.tempdir,prefix+next(tempfile._get_candidate_names()))
+	return os.path.join(tempfile.tempdir,prefix+next(tempfile._get_candidate_names())+"tmp") 
+	#add suffix here to avoid gzip error: already has _z suffix -- unchanged
 
 class CommentedFile:
 	def __init__(self, f, commentstring="#"):
@@ -357,13 +358,6 @@ def var2wgs(bun):
 	print bedbams
 	print "done fakebam", 	time.time()-starttime, " seconds"	
 
-	#pool = Pool(processes=int(nprocs))
-	#bedbams=[]
-	#bedbams=pool.map(fakebam,hapiter,1)
-	#print "done fakebam"
-	#for hapit in hapiter:
-	#	bedbams.append(fakebam(hapit))
-
 	libbams = {} #bamfiles to be merged: [ [hap1lib1, hap1lib2, ...], [hap2lib1, hap2lib2, ...] ]
 	#libcnt0 = 0; libcnt1 = 0
 	for i in xrange(0,len(bedbams)):
@@ -488,14 +482,19 @@ def var2fq(bun):
 def fakefq(hapit): # makebam from a pair of seqs of representing the original and sved haplotype
 	hap=hapit[0]; hapfas=hapit[1]; nligation=hapit[2]; parlist=hapit[3]; reffile=hapit[4]; nploid=hapit[5]; bed=hapit[8];
 	print >>sys.stderr, "processing %d out of %d regions" % (hapit[6],hapit[7])
-	seq0=SeqRecord(Seq(pysam.Fastafile(hapfas).fetch(bed[0],int(bed[1])+1,int(bed[2])), generic_dna),id=bed[0], name="", description="")
+	print "OK0"
+	tmpfas=pysam.Fastafile(hapfas)
+	seq0=SeqRecord(Seq(tmpfas.fetch(bed[0],int(bed[1])+1,int(bed[2])), generic_dna),id=bed[0], name="", description="")
+	tmpfas.close()
 	seq1=seq0
 	#CHR ST	ED	VID	MID	FREQ	DEL	INS
 	if int(bed[6])!=0: #work on deletion
 		seq1.seq=seq1.seq[:nligation]+seq1.seq[nligation+int(bed[6]):];
 	if bed[7]!="None": #work on insertion
 		info = readins(bed[7])
+		tmpfas=pysam.Fastafile(info[0])
 		seqi = SeqRecord(Seq(pysam.Fastafile(info[0]).fetch(info[1],info[2],info[2]+info[3]), generic_dna),id=info[0], name="", description="")
+		tmpfas.close() #reduce open handles
 		#['example.fasta', '22', 25202000, 1000, 2, False]
 		if info[5]:
 			seqi.seq = seqi.seq.reverse_complement();
@@ -505,16 +504,36 @@ def fakefq(hapit): # makebam from a pair of seqs of representing the original an
 		seq1.seq=seq1.seq[:nligation]+seqi.seq+seq1.seq[nligation:]
 	nlibrary=parlist.getint('xwgsim', 'nlibrary')
 	libnames=json.loads(parlist.get('xwgsim', 'libnames'))
+	rl1=json.loads(parlist.get('xwgsim', 'read1'))
+	rl2=json.loads(parlist.get('xwgsim', 'read2'))
 	freq=float(bed[5])
+	print "OK1"
 
 	fqs = [None] * nlibrary
 	for lib in range(0,nlibrary):
-		freq0 = 1-freq
-		wgs0 = fqwgs(parlist,nligation,reffile,nploid,[seq0],lib,freq0)
-		wgs1 = fqwgs(parlist,nligation,reffile,nploid,[seq1],lib,freq)
+		libn=libnames[lib]; rl=min(rl1[libn],rl2[libn])
+		freq0 = 1-freq; empty0=False; empty1=False;
+		# a successful region would be no N in middle + not all N in ligation; goodseq holds if Ns are consecutive
+		def goodseq(seq, nl, rl):
+			gd = nl - seq[:nl].count('N') > rl and nl - seq[(len(seq)-nl):len(seq)].count('N') > rl and len(seq)-2*nl-seq[nl:len(seq)-nl].count('N') > rl
+		#print seq0.seq
+		if not goodseq(seq0.seq, nligation, rl): empty0=True
+		#if len(seq0.seq)<2*nligation+: empty0=True #FIXME, need to force rl1==rl2
+		if empty0:
+			wgs0 = [None, None]
+		else:
+			wgs0 = fqwgs(parlist,nligation,reffile,nploid,[seq0],lib,freq0)
+		#print seq1.seq
+		if not goodseq(seq1.seq, nligation, rl): empty1=True #FIXME, these N regions has to be masked
+		#if len(seq1.seq)<2*nligation+: empty1=True #FIXME, need to force rl1==rl2
+		if empty1:
+			wgs1 = [None, None]
+		else:
+			wgs1 = fqwgs(parlist,nligation,reffile,nploid,[seq1],lib,freq)
 		fqopre = myTemporaryFile(prefix="fakefq_")
 		#only need the temporary filename here
 		fqs[lib] = mergefq([wgs0,wgs1],fqopre)
+	print "OK2"
 	print >>sys.stderr, "processed %d out of %d regions" % (hapit[6],hapit[7])
 	return [hap,fqs]
 
