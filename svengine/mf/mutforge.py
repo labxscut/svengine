@@ -110,6 +110,7 @@ def main(args):
 	except:
 		print >>sys.stderr, tempfile.tempdir, "error!, either it exists or cann't be created! please change path"
 	print "tmpdir=", tempfile.tempdir
+	pybedtools.set_tempdir(tempfile.tempdir)
 
 	runmode=0 #1 fasta+meta, 2 bam+meta, 3 fasta+var, 4 bam+var
 	if args.inbamfilenames!=None and args.metafile!=None:
