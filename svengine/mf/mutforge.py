@@ -13,12 +13,16 @@ from Bio.Alphabet import generic_dna
 import shelve
 
 starttime=time.time()
+devnull=open(os.devnull, 'w')
 io_quote = "this is for end user"
 code_quote = 'this is for program'
 maxrefnum = 24 			#for debugging and human, should set to a big number afterwards
 burnin = 100000		#burnin region for each chromosome
 varfile_names = ['#VID','MID','VARFREQ','VARHAP','VARCHR','VARPOS','VARDEL','VARDELSIZE','VARINS','VARINSSEQ(HAP/SEQFILE,CHR:START-END,COPY,REVCOMP)']
 varbed_names = ['#CHROM','START','END','VID','MID','VARFREQ','VARHAP','VARCHR','VARPOS','VARDEL','VARDELSIZE','VARINS','VARINSSEQ(HAP/SEQFILE,CHR:START-END,COPY,REVCOMP)']
+
+def myTemporaryFile(prefix): #this provides a unique temporary file name only
+	return os.path.join(tempfile.tempdir,prefix+next(tempfile._get_candidate_names()))
 
 class CommentedFile:
 	def __init__(self, f, commentstring="#"):
@@ -70,11 +74,36 @@ def deovlpvar(dic,maxdeovlp=2):
 	return varlist
 	
 def runcmd(cmd):
-	try:
-		subprocess.call(cmd,shell=True,stderr=open('./stderr.txt','a'),stdout=open('./stdout.txt','a'))
+	#try:
+	subprocess.Popen(cmd,shell=True,stderr=devnull,stdout=devnull).communicate() 
+		#FIXME, this is nonblocked, why?
 		#subprocess.call(cmd,shell=True)
-	except OSError:
-		raise Exception("cmd %s didn't run successfully" % cmd)
+	#except OSError:
+	#	raise Exception("cmd %s didn't run successfully" % cmd)
+
+def callcmd(cmd):
+	#try:
+	os.system(cmd)
+		#FIXME, this is nonblocked, why?
+		#subprocess.call(cmd,shell=True)
+	#except OSError:
+	#	raise Exception("cmd %s didn't run successfully" % cmd)
+
+def CountUnique(mylist):
+	h = {}
+	for x in mylist: h[x] = h.get(x, 0) + 1
+	return h
+
+def isint(s):
+	try: int(s); return True;
+	except ValueError: return False;
+
+def locatemin(a):
+	smallest = min(a)
+	return smallest, [index for index, element in enumerate(a) if smallest == element]
+
+def demultiplex(m):
+	return [i for i, x in enumerate([int(x) for x in bin(m)[2:][::-1]]) if x == 1]
 
 def CountUnique(mylist):
 	h = {}
@@ -109,6 +138,7 @@ def main(args):
 		os.mkdir(tempfile.tempdir)
 	except:
 		print >>sys.stderr, tempfile.tempdir, "error!, either it exists or cann't be created! please change path"
+		quit()
 	print "tmpdir=", tempfile.tempdir
 	pybedtools.set_tempdir(tempfile.tempdir)
 
@@ -245,7 +275,7 @@ def fas2bed(fasfile):
 	return pybedtools.BedTool('\n'.join(bed),from_string=True)
 
 def fas2size(fasfile):
-	sizefile = tempfile.NamedTemporaryFile('w',delete=False)
+	sizefile = tempfile.NamedTemporaryFile('w',delete=False,prefix="fasize_")
 	fasseq = pysam.Fastafile(fasfile)
 	size = [ fasseq.references[i]+'\t'+str(fasseq.lengths[i]) for i in range(0,min(fasseq.nreferences,maxrefnum)) ]
 	sizefile.write('\n'.join(size))
@@ -432,7 +462,7 @@ def var2fq(bun):
 	else:
 		pool = Pool(processes=int(nprocs))
 		bedfqs = pool.map(fakefq,hapiter,1)
-	print bedfqs
+	#print bedfqs
 	print "done fakefq", 	time.time()-starttime, " seconds"	
 
 	libfqs = {} #fqfiles to be merged: [ [hap1lib1, hap1lib2, ...], [hap2lib1, hap2lib2, ...] ]
@@ -482,17 +512,20 @@ def fakefq(hapit): # makebam from a pair of seqs of representing the original an
 		freq0 = 1-freq
 		wgs0 = fqwgs(parlist,nligation,reffile,nploid,[seq0],lib,freq0)
 		wgs1 = fqwgs(parlist,nligation,reffile,nploid,[seq1],lib,freq)
-		fqs[lib] = mergefq([wgs0,wgs1],tempfile.NamedTemporaryFile('w',delete=False).name)
+		fqopre = myTemporaryFile(prefix="fakefq_")
+		#only need the temporary filename here
+		fqs[lib] = mergefq([wgs0,wgs1],fqopre)
 	print >>sys.stderr, "processed %d out of %d regions" % (hapit[6],hapit[7])
 	return [hap,fqs]
 
 def fqwgs(parlist,nligation,reffile,nploid,seq,lib,freq): #create bam file for 1 library given seq and freq
 	#passing both filename and contents to save space
+	tmpfa=False #fa is temporary created or constant
 	if(type(seq)==type({})):
-		fa=seq['filename']; seqs=seq['seq']
+		fa=seq['filename']; seqs=seq['seq'] #for fasforge calls
 	else:
-		fa=tempfile.NamedTemporaryFile('w',delete=False).name
-		SeqIO.write(seq,fa,'fasta')
+		fa=myTemporaryFile(prefix="fqwgs_") #this has to be removed
+		tmpfa=True
 		seqs=seq
 	seql = sum( [ len(s) for s in seqs ] ) #len of all seqs
 	libnames=json.loads(parlist.get('xwgsim', 'libnames'))
@@ -504,27 +537,27 @@ def fqwgs(parlist,nligation,reffile,nploid,seq,lib,freq): #create bam file for 1
 	nrdp = seql*coverage[libn]/nploid*freq/(rl1[libn]+rl2[libn])
 	nmode = len(isize[libn])
 	mode = [ None ] * nmode
-	#print "run wgs for:", libn, fa, coverage[libn], freq, nrdp
 	if freq == 0 or nrdp == 0:
 		return [ None, None ]
 	else:
 		for m in range(0,nmode):
 			mden=isize[libn][m][0]; mnread = int(nrdp * mden)
 			if mnread>0:
+				SeqIO.write(seqs,fa,'fasta') #we need this temp fa file
 				misize=isize[libn][m][1]; misizesd=isize[libn][m][2]
-				fq1=tempfile.NamedTemporaryFile('w',delete=False).name
-				fq2=tempfile.NamedTemporaryFile('w',delete=False).name
-				#mbam=tempfile.NamedTemporaryFile('w',delete=False).name
-				#print (misize,misizesd,mnread,rl1[libn],rl2[libn],fa,fq1,fq2)
+				fq1=myTemporaryFile(prefix="fqwgsfq1_")
+				fq2=myTemporaryFile(prefix="fqwgsfq2_")
 				wgs_cmd="xwgsim -h -d %d -s %d -N %d -1 %d -2 %d -l %d %s %s %s " % (misize,misizesd,mnread,rl1[libn],rl2[libn],nligation,fa,fq1,fq2)
 				print >>sys.stderr, wgs_cmd
 				runcmd(wgs_cmd) #fastq file
-				gzfq1_cmd="gzip %s" % fq1
-				gzfq2_cmd="gzip %s" % fq2
+				gzfq1_cmd="gzip %s" % fq1 #  fq1.gz, fq1 auto deleted
+				gzfq2_cmd="gzip %s" % fq2 #  fq2.gz, fq2 auto deleted
 				print >>sys.stderr, gzfq1_cmd
 				print >>sys.stderr, gzfq2_cmd
 				runcmd(gzfq1_cmd) #fastq file
 				runcmd(gzfq2_cmd) #fastq file
+				#clean up
+				if tmpfa: os.remove(fa)
 				#fq3,fq4=filterfq(fq1,fq2,nligation,len(seq)-nligation) #half ligation region reads
 				#print (fq1,fq2,fq3,fq4,nligation,len(seq)-nligation)
 				#bwasw_cmd="bwa mem -t 4 %s %s %s | samtools view -bS -o %s - " % (reffile,fq1,fq2,mbam+".bam") #it auto gives bam if not provided
@@ -535,7 +568,7 @@ def fqwgs(parlist,nligation,reffile,nploid,seq,lib,freq): #create bam file for 1
 				mode[m]=[fq1+".gz",fq2+".gz"]
 			else:
 				mode[m]=[None,None]
-	libfq = mergefq(mode,tempfile.NamedTemporaryFile('w',delete=False).name)
+	libfq = mergefq(mode,myTemporaryFile(prefix="fqwgslibfq_"))
 	#TODO: for tmpfile in mode + [fa]: os.remove(tmpfile)
 	return libfq
 
@@ -552,8 +585,8 @@ def mergefq(fqs,oprefix):
 			if i == 0: #first iteration
 				cfq1 = ""
 				cfq2 = ""
-				mfq1 = tempfile.NamedTemporaryFile('w',delete=False).name
-				mfq2 = tempfile.NamedTemporaryFile('w',delete=False).name
+				mfq1 = myTemporaryFile(prefix="mfq1_")
+				mfq2 = myTemporaryFile(prefix="mfq2_")
 			if i == nfqs/4000: #last iteration
 				if cfq1 != "": cfq1 = mfq1
 				if cfq2 != "": cfq2 = mfq2
@@ -562,14 +595,19 @@ def mergefq(fqs,oprefix):
 			else:
 				cfq1 = mfq1
 				cfq2 = mfq2
-				mfq1 = tempfile.NamedTemporaryFile('w',delete=False).name
-				mfq2 = tempfile.NamedTemporaryFile('w',delete=False).name
+				mfq1 = myTemporaryFile(prefix="mfq1_")
+				mfq2 = myTemporaryFile(prefix="mfq2_")
 			merge1_cmd = "zcat %s %s | gzip -c >%s " % ( cfq1, " ".join([fq1 for fq1 in fq1s[i*4000:min((i+1)*4000,nfqs)]]), mfq1 )
 			merge2_cmd = "zcat %s %s | gzip -c >%s " % ( cfq2, " ".join([fq2 for fq2 in fq2s[i*4000:min((i+1)*4000,nfqs)]]), mfq2 )
 			print merge1_cmd #unsorted
 			print merge2_cmd #unsorted
 			runcmd(merge1_cmd)
 			runcmd(merge2_cmd)
+			#clean temp files
+			for f in fq1s[i*4000:min((i+1)*4000,nfqs)]: os.remove(f)
+			for f in fq2s[i*4000:min((i+1)*4000,nfqs)]: os.remove(f)
+			if cfq1 != "": os.remove(cfq1)
+			if cfq2 != "": os.remove(cfq2)
 	#FIXME: who do we clean up this mess of temporary files here?
 	return [ffq1,ffq2]
 
@@ -647,7 +685,7 @@ def runwgs(parlist,nligation,reffile,nploid,seq,lib,freq): #create bam file for 
 	#TODO: for tmpfile in mode + [fa]: os.remove(tmpfile)
 	return libbam
 
-def filterfq(fq1,fq2,leftcut,rightcut): #half ligation region reads
+def filterfq(fq1,fq2,leftcut,rightcut): #half ligation region reads, this is no longer needed for xwgsim
 	fq3seq = []; fq4seq=[]; thincnt=0
 	for rfq1,rfq2 in zip(SeqIO.parse(open(fq1,'rU'),'fastq'),SeqIO.parse(open(fq2,'rU'),'fastq')):
 		assert rfq1.id[:-1] == rfq2.id[:-1], "unmatching fastq1 and fastq2, error in simulation"

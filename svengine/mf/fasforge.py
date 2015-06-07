@@ -155,6 +155,7 @@ def main(args):
 		os.mkdir(tempfile.tempdir)
 	except:
 		print >>sys.stderr, tempfile.tempdir, "error!, either it exists or cann't be created! please change path"
+		quit()
 	print "tmpdir=", tempfile.tempdir
 	pybedtools.set_tempdir(tempfile.tempdir)
 
