@@ -17,10 +17,12 @@ INSTALL
     Dependencies:
     
     Python2(>=2.7)  http://www.python.org/
-    Pandas http://pandas.pydata.org
-    Pysam  http://pysam.readthedocs.org/en/latest/
     Pybedtools(>=3.0) http://pythonhosted.org/pybedtools/
-    Cython (>=2.2) http://cython.org/
+      Pandas http://pandas.pydata.org
+      Cython (>=2.2) http://cython.org/
+    Pysam  http://pysam.readthedocs.org/en/latest/
+      Samtools (>0.19) http://samtools.org/
+    BWA http://samtools.org/
   
     If you have root, these can be easily installed using:
     
