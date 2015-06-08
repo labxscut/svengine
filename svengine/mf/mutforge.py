@@ -571,12 +571,13 @@ def fqwgs(parlist,nligation,reffile,nploid,seq,lib,freq): #create bam file for 1
 				wgs_cmd="xwgsim -h -d %d -s %d -N %d -1 %d -2 %d -l %d %s %s %s " % (misize,misizesd,mnread,rl1[libn],rl2[libn],nligation,fa,fq1,fq2)
 				print >>sys.stderr, wgs_cmd
 				runcmd(wgs_cmd) #fastq file
-				gzfq1_cmd="gzip %s" % fq1 #  fq1.gz, fq1 auto deleted
-				gzfq2_cmd="gzip %s" % fq2 #  fq2.gz, fq2 auto deleted
-				print >>sys.stderr, gzfq1_cmd
-				print >>sys.stderr, gzfq2_cmd
-				runcmd(gzfq1_cmd) #fastq file
-				runcmd(gzfq2_cmd) #fastq file
+				#we opt for speed instead of space
+				#gzfq1_cmd="gzip %s" % fq1 #  fq1.gz, fq1 auto deleted
+				#gzfq2_cmd="gzip %s" % fq2 #  fq2.gz, fq2 auto deleted
+				#print >>sys.stderr, gzfq1_cmd
+				#print >>sys.stderr, gzfq2_cmd
+				#runcmd(gzfq1_cmd) #fastq file
+				#runcmd(gzfq2_cmd) #fastq file
 				#clean up
 				if tmpfa: os.remove(fa)
 				#fq3,fq4=filterfq(fq1,fq2,nligation,len(seq)-nligation) #half ligation region reads
@@ -585,8 +586,8 @@ def fqwgs(parlist,nligation,reffile,nploid,seq,lib,freq): #create bam file for 1
 				#print bwasw_cmd
 				#runcmd(bwasw_cmd)
 				#TODO: for tmpfile in (fq1,fq2,fq3,fq4): os.remove(tmpfile)
-				#mode[m]=mbam+".bam"
-				mode[m]=[fq1+".gz",fq2+".gz"]
+				#mode[m]=[fq1+".gz",fq2+".gz"]
+				mode[m]=[fq1,fq2]
 			else:
 				mode[m]=[None,None]
 	libfq = mergefq(mode,myTemporaryFile(prefix="libfq_"))
@@ -597,7 +598,8 @@ def mergefq(fqs,oprefix):
 	fq1s = [x[0] for x in fqs if x[0] is not None] #remove empty components
 	fq2s = [x[1] for x in fqs if x[1] is not None] #remove empty components
 	assert len(fq1s)==len(fq2s)	 #all reads have to be properly paired
-	nfqs = len(fq1s); ffq1=oprefix+".fq1.gz"; ffq2=oprefix+".fq2.gz";
+	#nfqs = len(fq1s); ffq1=oprefix+".fq1.gz"; ffq2=oprefix+".fq2.gz";
+	nfqs = len(fq1s); ffq1=oprefix+".fq1"; ffq2=oprefix+".fq2";
 	if nfqs==0:
 		return [None, None]
 	elif nfqs==1:
@@ -622,8 +624,10 @@ def mergefq(fqs,oprefix):
 				cfq2 = mfq2
 				mfq1 = myTemporaryFile(prefix="mfq1_")
 				mfq2 = myTemporaryFile(prefix="mfq2_")
-			merge1_cmd = "zcat %s %s | gzip -c >%s " % ( cfq1, " ".join([fq1 for fq1 in fq1s[i*4000:min((i+1)*4000,nfqs)]]), mfq1 )
-			merge2_cmd = "zcat %s %s | gzip -c >%s " % ( cfq2, " ".join([fq2 for fq2 in fq2s[i*4000:min((i+1)*4000,nfqs)]]), mfq2 )
+			#merge1_cmd = "zcat %s %s | gzip -c >%s " % ( cfq1, " ".join([fq1 for fq1 in fq1s[i*4000:min((i+1)*4000,nfqs)]]), mfq1 )
+			#merge2_cmd = "zcat %s %s | gzip -c >%s " % ( cfq2, " ".join([fq2 for fq2 in fq2s[i*4000:min((i+1)*4000,nfqs)]]), mfq2 )
+			merge1_cmd = "cat %s %s >%s" % ( cfq1, " ".join([fq1 for fq1 in fq1s[i*4000:min((i+1)*4000,nfqs)]]), mfq1 )
+			merge2_cmd = "cat %s %s >%s" % ( cfq2, " ".join([fq2 for fq2 in fq2s[i*4000:min((i+1)*4000,nfqs)]]), mfq2 )
 			print merge1_cmd #unsorted
 			print merge2_cmd #unsorted
 			runcmd(merge1_cmd)
