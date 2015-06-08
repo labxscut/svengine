@@ -517,16 +517,17 @@ def fakefq(hapit): # makebam from a pair of seqs of representing the original an
 		# a successful region would be no N in middle + not all N in ligation; goodseq holds if Ns are consecutive
 		def goodseq(seq, nl, rl):
 			gd = nl - seq[:nl].count('N') > rl and nl - seq[(len(seq)-nl):len(seq)].count('N') > rl and len(seq)-2*nl-seq[nl:len(seq)-nl].count('N') > rl
+			return gd
 		#print seq0.seq
 		if not goodseq(seq0.seq, nligation, rl): empty0=True
-		#if len(seq0.seq)<2*nligation+: empty0=True #FIXME, need to force rl1==rl2
+		print goodseq(seq0.seq, nligation, rl)
 		if empty0:
 			wgs0 = [None, None]
 		else:
 			wgs0 = fqwgs(parlist,nligation,reffile,nploid,[seq0],lib,freq0)
 		#print seq1.seq
 		if not goodseq(seq1.seq, nligation, rl): empty1=True #FIXME, these N regions has to be masked from input
-		#if len(seq1.seq)<2*nligation+: empty1=True #FIXME, need to force rl1==rl2
+		print goodseq(seq1.seq, nligation, rl)
 		if empty1:
 			wgs1 = [None, None]
 		else:
@@ -534,6 +535,7 @@ def fakefq(hapit): # makebam from a pair of seqs of representing the original an
 		fqopre = myTemporaryFile(prefix="fakefq_")
 		#only need the temporary filename here
 		fqs[lib] = mergefq([wgs0,wgs1],fqopre)
+		print fqs[lib]
 	print >>sys.stderr, "processed %d out of %d regions" % (hapit[6],hapit[7])
 	return [hap,fqs]
 
@@ -543,7 +545,7 @@ def fqwgs(parlist,nligation,reffile,nploid,seq,lib,freq): #create bam file for 1
 	if(type(seq)==type({})):
 		fa=seq['filename']; seqs=seq['seq'] #for fasforge calls
 	else:
-		fa=myTemporaryFile(prefix="fqwgs_") #this has to be removed
+		fa=myTemporaryFile(prefix="fawgs_") #this has to be removed
 		tmpfa=True
 		seqs=seq
 	seql = sum( [ len(s) for s in seqs ] ) #len of all seqs
@@ -564,8 +566,8 @@ def fqwgs(parlist,nligation,reffile,nploid,seq,lib,freq): #create bam file for 1
 			if mnread>0:
 				SeqIO.write(seqs,fa,'fasta') #we need this temp fa file
 				misize=isize[libn][m][1]; misizesd=isize[libn][m][2]
-				fq1=myTemporaryFile(prefix="fqwgsfq1_")
-				fq2=myTemporaryFile(prefix="fqwgsfq2_")
+				fq1=myTemporaryFile(prefix="fq1wgs_")
+				fq2=myTemporaryFile(prefix="fq2wgs_")
 				wgs_cmd="xwgsim -h -d %d -s %d -N %d -1 %d -2 %d -l %d %s %s %s " % (misize,misizesd,mnread,rl1[libn],rl2[libn],nligation,fa,fq1,fq2)
 				print >>sys.stderr, wgs_cmd
 				runcmd(wgs_cmd) #fastq file
@@ -587,7 +589,7 @@ def fqwgs(parlist,nligation,reffile,nploid,seq,lib,freq): #create bam file for 1
 				mode[m]=[fq1+".gz",fq2+".gz"]
 			else:
 				mode[m]=[None,None]
-	libfq = mergefq(mode,myTemporaryFile(prefix="fqwgslibfq_"))
+	libfq = mergefq(mode,myTemporaryFile(prefix="libfq_"))
 	#TODO: for tmpfile in mode + [fa]: os.remove(tmpfile)
 	return libfq
 
@@ -596,7 +598,11 @@ def mergefq(fqs,oprefix):
 	fq2s = [x[1] for x in fqs if x[1] is not None] #remove empty components
 	assert len(fq1s)==len(fq2s)	 #all reads have to be properly paired
 	nfqs = len(fq1s); ffq1=oprefix+".fq1.gz"; ffq2=oprefix+".fq2.gz";
-	if nfqs==1:
+	if nfqs==0:
+		return [None, None]
+	elif nfqs==1:
+		print "mv %s %s" % (fq1s[0],ffq1)
+		print "mv %s %s" % (fq2s[0],ffq2)
 		shutil.move(fq1s[0],ffq1) #if merge only one file, just move it to new name
 		shutil.move(fq2s[0],ffq2) #if merge only one file, just move it to new name
 	else:
