@@ -14,14 +14,24 @@ INTRODUCTION
 INSTALL
 ========
     
-    Dependencies:
+    Dependencies (and that of):
+    
+    ::
     
     Python2(>=2.7)  http://www.python.org/
+    
+    Pysam  http://pysam.readthedocs.org/en/latest/
+      ::
+      
+      Samtools (>0.19) http://samtools.org/
+    
     Pybedtools(>=3.0) http://pythonhosted.org/pybedtools/
+      ::
+      
       Pandas http://pandas.pydata.org
       Cython (>=2.2) http://cython.org/
-    Pysam  http://pysam.readthedocs.org/en/latest/
-      Samtools (>0.19) http://samtools.org/
+      Numpy http://numpy.org
+   
     BWA http://samtools.org/
   
     If you have root, these can be easily installed using:
