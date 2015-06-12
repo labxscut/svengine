@@ -21,6 +21,9 @@ INSTALL
     Python2(>=2.7)  http://www.python.org/
       ::    
 
+    Biopython http://www.biopython.org
+      ::
+
     Pysam  http://pysam.readthedocs.org/en/latest/
       ::
       
@@ -47,6 +50,7 @@ INSTALL
       > sudo pip install -U Pandas
       > sudo pip install -U Cython
       > sudo pip install -U Pybedtools
+      > sudo pip install -U Biopython
       > sudo python setup.py install
       
     Or if You are using your local python distribution, these dependencies shall be automatically setup during SVEngine installation in:
