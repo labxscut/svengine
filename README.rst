@@ -18,8 +18,9 @@ INSTALL
     
     ::
     
-    Python2 (>=2.7)  http://www.python.org/
-    
+    Python2(>=2.7)  http://www.python.org/
+      ::    
+
     Pysam  http://pysam.readthedocs.org/en/latest/
       ::
       
@@ -36,6 +37,7 @@ INSTALL
       Numpy http://numpy.org
    
     BWA http://samtools.org/
+      ::
   
     If you have root, these can be easily installed using:
     
