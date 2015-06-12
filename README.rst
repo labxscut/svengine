@@ -38,6 +38,7 @@ INSTALL
       Pandas http://pandas.pydata.org
       Cython (>=2.2) http://cython.org/
       Numpy http://numpy.org
+      Sqlite3 http://sqlite.org
    
     BWA http://samtools.org/
       ::
