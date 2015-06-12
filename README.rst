@@ -24,6 +24,7 @@ INSTALL
       ::
       
       Samtools (>0.19) http://samtools.org/
+      (Samtools comes wit Pysam, however it has to be able to compile on your system with dafault setting. otherwise expect the "csamtools.c" not found error. e.g. libcurse is required for build samtools but often missing in some Linux.)
     
     Pybedtools(>=3.0) http://pythonhosted.org/pybedtools/
       ::
