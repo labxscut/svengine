@@ -47,6 +47,7 @@ INSTALL
     
     ::
       
+      > sudo apt-get install sqlite3 libcurses-dev python-dev python-pip
       > sudo pip install -U Pysam
       > sudo pip install -U Pandas
       > sudo pip install -U Cython
