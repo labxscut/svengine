@@ -18,7 +18,7 @@ INSTALL
     
     ::
     
-    Python2(>=2.7)  http://www.python.org/
+    Python2 (>=2.7)  http://www.python.org/
     
     Pysam  http://pysam.readthedocs.org/en/latest/
       ::
