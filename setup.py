@@ -19,12 +19,13 @@ doclines=__doc__.splitlines()
 #        ('build_scripts', build.build.has_scripts), ] 
 
 #install xwgsim
-os.chdir("xwgsim")
-os.system("gcc -g -O2 -Wall -o xwgsim xwgsim.c -lz -lm")
-os.system("mv xwgsim ~/scripts")
-os.chdir("..")
 
-setup(name="svengine",
+print "gcc -g -O2 -Wall -o xwgsim/xwgsim xwgsim/xwgsim.c -lz -lm"
+os.system("gcc -g -O2 -Wall -o xwgsim/xwgsim xwgsim/xwgsim.c -lz -lm")
+print "cp xwgsim/xwgsim %s" % sys.prefix
+os.system("cp xwgsim/xwgsim %s/bin" % sys.prefix)
+
+dist=setup(name="svengine",
     version="0.0.1",
     description=doclines[0],
     long_description="\n".join(doclines[2:]),
@@ -47,6 +48,7 @@ setup(name="svengine",
 	#'svengine.bs.asmregion','svengine.bs.mutableseq','svengine.bs.parseamos',
 	#'svengine.bs.replacereads',
 	'svengine.mf.mutforge'],
+		scripts = ['xwgsim/xwgsim'],
     #cmdclass = {'build': my_build},
     data_files = [('',['README.rst','LICENSE.txt'])],
     entry_points = { 
@@ -61,3 +63,8 @@ setup(name="svengine",
       ]
    },
 )
+
+#print(dist.dump_option_dicts())
+#print(dist.parse_config_files())
+#print(dist.metadata)
+
