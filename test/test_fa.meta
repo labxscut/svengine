@@ -4,19 +4,19 @@
 #IF DONOR is multiple and is providing sequence, a random one among them is chosen 
 #IF RECPT is multiple and every in the multiple is receiving the chosen donor seq
 #FOR HOMOZYGOUS EVENTS TO HAPPEN at nploid=2: 
-#DONOR must be fix_1, RECPT must be fix_1
+#DONOR must be fix_3, RECPT must be fix_3
 #And Sequence Content Should be the same for any donor sequence
 #FOR HEMIZYGOUS EVENTS TO HAPPEN at nploid=2: 
 #DONOR must be fix_1/fix_2, RECPT must be fix_1/fix_2
 #And Sequence Content Should be the same for any donor sequence
 #FOR FASFORGE:
-#DONOR, RECPT, DONORFREQ, RECPTFREQ shall always be fix_1
-#they are not effective
+#DONOR, RECPT, DONORFREQ, RECPTFREQ are not effective 
+#their values shall always be fix_1, which are just place holders
 #METATYPE	COUNT	SIZEDIST/SEQ	COPYDIST	DONORDIST	RECPTDIST	DONORFREQ	RECPTFREQ	NOTE
 FINS	2	example.fas	fix_1	fix_1	fix_1	fix_1	fix_1	#FINS=COPY*INS, foreign insertion
 ITRA	2	fix_1000	fix_1	fix_1	fix_1	fix_1	fix_1	#ITRA=1*DEL + COPY * INS, inverted transposition
 DEL	4	fix_500_500_1000_2000_2000	fix_1	fix_1	fix_1	fix_1	fix_1	#DEL=1*DEL, deletion
-TRA	2	fix_1000	fix_1	fix_1	fix_1	fix_1.0	fix_1	#TRA=1*DEL + COPY*INS, transposition
+TRA	2	fix_1000	fix_1	fix_1	fix_1	fix_1	fix_1	#TRA=1*DEL + COPY*INS, transposition
 INV	2	fix_1000	fix_1	fix_1	fix_1	fix_1	fix_1	#INV=1*DEL + COPY*INS, inversion
 IDUP	2	fix_1000	fix_2	fix_1	fix_1	fix_1	fix_1	#IDUP=1*DEL + COPY*INS, inverted duplication
 DINS	2	fix_1000	fix_1	fix_1	fix_1	fix_1	fix_1	#DINS=COPY*INS, domestic insertion

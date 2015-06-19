@@ -1138,15 +1138,14 @@ def expanddist(diststring, cnt):
 	uniques = {}
 	new_cnt = 0
 	if dist[0] == 'fix':
-		#print dist[1:len(dist)]
 		values = [ int(x) if isint(x) else float(x) for x in dist[1:len(dist)] ]
 		uniques = CountUnique(values)
-		sorted_uniques = sorted(uniques.items(), key=operator.itemgetter(1)) #increasing order sorting of values
+		sorted_uniques = sorted(uniques.items(), key=operator.itemgetter(1)) 
+		#increasing order sorting of values
 		nvalue = len(values)
 		nunique = len(uniques)
 		amp = cnt/nvalue
 		rem = cnt-amp*nvalue
-		#print(sorted_uniques)
 		for item in sorted_uniques:
 			key = item[0]
 			if rem>0:
@@ -1158,16 +1157,57 @@ def expanddist(diststring, cnt):
 				uniques[key] = uniques[key] * amp
 			new_cnt = new_cnt + uniques[key]
 		assert new_cnt == cnt
-		#print(uniques)
+
+	elif dist[0] == 'nori':
+		#create cnt normal integer; 
+    mean = int(dist[1]); sd = int(dist[2])
+		values = [ random.gauss(mean, sd) for i in xrange(0,cnt) ]
+		values = [ mean for v in values if v<=0 else int(v) ]
+		uniques = CountUnique(values)
+		assert new_cnt == cnt
+
+	elif dist[0] == 'norf':
+		#create cnt normal floats; 
+    mean = float(dist[1]); sd = float(dist[2])
+		values = [ random.gauss(mean, sd) for i in xrange(0,cnt) ]
+		values = [ mean for v in values if v<=0 else v ]
+		uniques = CountUnique(values)
+		assert new_cnt == cnt
+
+	elif dist[0] == 'unii':
+		#create cnt uniform integer; 
+    low = int(dist[1]); up = int(dist[2])
+		values = [ random.uniform(low, up) for i in xrange(0,cnt) ]
+		values = [ int(v) for v in values ]
+		uniques = CountUnique(values)
+		assert new_cnt == cnt
 
 	elif dist[0] == 'unif':
-		raise Exception("can't expand specified distribution!")
-	elif dist[0] == 'exp':
-		raise Exception("can't expand specified distribution!")
-	elif dist[0] == 'norm':
-		raise Exception("can't expand specified distribution!")
+		#create cnt uniform floats; 
+    low = float(dist[1]); up = float(dist[2])
+		values = [ random.uniform(low, up) for i in xrange(0,cnt) ]
+		uniques = CountUnique(values)
+		assert new_cnt == cnt
+
+	elif dist[0] == 'expi':
+		#create cnt uniform integer; 
+    lam = float(dist[1]);
+		values = [ random.expovariate(lam) for i in xrange(0,cnt) ]
+		values = [ int(1/lam) for v in values if v<=0 else int(v) ]
+		uniques = CountUnique(values)
+		assert new_cnt == cnt
+
+	elif dist[0] == 'expf':
+		#create cnt uniform float; 
+    lam = float(dist[1]);
+		values = [ random.expovariate(lam) for i in xrange(0,cnt) ]
+		values = [ 1/lam for v in values if v<=0 else v ]
+		uniques = CountUnique(values)
+		assert new_cnt == cnt
+
 	else:
 		raise Exception("can't expand specified distribution!")
+
 	return uniques
 
 def run():
