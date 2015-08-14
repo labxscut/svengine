@@ -210,8 +210,13 @@ def main(args):
 		dic['varcnt']=len(varlist) #this is needed for continuously counting
 		dic['varlist']=varlist #this is needed for continuously counting
 		#d.iloc[0:1,0:1]; deoverlapping
-		varlist=mf.deovlpvar(dic); dic['varcnt']=len(varlist); dic['varlist']=varlist; vartab=mf.var2bed(mf.Bunch(dic))
-		assert mf.chkvar(vartab) == True, "==Warn: varfile still contains self overlaps, which is not allowed, bail out"
+		vartab=mf.var2bed(mf.Bunch(dic))
+		if(len(varlist)>1): #only needed if input is more than 2
+				varlist=mf.deovlpvar(dic) 
+				dic['varcnt']=len(varlist) 
+				dic['varlist']=varlist 
+				vartab=mf.var2bed(mf.Bunch(dic))
+				assert mf.chkvar(vartab) == True, "==Warn: varfile still contains self overlaps, which is not allowed, bail out"
 		gaptab=vartab.cat(gaptab.each(pybedtools.featurefuncs.extend_fields,n=vartab.field_count()).saveas())
 		dic['gaptab']=gaptab #considerring var tab as pre-existing mask that works for meta-variant 
 
@@ -220,8 +225,13 @@ def main(args):
 		varlist,varcnt = mf.makevar(mf.Bunch(dic),metatab)
 		dic['varlist'] = varlist
 		dic['varcnt'] = varcnt
-		varlist=mf.deovlpvar(dic); dic['varcnt']=len(varlist); dic['varlist']=varlist; vartab=mf.var2bed(mf.Bunch(dic))
-		assert mf.chkvar(vartab) == True, "==Warn: varfile still contains self overlaps, which is not allowed, bail out"
+		vartab=mf.var2bed(mf.Bunch(dic))
+		if(len(varlist)>1): #only needed if input is more than 2
+				varlist=mf.deovlpvar(dic) 
+				dic['varcnt']=len(varlist) 
+				dic['varlist']=varlist 
+				vartab=mf.var2bed(mf.Bunch(dic))
+				assert mf.chkvar(vartab) == True, "==Warn: varfile still contains self overlaps, which is not allowed, bail out"
 
 	mf.var2file(mf.Bunch(dic))
 	#read in bedpe to generate varlist
