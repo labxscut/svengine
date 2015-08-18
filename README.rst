@@ -43,6 +43,10 @@ INSTALL
     BWA http://samtools.org/
       ::
   
+    There are multiple ways to install dependencies and SVEngine. 
+    The virtualenv based installation and usage offer the benefits of non-root installation and python site separation. 
+   ** virtualenv is the MOST RECOMMENDED WAY for installation. **
+
     If you have root, these can be easily installed using:
     
     ::
