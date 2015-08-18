@@ -911,7 +911,7 @@ def makevar(bun,metatab):
 	trunks=trunks.to_dataframe()
 	# seqfile,sizestring #random seq from seqfile using sizestring
 	# seqfile #use seqfile exactly
-	metacnt={}; delvec=set(); finsvec=set(); dinsvec=set(); dupvec=set(); travec=set(); idupvec=set(); invvec=set(); itravec=set(); 
+	metacnt={}; delvec=set(); finsvec=set(); dinsvec=set(); dupvec=set(); travec=set(); idupvec=set(); invvec=set(); itravec=set(); idinsvec=set();
 	for var in varlist:
 		meta=varlist[var][1].split("_")[0]
 		if meta == "DEL":
@@ -920,6 +920,8 @@ def makevar(bun,metatab):
 			finsvec.add(varlist[var][1])
 		elif meta == "DINS":
 			dinsvec.add(varlist[var][1])
+		elif meta == "IDINS":
+			idinsvec.add(varlist[var][1])
 		elif meta == "DUP":
 			dupvec.add(varlist[var][1])
 		elif meta == "TRA":
@@ -937,6 +939,7 @@ def makevar(bun,metatab):
 	metacnt['TRA']=len(travec);
 	metacnt['IDUP']=len(idupvec);
 	metacnt['INV']=len(invvec);
+	metacnt['IDINS']=len(idinsvec);
 	metacnt['ITRA']=len(itravec);
 	
 	rows=[]
@@ -1039,6 +1042,14 @@ def makevar(bun,metatab):
 						varid = vartag+"_"+str(varcnt)
 						varlist[varid]=[varid,mid,recptfreq[i],r,str(trunks.iloc[rtid,0]),trunks.iloc[rtid,1],False,0,True,\
 							[hapseq[dpick].filename,str(trunks.iloc[dtid,0]),trunks.iloc[dtid,1]+nligation,sizevec[i],copyvec[i],False]]
+				elif metatype == 'IDINS':
+					dtid,stretches=maketid(stretches,sizevec[i]/(plansize+2*nligation)+1)
+					rtid,stretches=maketid(stretches,1)
+					for r in recpt:		#inserting sequence: [ filename, chr, start, size, copy, rc=True/False ]
+						varcnt+=1
+						varid = vartag+"_"+str(varcnt)
+						varlist[varid]=[varid,mid,recptfreq[i],r,str(trunks.iloc[rtid,0]),trunks.iloc[rtid,1],False,0,True,\
+							[hapseq[dpick].filename,str(trunks.iloc[dtid,0]),trunks.iloc[dtid,1]+nligation,sizevec[i],copyvec[i],True]]
 				elif metatype == 'DUP':
 					rtid,stretches=maketid(stretches,sizevec[i]/(plansize+2*nligation)+1)
 					for r in recpt:		#inserting sequence: [ filename, chr, start, size, copy, rc=True/False ]
