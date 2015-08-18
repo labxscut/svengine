@@ -1160,23 +1160,23 @@ def expanddist(diststring, cnt):
 
 	elif dist[0] == 'nori':
 		#create cnt normal integer; 
-    mean = int(dist[1]); sd = int(dist[2])
+		mean = int(dist[1]); sd = int(dist[2])
 		values = [ random.gauss(mean, sd) for i in xrange(0,cnt) ]
-		values = [ mean for v in values if v<=0 else int(v) ]
+		values = [ mean if v <= 0 else int(v) for v in values ]
 		uniques = CountUnique(values)
 		assert new_cnt == cnt
 
 	elif dist[0] == 'norf':
 		#create cnt normal floats; 
-    mean = float(dist[1]); sd = float(dist[2])
+		mean = float(dist[1]); sd = float(dist[2])
 		values = [ random.gauss(mean, sd) for i in xrange(0,cnt) ]
-		values = [ mean for v in values if v<=0 else v ]
+		values = [ mean if v<=0 else v for v in values ]
 		uniques = CountUnique(values)
 		assert new_cnt == cnt
 
 	elif dist[0] == 'unii':
 		#create cnt uniform integer; 
-    low = int(dist[1]); up = int(dist[2])
+		low = int(dist[1]); up = int(dist[2])
 		values = [ random.uniform(low, up) for i in xrange(0,cnt) ]
 		values = [ int(v) for v in values ]
 		uniques = CountUnique(values)
@@ -1184,24 +1184,24 @@ def expanddist(diststring, cnt):
 
 	elif dist[0] == 'unif':
 		#create cnt uniform floats; 
-    low = float(dist[1]); up = float(dist[2])
+		low = float(dist[1]); up = float(dist[2])
 		values = [ random.uniform(low, up) for i in xrange(0,cnt) ]
 		uniques = CountUnique(values)
 		assert new_cnt == cnt
 
 	elif dist[0] == 'expi':
 		#create cnt uniform integer; 
-    lam = float(dist[1]);
+		lam = float(dist[1]);
 		values = [ random.expovariate(lam) for i in xrange(0,cnt) ]
-		values = [ int(1/lam) for v in values if v<=0 else int(v) ]
+		values = [ int(1/lam) if v<=0 else int(v) for v in values ]
 		uniques = CountUnique(values)
 		assert new_cnt == cnt
 
 	elif dist[0] == 'expf':
 		#create cnt uniform float; 
-    lam = float(dist[1]);
+		lam = float(dist[1]);
 		values = [ random.expovariate(lam) for i in xrange(0,cnt) ]
-		values = [ 1/lam for v in values if v<=0 else v ]
+		values = [ 1/lam if v<=0 else v for v in values ]
 		uniques = CountUnique(values)
 		assert new_cnt == cnt
 
