@@ -37,7 +37,7 @@ dist=setup(name="svengine",
     packages=find_packages(exclude=['ez_setup', 'test', 'doc']),
     include_package_data=True,
     zip_safe=False,
-    install_requires=["python >= 2.7","pysam >= 0.7","pybedtools >= 0.6.9","biopython >= 0.1","pandas >= 0.16","cython >= 0.22"],
+    install_requires=["python >= 2.7","cython >= 0.22","pandas >= 0.16","pybedtools >= 0.6.9","pysam >= 0.7","biopython >= 0.1",],
     provides=['svengine'],
     #can insert C++ extension here when needed
     #ext_modules = [ Extension('lsa._compcore', 
