@@ -20,4 +20,5 @@ TRA	2	fix_1000	fix_1	fix_1	fix_1	fix_1	fix_1	#TRA=1*DEL + COPY*INS, transpositio
 INV	2	fix_1000	fix_1	fix_1	fix_1	fix_1	fix_1	#INV=1*DEL + COPY*INS, inversion
 IDUP	2	fix_1000	fix_2	fix_1	fix_1	fix_1	fix_1	#IDUP=1*DEL + COPY*INS, inverted duplication
 DINS	2	fix_1000	fix_1	fix_1	fix_1	fix_1	fix_1	#DINS=COPY*INS, domestic insertion
+IDINS	2	fix_1000	fix_1	fix_1	fix_1	fix_1	fix_1	#IDINS=COPY*INS, inverted domestic insertion
 DUP	2	fix_1000	fix_2	fix_1	fix_1	fix_1	fix_1	#DUP=COPY*INS, duplication

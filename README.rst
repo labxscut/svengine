@@ -14,7 +14,8 @@ INTRODUCTION
 INSTALL
 ========
     
-    Dependencies (and that of):
+    *Dependencies* (and that of):
+    
     ::
 
       Python2(>=2.7)  http://www.python.org/
@@ -37,7 +38,13 @@ INSTALL
    
       BWA http://samtools.org/
   
-    If you have root, these can be easily installed using:
+    There are multiple ways to install dependencies and SVEngine. 
+    The virtualenv based installation and usage offer the benefits of non-root installation and python site separation. 
+    
+    **virtualenv is the MOST RECOMMENDED WAY for installation**
+
+    1. If you have root, these can be easily installed using:
+    
     ::
       
       > sudo apt-get install sqlite3 libcurses-dev python-dev python-pip
@@ -48,21 +55,38 @@ INSTALL
       > sudo pip install -U Biopython
       > sudo python setup.py install
       
-    Or if You are using your local python distribution, these dependencies shall be automatically setup during SVEngine installation in:
+    2. For installations without root priviledge, you need to use virtualenv python or your local python installation,
+       Please see https://virtualenv.pypa.io and http://dl.dropbox.com/u/35182955/Development_environment.html 
+       for details to use virtualenv or install your own python.
+    
+       Now, if you are using virtualenv, make sure your PYTHONPATH is set to empty and follow steps below:
+
+    ::
+
+      >virtualenv sve_vpy --no-site-packages
+      >source sve_vpy/bin/activate
+
+    3. Now either your are under virtualenv or if you are using your local python distribution, 
+       these dependencies will be automatically setup by SVEngine installation:
+    
     ::
       
-      python setup.py install --prefix="your/own/prefix"
+      >python setup.py install --prefix="your/own/prefix" #if using your local python under your/own/prefix
+      sve_vpy> python setup.py #if using your virtualenv python in sve_vpy
     
-    Now the executables will be available from "your/own/prefix/bin", remember to add it to your PATH.
+      Now the executables will be available from "sve_vpy/bin" or "your/own/prefix/bin". If not virtualenv, remember to add it to your PATH.
     
-    Or if you are using system python without root, please ask your system admin to install pysam, pandas, pybedtools and cython for you.
-    Change your PYTHONPATH to include "your/own/prefix" i.e.
+    4. Or if you prefer system python without root, the installation is not much different.
+       please ask your system admin to install pysam, pandas, pybedtools and cython for you. 
+       Change your PYTHONPATH to include "your/own/prefix" i.e.
+
     ::
     
       export PYTHONPATH="PYTHONPATH:your/own/prefixe/lib/python2.7/site-packages/"
     
-    please consult the author's development document to setup a working environment:
-    http://dl.dropbox.com/u/35182955/Development_environment.html
+      You might encounter other permission related problems, please also consult your admin.
+      please consult the author's development document to setup a working environment:
+      http://dl.dropbox.com/u/35182955/Development_environment.html
 
 EXECUTABLES
 ===========
@@ -72,6 +96,7 @@ EXECUTABLES
     mutforge            --  engineer structure variants (sophisticated)
     
     fasforge            --  engineer structure variants (straightforward)
+
 
 USAGE
 ========
