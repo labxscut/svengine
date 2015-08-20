@@ -1160,7 +1160,8 @@ def expanddist(diststring, cnt):
 
 	elif dist[0] == 'nori':
 		#create cnt normal integer; 
-		mean = int(dist[1]); sd = int(dist[2])
+		mean = int(dist[1]) 
+		sd = int(dist[2])
 		values = [ random.gauss(mean, sd) for i in xrange(0,cnt) ]
 		values = [ mean if v <= 0 else int(v) for v in values ]
 		uniques = CountUnique(values)
