@@ -14,7 +14,7 @@ INTRODUCTION
 INSTALL
 ========
     
-    Dependencies (and that of):
+    1. Dependencies (and that of):
     
     ::
     
@@ -48,7 +48,7 @@ INSTALL
     
     **virtualenv is the MOST RECOMMENDED WAY for installation**
 
-    If you have root, these can be easily installed using:
+    1.#. If you have root, these can be easily installed using:
     
     ::
       
@@ -60,7 +60,7 @@ INSTALL
       > sudo pip install -U Biopython
       > sudo python setup.py install
       
-    For installations without root priviledge, you need to use virtualenv python or your local python installation,
+    1.#. For installations without root priviledge, you need to use virtualenv python or your local python installation,
     Please see https://virtualenv.pypa.io and http://dl.dropbox.com/u/35182955/Development_environment.html 
     for details to use virtualenv or install your own python.
     
@@ -81,7 +81,7 @@ INSTALL
     
     Now the executables will be available from "sve_vpy/bin" or "your/own/prefix/bin". If not virtualenv, remember to add it to your PATH.
     
-    Or if you prefer system python without root, the installation is not much different.
+    1.#. Or if you prefer system python without root, the installation is not much different.
     please ask your system admin to install pysam, pandas, pybedtools and cython for you. 
     Change your PYTHONPATH to include "your/own/prefix" i.e.
     ::
