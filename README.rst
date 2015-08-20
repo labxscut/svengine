@@ -79,7 +79,7 @@ INSTALL
       >python setup.py install --prefix="your/own/prefix" #if using your local python under your/own/prefix
       sve_vpy> python setup.py #if using your virtualenv python in sve_vpy
     
-    Now the executables will be available from "sve_vpy/bin" or "your/own/prefix/bin". If not virtualenv, remember to add it to your PATH.
+      Now the executables will be available from "sve_vpy/bin" or "your/own/prefix/bin". If not virtualenv, remember to add it to your PATH.
     
     4. Or if you prefer system python without root, the installation is not much different.
        please ask your system admin to install pysam, pandas, pybedtools and cython for you. 
@@ -88,9 +88,9 @@ INSTALL
     
       export PYTHONPATH="PYTHONPATH:your/own/prefixe/lib/python2.7/site-packages/"
     
-    You might encounter a lot other permission related problems, please also consult your admin.
-    please consult the author's development document to setup a working environment:
-    http://dl.dropbox.com/u/35182955/Development_environment.html
+      You might encounter other permission related problems, please also consult your admin.
+      please consult the author's development document to setup a working environment:
+      http://dl.dropbox.com/u/35182955/Development_environment.html
 
 EXECUTABLES
 ========
