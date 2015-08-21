@@ -65,13 +65,13 @@ INSTALL
        >PYTHONPATH="local/python/prefix/lib/python2.x/site-packages" python setup.py install --prefix="local/python/prefix"
        >PYTHONPATH="local/python/prefix/lib/python2.x/site-packages" local/python/prefix/bin/virtualenv sve_vpy --no-site-packages
     
-       Or if your system python has virtualenv, make sure your PYTHONPATH is set to empty and follow steps below:
+    Or if your system python has virtualenv, make sure your PYTHONPATH is set to empty and follow steps below:
 
     ::
      
       >virtualenv sve_vpy --no-site-packages
       
-      Then you can activate this virtual python for installing SVEngine:
+    Then you can activate this virtual python for installing SVEngine:
     
     ::
       
@@ -85,7 +85,7 @@ INSTALL
       >python setup.py install --prefix="local/python/prefix" #if using your local python under your/own/prefix
       sve_vpy> python setup.py #if using your virtualenv python in sve_vpy
     
-      Now the executables will be available from "sve_vpy/bin" or "local/python/prefix/bin". If not virtualenv, remember to add it to your PATH.
+    Now the executables will be available from "sve_vpy/bin" or "local/python/prefix/bin". If not virtualenv, remember to add it to your PATH.
     
     4. Or if you prefer system python without root, the installation is not much different.
        please ask your system admin to install pysam, pandas, pybedtools and cython for you. 
