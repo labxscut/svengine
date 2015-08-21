@@ -57,13 +57,23 @@ INSTALL
       
     2. For installations without root priviledge, you need to use virtualenv python or your local python installation,
        Please see https://virtualenv.pypa.io and http://dl.dropbox.com/u/35182955/Development_environment.html 
-       for details to use virtualenv or install your own python.
+       for details to install virtualenv or your own python. Briefly, download virtualenv from: https://pypi.python.org/pypi/virtualenv
+       then unzip and change into your virtualenv directory and run:
     
-       Now, if you are using virtualenv, make sure your PYTHONPATH is set to empty and follow steps below:
+    ::
+       >PYTHONPATH="local/python/prefix/lib/python2.x/site-packages" python setup.py install --prefix="local/python/prefix"
+       >PYTHONPATH="local/python/prefix/lib/python2.x/site-packages" local/python/prefix/bin/virtualenv sve_vpy --no-site-packages
+    
+       Or if your system python has virtualenv, make sure your PYTHONPATH is set to empty and follow steps below:
 
     ::
-
+     
       >virtualenv sve_vpy --no-site-packages
+      
+      Then you can activate this virtual python for installing SVEngine:
+    
+    ::
+      
       >source sve_vpy/bin/activate
 
     3. Now either your are under virtualenv or if you are using your local python distribution, 
