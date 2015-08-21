@@ -61,6 +61,7 @@ INSTALL
        then unzip and change into your virtualenv directory and run:
     
     ::
+       
        >PYTHONPATH="local/python/prefix/lib/python2.x/site-packages" python setup.py install --prefix="local/python/prefix"
        >PYTHONPATH="local/python/prefix/lib/python2.x/site-packages" local/python/prefix/bin/virtualenv sve_vpy --no-site-packages
     
@@ -81,18 +82,18 @@ INSTALL
     
     ::
       
-      >python setup.py install --prefix="your/own/prefix" #if using your local python under your/own/prefix
+      >python setup.py install --prefix="local/python/prefix" #if using your local python under your/own/prefix
       sve_vpy> python setup.py #if using your virtualenv python in sve_vpy
     
-      Now the executables will be available from "sve_vpy/bin" or "your/own/prefix/bin". If not virtualenv, remember to add it to your PATH.
+      Now the executables will be available from "sve_vpy/bin" or "local/python/prefix/bin". If not virtualenv, remember to add it to your PATH.
     
     4. Or if you prefer system python without root, the installation is not much different.
        please ask your system admin to install pysam, pandas, pybedtools and cython for you. 
-       Change your PYTHONPATH to include "your/own/prefix" i.e.
+       Change your PYTHONPATH to include "local/python/prefix" i.e.
 
     ::
     
-      export PYTHONPATH="PYTHONPATH:your/own/prefixe/lib/python2.7/site-packages/"
+      export PYTHONPATH="PYTHONPATH:local/python/prefix/lib/python2.7/site-packages/"
     
       You might encounter other permission related problems, please also consult your admin.
       please consult the author's development document to setup a working environment:
