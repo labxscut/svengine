@@ -57,7 +57,10 @@ INSTALL
       
     2. For installations without root priviledge, you need to use virtualenv python or your local python installation,
        Please see https://virtualenv.pypa.io and http://dl.dropbox.com/u/35182955/Development_environment.html 
-       for details to install virtualenv or your own python. Briefly, download virtualenv from: https://pypi.python.org/pypi/virtualenv
+       for details to install virtualenv or your own python. Also see the install script examples
+in https://bitbucket.org/charade/svengine/wiki/Example for detailed steps.
+
+      Briefly, download virtualenv from: https://pypi.python.org/pypi/virtualenv
        then unzip and change into your virtualenv directory and run:
     
     ::
@@ -84,6 +87,12 @@ INSTALL
       
       >python setup.py install --prefix="local/python/prefix" #if using your local python under your/own/prefix
       sve_vpy> python setup.py #if using your virtualenv python in sve_vpy
+
+    You might be running into error and prompted to install Cython, just install Cython and try again:
+    
+    ::
+      
+      >pip install -U cython
     
     Now the executables will be available from "sve_vpy/bin" or "local/python/prefix/bin". If not virtualenv, remember to add it to your PATH.
     If you are using virtualenv, remember to activate it everytime you use SVEngine

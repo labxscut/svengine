@@ -26,7 +26,7 @@ print "cp xwgsim/xwgsim %s" % sys.prefix
 os.system("cp xwgsim/xwgsim %s/bin" % sys.prefix)
 
 dist=setup(name="svengine",
-    version="0.0.1",
+    version="1.0.0",
     description=doclines[0],
     long_description="\n".join(doclines[2:]),
     author="Li Xia",
