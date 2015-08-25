@@ -323,17 +323,17 @@ def run():
 	parser.add_argument('-o', '--oprefix', dest='oprefix', default=None, #output1,output2,output3,...
 												help="prefix for output files")
 	parser.add_argument('-f', '--plansize', dest='plansize', type=int, default=100000,
-												help="palnsize is the grain size for genome planning, exluding ligation buffer (default=100bp)")
+												help="palnsize is the grain size for genome planning, exluding ligation buffer (default= %(default)s bp)")
 	parser.add_argument('-b', '--burnin', dest='burnin', type=int, default=1000000,
-												help="burnin is the burnin size for genome planning, excluding ligation buffer (default=100bp)")
+												help="burnin is the burnin size for genome planning, excluding ligation buffer (default= %(default)s bp)")
 	parser.add_argument('-q', '--mixfreq', dest='mixfreq', default="1",
 												help="generated spikein-in mixing frequency, homozygous=1")
 	parser.add_argument('-n', '--nprocs', dest='nprocs', type=int, default=1,
-												help="split into multiple processes (default=1)")
+												help="split into multiple processes (default= %(default)s )")
 	parser.add_argument('-d', '--tmpdir', dest='tmpdir', default=os.path.join(os.environ['HOME'],'svetmp'),
 												help="root dir for keeping temporary files")
 	parser.add_argument('--layout', dest='layout', action='store_true', default=False,
-												help="only dry layout (default=False)")
+												help="only dry layout")
 	parser.add_argument('--outbam', action='store_true', dest='outbam', default=False, 
 												help="wet run to bam")
 	args = parser.parse_args()
