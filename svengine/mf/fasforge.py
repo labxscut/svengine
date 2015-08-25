@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #TODO: add FINSERIONS and DINSERTIONS
 
-import copy, time, re, os, shutil, sys, random, csv, subprocess, traceback, argparse, tempfile, itertools, operator, collections, ConfigParser, json, imp, StringIO
+import copy, time, re, os, shutil, sys, random, csv, subprocess, traceback, argparse, tempfile, itertools, operator, collections, ConfigParser, json, imp, StringIO, string
 from multiprocessing import Pool
 import pysam
 import pybedtools
@@ -211,14 +211,17 @@ def main(args):
 		dic['varlist']=varlist #this is needed for continuously counting
 		#d.iloc[0:1,0:1]; deoverlapping
 		vartab=mf.var2bed(mf.Bunch(dic))
+		#print "br1"
 		if(len(varlist)>1): #only needed if input is more than 2
 				varlist=mf.deovlpvar(dic) 
 				dic['varcnt']=len(varlist) 
 				dic['varlist']=varlist 
 				vartab=mf.var2bed(mf.Bunch(dic))
 				assert mf.chkvar(vartab) == True, "==Warn: varfile still contains self overlaps, which is not allowed, bail out"
+		#print "br2"
 		gaptab=vartab.cat(gaptab.each(pybedtools.featurefuncs.extend_fields,n=vartab.field_count()).saveas())
 		dic['gaptab']=gaptab #considerring var tab as pre-existing mask that works for meta-variant 
+		#print "br3"
 
 	if runmode%2 == 1: #have meta input, merge var with meta
 		metatab = mf.CommentedFile(metafile)
@@ -238,14 +241,17 @@ def main(args):
 	#now we need to check whether the	sv has been correctly inserted
 	#we also need to check whether the position is properly selected 
 	brpt=collections.OrderedDict()
+	#print "br4"
 	for key in varlist.keys():
 		var = varlist[key]
 		if brpt.get(var[4],None) == None:
 			brpt[var[4]] = collections.OrderedDict({var[5]:var})
 		else:
 			brpt[var[4]][var[5]]=var	#brpt[chr][pos]
+	#print "br5"
 	ref = pysam.Fastafile(reffile.name)
 	seq0 = { 'filename':reffile.name, 'seq':[ SeqRecord(Seq(ref.fetch(ref.references[i],0,ref.lengths[i]) ),id=ref.references[i],name=ref.references[i],description=ref.references[i]) for i in xrange(0,ref.nreferences) ] }
+	#print "br6"
 	seq1 = var2seq(brpt,reffile,nligation,oprefix)
 	print "done var2seq", time.time()-starttime, " seconds" 
 
@@ -331,7 +337,7 @@ def run():
 	parser.add_argument('-n', '--nprocs', dest='nprocs', type=int, default=1,
 												help="split into multiple processes (default= %(default)s )")
 	parser.add_argument('-d', '--tmpdir', dest='tmpdir', default=os.path.join(os.environ['HOME'],'svetmp_'+''.join([random.choice(string.ascii_letters) for i in range(4)])),
-												help="root dir for keeping temporary files, default: %(default)s")
+												help="root dir for keeping temporary files, default (last 4 digits random): %(default)s")
 	parser.add_argument('--layout', dest='layout', action='store_true', default=False,
 												help="only dry layout")
 	parser.add_argument('--outbam', action='store_true', dest='outbam', default=False, 

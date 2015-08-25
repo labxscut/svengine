@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import copy, time, re, os, shutil, sys, random, csv, subprocess, traceback, argparse, tempfile, itertools, operator, collections, ConfigParser, json, imp
+import copy, time, re, os, shutil, sys, random, csv, subprocess, traceback, argparse, tempfile, itertools, operator, collections, ConfigParser, json, imp, string
 from itertools import izip
 from collections import Counter
 from multiprocessing import Pool
@@ -1254,7 +1254,7 @@ def run():
 	parser.add_argument('-n', '--nprocs', dest='nprocs', default=1, type=int,
 												help="split into multiple processes (default: %(default)s )")
 	parser.add_argument('-d', '--tmpdir', dest='tmpdir', default=os.path.join(os.environ['HOME'],'svetmp_'+''.join([random.choice(string.ascii_letters) for i in range(4)])),
-												help="root dir for keeping temporary files, default: %(default)s")
+												help="root dir for keeping temporary files, default (last 4 digits random): %(default)s")
 	parser.add_argument('--layout', action='store_true', dest='layout', default=False, help="dry run to layout")
 	parser.add_argument('--outbam', action='store_true', dest='outbam', default=False, help="wet run to bam")
 	args = parser.parse_args()
