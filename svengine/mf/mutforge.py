@@ -260,11 +260,11 @@ def fq2bam(ffq,bun):
 	fbam = [None] * nlibrary
 	for lib in range(0,nlibrary):
 		fq1 = ffq[lib][0]; fq2 =	ffq[lib][1]
-		sbam = '.'.join([oprefix,libnames[lib]])
+		sbam = '.'.join([oprefix,libnames[lib],"bam"])
 		bwasw_cmd="bwa mem -t %s %s %s %s | samtools view -bS -o %s - " % (nprocs,reffile,fq1,fq2,sbam) 
 		print >>sys.stderr, bwasw_cmd #
 		runcmd(bwasw_cmd)
-		fbam[lib] = sbam+".bam" #post processing: librarywise merging bams
+		fbam[lib] = sbam #post processing: librarywise merging bams
 	return fbam
 
 def var2bs(bun):
