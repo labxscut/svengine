@@ -330,8 +330,8 @@ def run():
 												help="generated spikein-in mixing frequency, homozygous=1")
 	parser.add_argument('-n', '--nprocs', dest='nprocs', type=int, default=1,
 												help="split into multiple processes (default= %(default)s )")
-	parser.add_argument('-d', '--tmpdir', dest='tmpdir', default=os.path.join(os.environ['HOME'],'svetmp'),
-												help="root dir for keeping temporary files")
+	parser.add_argument('-d', '--tmpdir', dest='tmpdir', default=os.path.join(os.environ['HOME'],'svetmp_'+''.join([random.choice(string.ascii_letters) for i in range(4)])),
+												help="root dir for keeping temporary files, default: %(default)s")
 	parser.add_argument('--layout', dest='layout', action='store_true', default=False,
 												help="only dry layout")
 	parser.add_argument('--outbam', action='store_true', dest='outbam', default=False, 

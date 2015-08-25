@@ -1253,8 +1253,8 @@ def run():
 												help="genome trunk ligation (default: %(default)s bp)")
 	parser.add_argument('-n', '--nprocs', dest='nprocs', default=1, type=int,
 												help="split into multiple processes (default: %(default)s )")
-	parser.add_argument('-d', '--tmpdir', dest='tmpdir', default=os.path.join(os.environ['HOME'],'svetmp'),
-												help="root dir for keeping temporary files")
+	parser.add_argument('-d', '--tmpdir', dest='tmpdir', default=os.path.join(os.environ['HOME'],'svetmp_'+''.join([random.choice(string.ascii_letters) for i in range(4)])),
+												help="root dir for keeping temporary files, default: %(default)s")
 	parser.add_argument('--layout', action='store_true', dest='layout', default=False, help="dry run to layout")
 	parser.add_argument('--outbam', action='store_true', dest='outbam', default=False, help="wet run to bam")
 	args = parser.parse_args()
