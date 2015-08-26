@@ -150,6 +150,7 @@ def main(args):
 	parlist.readfp(parfile)
 	plansize = args.plansize
 	edgesize = 100000
+	mergemax = args.mergemax
 	layout = args.layout
 	tempfile.tempdir = args.tmpdir
 	try:
@@ -190,7 +191,7 @@ def main(args):
 	#metastr='\n'.join([ "\t".join(['FINS',str(2),'adeno.fna,'+inssize,'fix_1','fix_1','fix_1','fix_1','fix_1' ]),
 	#					"\t".join(['DINS',str(2),'fix_100_200','fix_1','fix_1','fix_1','fix_1','fix_1' ]) ])
 	varlist = collections.OrderedDict()
-	dic={'nligation':nligation,'varlist':varlist,'oprefix':oprefix,'reffile':reffile,'nploid':nploid,'plansize':plansize,'varcnt':0,'edgesize':edgesize,'gaptab':gaptab,'varfile':varfile,'parfile':parfile,'parlist':parlist,'nprocs':nprocs,'burnin':burnin}
+	dic={'nligation':nligation,'varlist':varlist,'oprefix':oprefix,'reffile':reffile,'nploid':nploid,'plansize':plansize,'varcnt':0,'edgesize':edgesize,'gaptab':gaptab,'varfile':varfile,'parfile':parfile,'parlist':parlist,'nprocs':nprocs,'burnin':burnin,'mergemax':mergemax}
 	print >>sys.stderr, "runmode=", runmode
 	dic['hapseq']=[pysam.Fastafile(reffile.name)];
 
@@ -265,7 +266,7 @@ def main(args):
 	pariter=[]
 	for lib in range(0,nlibrary):
 		for fi in range(0,len(freq1)):
-			pariter.append([parlist,nligation,reffile.name,nploid,seq0,lib,freq1[fi],seq0,seq1,lib,oprefix])
+			pariter.append([parlist,nligation,reffile.name,nploid,seq0,lib,freq1[fi],seq0,seq1,lib,oprefix,mergemax])
 
 	#NOTE: debug code
 	ffq=[]
@@ -301,10 +302,10 @@ def makebam(parit):
 
 def makefq(parit):		
 	print "processing lib %s freq %s regions" % (str(parit[5]),str(parit[6]))
-	parlist=parit[0]; nligation=parit[1]; rname=parit[2]; nploid=parit[3]; lib=parit[5]; freq1=parit[6]; freq0=1-freq1; seq0=parit[7]; seq1=parit[8]; lib=parit[9]; oprefix=parit[10] #seq0=parit[4];
+	parlist=parit[0]; nligation=parit[1]; rname=parit[2]; nploid=parit[3]; lib=parit[5]; freq1=parit[6]; freq0=1-freq1; seq0=parit[7]; seq1=parit[8]; lib=parit[9]; oprefix=parit[10]; mergemax=parit[11] #seq0=parit[4]; 
 	libnames = json.loads(parlist.get('xwgsim', 'libnames'))
-	wgs0 = mf.fqwgs(parlist,nligation,rname,nploid,seq0,lib,freq0)
-	wgs1 = mf.fqwgs(parlist,nligation,rname,nploid,seq1,lib,freq1)
+	wgs0 = mf.fqwgs(parlist,nligation,rname,nploid,seq0,lib,freq0,mergemax)
+	wgs1 = mf.fqwgs(parlist,nligation,rname,nploid,seq1,lib,freq1,mergemax)
 	#bam0 = mf.runwgs(parlist,nligation,rname,nploid,seq0,lib,freq0)
 	#bam1 = mf.runwgs(parlist,nligation,rname,nploid,seq1,lib,freq1)
 	#print [bam0,bam1]
@@ -336,6 +337,8 @@ def run():
 												help="generated spikein-in mixing frequency, homozygous=1")
 	parser.add_argument('-n', '--nprocs', dest='nprocs', type=int, default=1,
 												help="split into multiple processes (default= %(default)s )")
+	parser.add_argument('-r', '--mergemax', dest='mergemax', default=2000, type=int,
+                        help="max number of files in one iteration of merging (default: %(default)s )") 
 	parser.add_argument('-d', '--tmpdir', dest='tmpdir', default=os.path.join(os.environ['HOME'],'svetmp_'+''.join([random.choice(string.ascii_letters) for i in range(4)])),
 												help="root dir for keeping temporary files, default (last 4 digits random): %(default)s")
 	parser.add_argument('--layout', dest='layout', action='store_true', default=False,
