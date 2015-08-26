@@ -53,6 +53,7 @@ class Bunch(object):
 def deovlpvar(dic,maxdeovlp=2):
 	nowdeovlp=0; 
 	varlist=copy.deepcopy(dic['varlist'])
+	print varlist
 	vartab=var2bed(Bunch(dic)) #vartab is a BedTool
 	#print vartab
 	while chkvar(vartab) != True and nowdeovlp<maxdeovlp: 
