@@ -130,7 +130,7 @@ def var2seq(brpt,reffile,nligation,oprefix): #assume varbed is checked for nonov
 					seg.append(seq1)
 				except TypeError:
 					print var
-					print "most likely formatting wrong in provided .var file, ignore entry!"
+					print >>sys.stderr,"most likely formatting wrong in provided .var file, ignore entry!"
 		#print "old:",len(rseq)
 		#print "new:",len(SeqRecord( Seq(''.join([str(s) for s in seg]), generic_dna), id=rname, name=rname, description=oprefix+"."+rname ) )
 		seq.append( SeqRecord( Seq(''.join([str(s) for s in seg]), generic_dna), id=rname, name=rname, description=oprefix+"."+rname ) )
@@ -157,7 +157,7 @@ def main(args):
 	except:
 		print >>sys.stderr, tempfile.tempdir, "error!, either it exists or cann't be created! please change path"
 		quit()
-	print "tmpdir=", tempfile.tempdir
+	print >>sys.stderr, "tmpdir=", tempfile.tempdir
 	pybedtools.set_tempdir(tempfile.tempdir)
 
 	runmode=0 #1 meta, 2 var, 3 var+meta
@@ -191,7 +191,7 @@ def main(args):
 	#					"\t".join(['DINS',str(2),'fix_100_200','fix_1','fix_1','fix_1','fix_1','fix_1' ]) ])
 	varlist = collections.OrderedDict()
 	dic={'nligation':nligation,'varlist':varlist,'oprefix':oprefix,'reffile':reffile,'nploid':nploid,'plansize':plansize,'varcnt':0,'edgesize':edgesize,'gaptab':gaptab,'varfile':varfile,'parfile':parfile,'parlist':parlist,'nprocs':nprocs,'burnin':burnin}
-	print "runmode=", runmode
+	print sys.stderr, "runmode=", runmode
 	dic['hapseq']=[pysam.Fastafile(reffile.name)];
 
 	if runmode > 1: #have var input
@@ -253,13 +253,13 @@ def main(args):
 	seq0 = { 'filename':reffile.name, 'seq':[ SeqRecord(Seq(ref.fetch(ref.references[i],0,ref.lengths[i]) ),id=ref.references[i],name=ref.references[i],description=ref.references[i]) for i in xrange(0,ref.nreferences) ] }
 	#print "br6"
 	seq1 = var2seq(brpt,reffile,nligation,oprefix)
-	print "done var2seq", time.time()-starttime, " seconds" 
+	print >>sys.stderr, "done var2seq", time.time()-starttime, " seconds" 
 
 	nlibrary=parlist.getint('xwgsim', 'nlibrary')
 	bams = [None] * nlibrary
 
 	if layout:
-		print "done layout and fas file generation"
+		print >>sys.stderr, "done layout and fas file generation"
 		quit()
 	
 	pariter=[]
@@ -276,15 +276,15 @@ def main(args):
 		pool = Pool(processes=int(nprocs))
 		ffq=pool.map(makefq,pariter,1)
 	print ffq
-	print "done var2fq", time.time()-starttime, " seconds"
+	print >>sys.stderr, "done var2fq", time.time()-starttime, " seconds"
 
 	if outbam:
 		fbam = mf.fq2bam(ffq,mf.Bunch(dic)) #FIXME: this has to be implemented
 		print fbam
-		print "done fq2bam", time.time()-starttime, " seconds"
+		print >>sys.stderr, "done fq2bam", time.time()-starttime, " seconds"
 
 	shutil.rmtree(tempfile.tempdir) #clean temp files
-	print "done fasforge"
+	print >>sys.stderr, "done fasforge"
 	
 	return None
 

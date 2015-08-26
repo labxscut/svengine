@@ -62,16 +62,16 @@ def deovlpvar(dic,maxdeovlp=2):
 		#NOTE: f=0 is important so that simple touching is considerred an overlap, which make chkvar work
 		#print ovlptab
 		#print varlist.keys()
-		print "total vars before deovlapping", len(ovlptab); assert len(ovlptab)==len(varlist)
+		print >>sys.stderr, "total vars before deovlapping", len(ovlptab); assert len(ovlptab)==len(varlist)
 		ovlpkey=[ ovlptab.iloc[j,3] for j in range(0,len(ovlptab)) if int(ovlptab.iloc[j,len(varbed_names)]) > 1 ]
-		print "Warn:", " overlapped events removed: ", ovlpkey 
-		print "Warn:", "complex events such as translocaitons maybe broken due to deovlapping"	
+		print >>sys.stderr, "Warn:", " overlapped events removed: ", ovlpkey 
+		print >>sys.stderr, "Warn:", "complex events such as translocaitons maybe broken due to deovlapping"	
 		for key in ovlpkey:
 			del varlist[key] #exclude overlapping entries
 		dic['varlist']=varlist #this is needed for var2bed
 		dic['varcnt']=len(varlist) #this is needed for continuously counting
 		vartab=var2bed(Bunch(dic))
-		print "total vars after deovlapping", len(vartab); assert len(varlist)==len(vartab)
+		print >>sys.stderr, "total vars after deovlapping", len(vartab); assert len(varlist)==len(vartab)
 		nowdeovlp=nowdeovlp+1
 	return varlist
 	
@@ -142,7 +142,7 @@ def main(args):
 	except:
 		print >>sys.stderr, tempfile.tempdir, "error!, either it exists or cann't be created! please change path"
 		quit()
-	print "tmpdir=", tempfile.tempdir
+	print >>sys.stderr, "tmpdir=", tempfile.tempdir
 	pybedtools.set_tempdir(tempfile.tempdir)
 
 	runmode=0 #1 fasta+meta, 2 bam+meta, 3 fasta+var, 4 bam+var
@@ -200,7 +200,7 @@ def main(args):
 		dic[i] = locals()[i]
 	dic['burnin'] = burnin
 
-	print "entering runmode", runmode
+	print >>sys.stderr, "entering runmode", runmode
 	print dic
 
 	if runmode==1 or runmode==2: #have meta input
@@ -213,7 +213,7 @@ def main(args):
 		#print "can get here"
 		
 		var2file(Bunch(dic))
-		print "done var2file"
+		print >>sys.stderr, "done var2file"
 
 	if runmode==3 or runmode==4: #have var input
 		dic['varfile'] = varfile
@@ -226,29 +226,29 @@ def main(args):
 	#assert chkvar(vartab) == True, "==Warn: varfile still contains self overlaps, which is not allowed, bail out"
 	vartab=var2bed(Bunch(dic))
 	var2bed(Bunch(dic))
-	print "done var2bed"
+	print >>sys.stderr, "done var2bed"
 
 	if layout:
-		print "done layout only, now quit"
+		print >>sys.stderr, "done layout only, now quit"
 		quit()
 	
 	if runmode==1 or runmode==3:
 		dic['parlist'] = parlist
 		ffq = var2fq(Bunch(dic))
 		print ffq
-		print "done var2fq", time.time()-starttime, " seconds"
+		print >>sys.stderr, "done var2fq", time.time()-starttime, " seconds"
 
 		if outbam:
 			fbam = fq2bam(ffq,Bunch(dic)) #FIXME: this has to be implemented
 			print fbam
-			print "done fq2bam", time.time()-starttime, " seconds"
+			print >>sys.stderr, "done fq2bam", time.time()-starttime, " seconds"
 
 	if runmode==2 or runmode==4:
 		inbamfilenames = args.inbamfilenames.split(':')
 		var2bs(Bunch(dic)) # use bam surgeon, not implemented yet
 
 	shutil.rmtree(tempfile.tempdir) #clean temp files
-	print "done mutforge"
+	print >>sys.stderr, "done mutforge"
 
 	return None #all done
 
@@ -269,7 +269,7 @@ def fq2bam(ffq,bun):
 	return fbam
 
 def var2bs(bun):
-	print "this part will use bamsurgeon, it has not been implemented yet"; quit()
+	print >>sys.stderr, "this part will use bamsurgeon, it has not been implemented yet"; quit()
 	numinbamfiles = len(inbamfilenames)
 	oprefix = args.oprefix.split(':') if args.oprefix!=None else args.oprefix.split(':')
 	return None
@@ -360,7 +360,7 @@ def var2wgs(bun):
 		pool = Pool(processes=int(nprocs))
 		bedbams = pool.map(fakebam,hapiter,1)
 	print bedbams
-	print "done fakebam", 	time.time()-starttime, " seconds"	
+	print >>sys.stderr, "done fakebam", 	time.time()-starttime, " seconds"	
 
 	libbams = {} #bamfiles to be merged: [ [hap1lib1, hap1lib2, ...], [hap2lib1, hap2lib2, ...] ]
 	#libcnt0 = 0; libcnt1 = 0
@@ -393,7 +393,7 @@ def var2wgs(bun):
 		runcmd(sort_cmd)
 		fbam[lib] = sbam+".bam" #post processing: librarywise merging bams
 
-	print "done merge to final bam"
+	print >>sys.stderr, "done merge to final bam"
 
 	return fbam
 
@@ -461,7 +461,7 @@ def var2fq(bun):
 		pool = Pool(processes=int(nprocs))
 		bedfqs = pool.map(fakefq,hapiter,1)
 	#print bedfqs
-	print "done fakefq", 	time.time()-starttime, " seconds"	
+	print >>sys.stderr, "done fakefq", 	time.time()-starttime, " seconds"	
 
 	libfqs = {} #fqfiles to be merged: [ [hap1lib1, hap1lib2, ...], [hap2lib1, hap2lib2, ...] ]
 	#hap1lib1=[hap1lib1fq1,hap1lib1fq2]
@@ -478,7 +478,7 @@ def var2fq(bun):
 		sfq = '.'.join([oprefix,libnames[lib]])
 		ffq[lib] = mergefq(libfqs[lib],sfq)
 
-	print "done merge to final fq"
+	print >>sys.stderr, "done merge to final fq"
 
 	return ffq
 
@@ -604,8 +604,8 @@ def mergefq(fqs,oprefix):
 	if nfqs==0:
 		return [None, None]
 	elif nfqs==1:
-		print "mv %s %s" % (fq1s[0],ffq1)
-		print "mv %s %s" % (fq2s[0],ffq2)
+		print >>sys.stderr, "mv %s %s" % (fq1s[0],ffq1)
+		print >>sys.stderr, "mv %s %s" % (fq2s[0],ffq2)
 		shutil.move(fq1s[0],ffq1) #if merge only one file, just move it to new name
 		shutil.move(fq2s[0],ffq2) #if merge only one file, just move it to new name
 	else:
@@ -629,8 +629,8 @@ def mergefq(fqs,oprefix):
 			#merge2_cmd = "zcat %s %s | gzip -c >%s " % ( cfq2, " ".join([fq2 for fq2 in fq2s[i*4000:min((i+1)*4000,nfqs)]]), mfq2 )
 			merge1_cmd = "cat %s %s >%s" % ( cfq1, " ".join([fq1 for fq1 in fq1s[i*4000:min((i+1)*4000,nfqs)]]), mfq1 )
 			merge2_cmd = "cat %s %s >%s" % ( cfq2, " ".join([fq2 for fq2 in fq2s[i*4000:min((i+1)*4000,nfqs)]]), mfq2 )
-			print merge1_cmd #unsorted
-			print merge2_cmd #unsorted
+			print >>sys.stderr, merge1_cmd #unsorted
+			print >>sys.stderr, merge2_cmd #unsorted
 			runcmd(merge1_cmd)
 			runcmd(merge2_cmd)
 			#clean temp files
@@ -700,12 +700,12 @@ def runwgs(parlist,nligation,reffile,nploid,seq,lib,freq): #create bam file for 
 				mbam=tempfile.NamedTemporaryFile('w',delete=False).name
 				#print (misize,misizesd,mnread,rl1[libn],rl2[libn],fa,fq1,fq2)
 				wgs_cmd="xwgsim -h -d %d -s %d -N %d -1 %d -2 %d -l %d %s %s %s " % (misize,misizesd,mnread,rl1[libn],rl2[libn],nligation,fa,fq1,fq2)
-				print wgs_cmd
+				print >>sys.stderr, wgs_cmd
 				runcmd(wgs_cmd) #fastq file
 				#fq3,fq4=filterfq(fq1,fq2,nligation,len(seq)-nligation) #half ligation region reads
 				#print (fq1,fq2,fq3,fq4,nligation,len(seq)-nligation)
 				bwasw_cmd="bwa mem -t 4 %s %s %s | samtools view -bS -o %s - " % (reffile,fq1,fq2,mbam+".bam") #it auto gives bam if not provided
-				print bwasw_cmd
+				print >>sys.stderr, bwasw_cmd
 				runcmd(bwasw_cmd)
 				#TODO: for tmpfile in (fq1,fq2,fq3,fq4): os.remove(tmpfile)
 				mode[m]=mbam+".bam"
@@ -753,7 +753,7 @@ def mergebam(bams,oprefix):
 				cbam = mbam
 				mbam = tempfile.NamedTemporaryFile('w',delete=False).name
 			merge_cmd = "samtools merge -f %s %s %s " % (mbam, cbam, " ".join([bam for bam in bams[i*4000:min((i+1)*4000,nbams)]]))
-			print merge_cmd #unsorted
+			print >>sys.stderr, merge_cmd #unsorted
 			runcmd(merge_cmd)
 	#FIXME: who do we clean up this mess of temporary files here?
 	return fbam
@@ -906,7 +906,7 @@ def makevar(bun,metatab):
 	burnin = bun.burnin
 	varlist = bun.varlist
 	varcnt = bun.varcnt
-	print "input varcnt", varcnt												#total number of input vars
+	print >>sys.stderr, "input varcnt", varcnt												#total number of input vars
 	trunks = maketrunks(bun)	 													#trunks is in bed format
 	trunks,stretches = blocktrunks(trunks,gaptab)				#block trunks that not usable
 	trunks=trunks.to_dataframe()
@@ -1082,7 +1082,7 @@ def makevar(bun,metatab):
 			except IndexError:
 				raise Exception("index out of boundry, best bet: insufficient haplo sequences provided than specified in .meta/.var")
 
-	print "output varcnt", varcnt
+	print >>sys.stderr, "output varcnt", varcnt
 	return varlist,varcnt #synonym to varlist
 
 def blocktrunks(trunks,gaptab):
@@ -1263,7 +1263,7 @@ def run():
 
 if __name__ == '__main__':
 	run()
-	print "total runtime: ", time.time()-starttime, " seconds"
+	print >>sys.stderr, "total runtime: ", time.time()-starttime, " seconds"
 
 #def var2vcf(bun):
 #	varlist=bun.varlist; ofile=[ csv.writer(open(bun.oprefix+'.'+str('.vcf','w'),delimiter='\t')
