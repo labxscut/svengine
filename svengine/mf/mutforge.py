@@ -85,8 +85,8 @@ def runcmd(cmd):
 	#	raise Exception("cmd %s didn't run successfully" % cmd)
 
 def run2cmd(cmd1,cmd2):
-	run1=subprocess.Popen(cmd1, shell=True, stdout=subprocess.PIPE)
-	run2=subprocess.check_output(cmd2, shell=True, stdin=run1.stdout)
+	run1=subprocess.Popen(cmd1, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	run2=subprocess.check_output(cmd2, shell=True, stdin=run1.stdout,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
 	run1.wait()
 	return run1,run2
 
