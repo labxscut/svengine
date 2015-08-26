@@ -311,7 +311,7 @@ def makefq(parit):
 	#bam0 = mf.runwgs(parlist,nligation,rname,nploid,seq0,lib,freq0)
 	#bam1 = mf.runwgs(parlist,nligation,rname,nploid,seq1,lib,freq1)
 	#print [bam0,bam1]
-	ffq = mf.mergefq([wgs0,wgs1],oprefix+"."+libnames[lib])
+	ffq = mf.mergefq([wgs0,wgs1],oprefix+"."+libnames[lib],mergemax)
 	print "done lib %s freq %s" % (str(parit[5]+1),str(parit[6])), time.time()-starttime, " seconds"
 	return ffq
 
