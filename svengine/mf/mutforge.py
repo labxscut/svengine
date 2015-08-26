@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-#import svengine.mf.mutforge as mf
+#DEBUG: import svengine.mf.mutforge as mf
+#NOTE: currently mergemax for mergefq is disabled
 
 import copy, time, re, os, shutil, sys, random, csv, subprocess, traceback, argparse, tempfile, itertools, operator, collections, ConfigParser, json, imp, string
 from itertools import izip
@@ -51,6 +52,11 @@ class Bunch(object):
 #pysam.Fastafile('example.fna').lengths
 #fas2bed(fasfile)
 
+def merge_file(inlist,output):
+	with open(output, 'w') as outfile:
+		for infile in inlist:
+			shutil.copyfileobj(open(infile), outfile)
+
 def deovlpvar(dic,maxdeovlp=2):
 	nowdeovlp=0; 
 	varlist=copy.deepcopy(dic['varlist'])
@@ -83,10 +89,10 @@ def runcmd(cmd):
 	return run_info
 
 def run2cmd(cmd1,cmd2):
-  print >>sys.stderr, cmd1, "|", cmd2
+	print >>sys.stderr, cmd1, "|", cmd2
 	run2=subprocess.Popen(cmd2.split(),env=os.environ,cwd=os.getcwd(),stdin=subprocess.PIPE,stdout=subprocess.PIPE)
 	run1=subprocess.Popen(cmd1.split(),env=os.environ,cwd=os.getcwd(),stdout=run2.stdin)
-  run2_info=run2.communicate()
+	run2_info=run2.communicate()
 	run1_info=run1.wait()
 	return run1_info,run2_info
 
@@ -262,15 +268,14 @@ def fq2bam(ffq,bun):
 	for lib in range(0,nlibrary):
 		fq1 = ffq[lib][0]; fq2 =	ffq[lib][1]
 		sbam = '.'.join([oprefix,libnames[lib],"bam"])
-		ssam = tempfile.NamedTemporaryFile('w',delete=False).name
-		bwasw_cmd1="bwa mem -t %s %s %s %s >%s" % (nprocs,reffile,fq1,fq2,ssam) 
-		bwasw_cmd2="samtools view -bS -o %s %s" % (sbam,ssam) #it auto gives bam if not provided
+		#ssam = tempfile.NamedTemporaryFile('w',delete=False).name
+		#bwasw_cmd1="bwa mem -t %s %s %s %s >%s" % (nprocs,reffile,fq1,fq2,ssam) 
+		#bwasw_cmd2="samtools view -bS -o %s %s" % (sbam,ssam) #it auto gives bam if not provided
+		bwasw_cmd1="bwa mem -t %s %s %s %s" % (nprocs,reffile,fq1,fq2) 
+		bwasw_cmd2="samtools view -bS -o %s -" % (sbam) #it auto gives bam if not provided
 		#bwasw_cmd3="rm -f %s" % ssam
-		print >>sys.stderr, bwasw_cmd1, "\n", bwasw_cmd2
-		runcmd(bwasw_cmd1)
-		runcmd(bwasw_cmd2)
-		#runcmd(bwasw_cmd3)
-		os.remove(ssam)
+		#print >>sys.stderr, bwasw_cmd1, "\n", bwasw_cmd2
+		run2cmd(bwasw_cmd1,bwasw_cmd2)
 		#bwasw_cmd="bwa mem -t %s %s %s %s | samtools view -bS -o %s - " % (nprocs,reffile,fq1,fq2,sbam) 
 		#print >>sys.stderr, bwasw_cmd #
 		#runcmd(bwasw_cmd)
@@ -471,7 +476,7 @@ def var2fq(bun):
 	else:
 		pool = Pool(processes=int(nprocs))
 		bedfqs = pool.map(fakefq,hapiter,1)
-	#print bedfqs
+	print bedfqs
 	print >>sys.stderr, "done fakefq", 	time.time()-starttime, " seconds"	
 
 	libfqs = {} #fqfiles to be merged: [ [hap1lib1, hap1lib2, ...], [hap2lib1, hap2lib2, ...] ]
@@ -546,8 +551,13 @@ def fakefq(hapit): # makebam from a pair of seqs of representing the original an
 			wgs1 = fqwgs(parlist,nligation,reffile,nploid,[seq1],lib,freq,mergemax)
 		fqopre = myTemporaryFile(prefix="fakefq_")
 		#only need the temporary filename here
+		print "wgs=",wgs0,wgs1
 		fqs[lib] = mergefq([wgs0,wgs1],fqopre,mergemax)
-		print fqs[lib]
+		print "fqs[lib]=",fqs[lib]
+		assert all([ os.path.isfile(x) for x in fqs[lib] if x != None ])
+		#assert all([ os.path.isfile(x[0]) for x in fqs[lib] if x[0] != None ])
+		#assert all([ os.path.isfile(x[1]) for x in fqs[lib] if x[1] != None ])
+		
 	print >>sys.stderr, "processed %d out of %d regions" % (hapit[6],hapit[7])
 	return [hap,fqs]
 
@@ -602,7 +612,14 @@ def fqwgs(parlist,nligation,reffile,nploid,seq,lib,freq,mergemax): #create bam f
 				mode[m]=[fq1,fq2]
 			else:
 				mode[m]=[None,None]
+	assert all([ os.path.isfile(x[0]) for x in mode if x[0] != None ])
+	assert all([ os.path.isfile(x[1]) for x in mode if x[1] != None ])
 	libfq = mergefq(mode,myTemporaryFile(prefix="libfq_"),mergemax)
+	print "libfq=", libfq
+	assert all([ os.path.isfile(x) for x in libfq if x != None ])
+	#quit()
+	#assert all([ os.path.isfile(x[0]) for x in libfq if x[0] != None ])
+	#assert all([ os.path.isfile(x[1]) for x in libfq if x[1] != None ])
 	#TODO: for tmpfile in mode + [fa]: os.remove(tmpfile)
 	return libfq
 
@@ -610,8 +627,11 @@ def mergefq(fqs,oprefix,mergemax):
 	fq1s = [x[0] for x in fqs if x[0] is not None] #remove empty components
 	fq2s = [x[1] for x in fqs if x[1] is not None] #remove empty components
 	assert len(fq1s)==len(fq2s)	 #all reads have to be properly paired
-	#nfqs = len(fq1s); ffq1=oprefix+".fq1.gz"; ffq2=oprefix+".fq2.gz";
+	#check all fq1s are good
 	nfqs = len(fq1s); ffq1=oprefix+".fq1"; ffq2=oprefix+".fq2";
+	print "nfqs,fq1s,fq2s=",nfqs,fq1s,fq2s
+	assert all([ os.path.isfile(x) for x in fq1s ])
+	assert all([ os.path.isfile(x) for x in fq2s ])
 	if nfqs==0:
 		return [None, None]
 	elif nfqs==1:
@@ -620,38 +640,43 @@ def mergefq(fqs,oprefix,mergemax):
 		shutil.move(fq1s[0],ffq1) #if merge only one file, just move it to new name
 		shutil.move(fq2s[0],ffq2) #if merge only one file, just move it to new name
 	else:
-		for i in range(0,nfqs/mergemax+1):
-			if i == 0: #first iteration
-				cfq1 = ""
-				cfq2 = ""
-				mfq1 = myTemporaryFile(prefix="mfq1_")
-				mfq2 = myTemporaryFile(prefix="mfq2_")
-			if i == nfqs/mergemax: #last iteration
-				if cfq1 != "": cfq1 = mfq1
-				if cfq2 != "": cfq2 = mfq2
-				mfq1 = ffq1
-				mfq2 = ffq2
-			else:
-				cfq1 = mfq1
-				cfq2 = mfq2
-				mfq1 = myTemporaryFile(prefix="mfq1_")
-				mfq2 = myTemporaryFile(prefix="mfq2_")
-			merge1_cmd = "cat %s %s >%s" % ( cfq1, " ".join([fq1 for fq1 in fq1s[i*mergemax:min((i+1)*mergemax,nfqs)]]), mfq1 )
-			merge2_cmd = "cat %s %s >%s" % ( cfq2, " ".join([fq2 for fq2 in fq2s[i*mergemax:min((i+1)*mergemax,nfqs)]]), mfq2 )
-			print >>sys.stderr, merge1_cmd #unsorted
-			print >>sys.stderr, merge2_cmd #unsorted
-			runcmd(merge1_cmd)
-			runcmd(merge2_cmd)
-			#clean temp files
-			for f in fq1s[i*mergemax:min((i+1)*mergemax,nfqs)]: os.remove(f)
-			for f in fq2s[i*mergemax:min((i+1)*mergemax,nfqs)]: os.remove(f)
-			if cfq1 != "": os.remove(cfq1)
-			if cfq2 != "": os.remove(cfq2)
+		merge_file(fq1s,ffq1)
+		merge_file(fq2s,ffq2)
+		for f in fq1s: os.remove(f)
+		for f in fq2s: os.remove(f)
+	#else: #trunk merge nfqs 
+	#	for i in range(0,(nfqs/mergemax)+1):
+	#		if i == 0: #first iteration
+	#			cfq1 = ""
+	#			cfq2 = ""
+	#			mfq1 = myTemporaryFile(prefix="mfq1_")
+	#			mfq2 = myTemporaryFile(prefix="mfq2_")
+	#		if i == nfqs/mergemax: #last iteration
+	#			if cfq1 != "": cfq1 = mfq1
+	#			if cfq2 != "": cfq2 = mfq2
+	#			mfq1 = ffq1
+	#			mfq2 = ffq2
+	#		else:
+	#			cfq1 = mfq1
+	#			cfq2 = mfq2
+	#			mfq1 = myTemporaryFile(prefix="mfq1_")
+	#			mfq2 = myTemporaryFile(prefix="mfq2_")
+	#		merge1_cmd = "cat %s %s >%s" % ( cfq1, " ".join([fq1 for fq1 in fq1s[i*mergemax:min((i+1)*mergemax,nfqs)]]), mfq1 )
+	#		merge2_cmd = "cat %s %s >%s" % ( cfq2, " ".join([fq2 for fq2 in fq2s[i*mergemax:min((i+1)*mergemax,nfqs)]]), mfq2 )
+	#		#print >>sys.stderr, merge1_cmd #unsorted
+	#		#print >>sys.stderr, merge2_cmd #unsorted
+	#		runcmd(merge1_cmd)
+	#		runcmd(merge2_cmd)
+	#		#clean temp files
+	#		#for f in fq1s[i*mergemax:min((i+1)*mergemax,nfqs)]: os.remove(f)
+	#		#for f in fq2s[i*mergemax:min((i+1)*mergemax,nfqs)]: os.remove(f)
+	#		if cfq1 != "": os.remove(cfq1)
+	#		if cfq2 != "": os.remove(cfq2)
 	#FIXME: who do we clean up this mess of temporary files here?
 	return [ffq1,ffq2]
 
 def fakebam(hapit): # makebam from a pair of seqs of representing the original and sved haplotype
-	hap=hapit[0]; hapfas=hapit[1]; nligation=hapit[2]; parlist=hapit[3]; reffile=hapit[4]; nploid=hapit[5]; bed=hapit[8]; mergemax=hapit[9]
+	hap=hapit[0]; hapfas=hapit[1]; nligation=hapit[2]; parlist=hapit[3]; reffile=hapit[4]; nploid=hapit[5]; bed=hapit[8]; mergemax=hapit[9]; print mergemax
 	print >>sys.stderr, "processing %d out of %d regions" % (hapit[6],hapit[7])
 	seq0=SeqRecord(Seq(pysam.Fastafile(hapfas).fetch(bed[0],int(bed[1])+1,int(bed[2])), generic_dna),id=bed[0], name="", description="")
 	seq1=seq0
@@ -715,7 +740,7 @@ def runwgs(parlist,nligation,reffile,nploid,seq,lib,freq): #create bam file for 
 				#print (fq1,fq2,fq3,fq4,nligation,len(seq)-nligation)
 				bwasw_cmd1="bwa mem -t 4 %s %s %s" % (reffile,fq1,fq2) 
 				bwasw_cmd2="samtools view -bS -o %s -" % mbam+".bam" #it auto gives bam if not provided
-				print >>sys.stderr, bwasw_cmd1, " | ", bwasw_cmd2
+				#print >>sys.stderr, bwasw_cmd1, " | ", bwasw_cmd2
 				run2cmd(bwasw_cmd1,bwasw_cmd2)
 				#TODO: for tmpfile in (fq1,fq2,fq3,fq4): os.remove(tmpfile)
 				mode[m]=mbam+".bam"
@@ -752,17 +777,17 @@ def mergebam(bams,oprefix):
 	if nbams==1:
 		shutil.move(bams[0],fbam) #if merge only one file, just move it to new name
 	else:
-		for i in range(0,nbams/4000+1):
+		for i in range(0,nbams/mergemax+1):
 			if i == 0: #first iteration
 				cbam = ""
 				mbam = tempfile.NamedTemporaryFile('w',delete=False).name
-			if i == nbams/4000: #last iteration
+			if i == nbams/mergemax: #last iteration
 				if cbam != "": cbam = mbam
 				mbam = fbam
 			else:
 				cbam = mbam
 				mbam = tempfile.NamedTemporaryFile('w',delete=False).name
-			merge_cmd = "samtools merge -f %s %s %s " % (mbam, cbam, " ".join([bam for bam in bams[i*4000:min((i+1)*4000,nbams)]]))
+			merge_cmd = "samtools merge -f %s %s %s " % (mbam, cbam, " ".join([bam for bam in bams[i*mergemax:min((i+1)*mergemax,nbams)]]))
 			print >>sys.stderr, merge_cmd #unsorted
 			runcmd(merge_cmd)
 	#FIXME: who do we clean up this mess of temporary files here?
@@ -1302,8 +1327,8 @@ def run():
 												help="genome trunk ligation (default: %(default)s bp)")
 	parser.add_argument('-n', '--nprocs', dest='nprocs', default=1, type=int,
 												help="split into multiple processes (default: %(default)s )")
-	parser.add_argument('-r', '--mergemax', dest='mergemax', default=2000, type=int,
-												help="max number of files in one iteration of merging (default: %(default)s )")
+	parser.add_argument('-r', '--mergemax', dest='mergemax', default=4000, type=int,
+												help="max number of bamfiles in one iteration of samtool merging (default: %(default)s )")
 	parser.add_argument('-d', '--tmpdir', dest='tmpdir', default=os.path.join(os.environ['HOME'],'svetmp_'+''.join([random.choice(string.ascii_letters) for i in range(4)])),
 												help="root dir for keeping temporary files, default (last 4 digits random): %(default)s")
 	parser.add_argument('--layout', action='store_true', dest='layout', default=False, help="dry run to layout")

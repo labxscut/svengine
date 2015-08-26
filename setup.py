@@ -47,7 +47,7 @@ dist=setup(name="svengine",
     py_modules = [
 	#'svengine.bs.asmregion','svengine.bs.mutableseq','svengine.bs.parseamos',
 	#'svengine.bs.replacereads',
-	'svengine.mf.mutforge'],
+		'svengine.mf.mutforge'],
 		scripts = ['xwgsim/xwgsim'],
     #cmdclass = {'build': my_build},
     data_files = [('',['README.rst','LICENSE.txt'])],
