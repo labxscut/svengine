@@ -139,6 +139,7 @@ def var2seq(brpt,reffile,nligation,oprefix): #assume varbed is checked for nonov
 
 def main(args):
 	burnin = args.burnin
+	edgein = args.edgein
 	outbam = args.outbam
 	nprocs = args.nprocs
 	varfile = args.varfile
@@ -149,7 +150,6 @@ def main(args):
 	parlist = ConfigParser.ConfigParser()
 	parlist.readfp(parfile)
 	plansize = args.plansize
-	edgesize = 100000
 	layout = args.layout
 	tempfile.tempdir = args.tmpdir
 	try:
@@ -180,7 +180,7 @@ def main(args):
 	try:
 		sizefile = mf.fas2size(reffile.name) #create genome size file
 		gaptab=pybedtools.BedTool(gapfile.read(),from_string=True)
-		gaptab=gaptab.slop(g=sizefile, b=edgesize)
+		gaptab=gaptab.slop(g=sizefile, b=edgein)
 	except pybedtools.cbedtools.BedToolsFileError:
 		raise Exception("incorrect gapfile provided, must in BED format")
 	#create a string meta file:
@@ -190,7 +190,7 @@ def main(args):
 	#metastr='\n'.join([ "\t".join(['FINS',str(2),'adeno.fna,'+inssize,'fix_1','fix_1','fix_1','fix_1','fix_1' ]),
 	#					"\t".join(['DINS',str(2),'fix_100_200','fix_1','fix_1','fix_1','fix_1','fix_1' ]) ])
 	varlist = collections.OrderedDict()
-	dic={'nligation':nligation,'varlist':varlist,'oprefix':oprefix,'reffile':reffile,'nploid':nploid,'plansize':plansize,'varcnt':0,'edgesize':edgesize,'gaptab':gaptab,'varfile':varfile,'parfile':parfile,'parlist':parlist,'nprocs':nprocs,'burnin':burnin}
+	dic={'nligation':nligation,'varlist':varlist,'oprefix':oprefix,'reffile':reffile,'nploid':nploid,'plansize':plansize,'varcnt':0,'edgein':edgein,'gaptab':gaptab,'varfile':varfile,'parfile':parfile,'parlist':parlist,'nprocs':nprocs,'burnin':burnin}
 	print >>sys.stderr, "runmode=", runmode
 	dic['hapseq']=[pysam.Fastafile(reffile.name)];
 
@@ -225,6 +225,8 @@ def main(args):
 
 	if runmode%2 == 1: #have meta input, merge var with meta
 		metatab = mf.CommentedFile(metafile)
+		for row in metatab: #force input of fix_1 columns 5-8 
+			row[4:8]=['fix_1']*4
 		varlist,varcnt = mf.makevar(mf.Bunch(dic),metatab)
 		dic['varlist'] = varlist
 		dic['varcnt'] = varcnt
@@ -331,7 +333,9 @@ def run():
 	parser.add_argument('-f', '--plansize', dest='plansize', type=int, default=100000,
 												help="palnsize is the grain size for genome planning, exluding ligation buffer (default= %(default)s bp)")
 	parser.add_argument('-b', '--burnin', dest='burnin', type=int, default=1000000,
-												help="burnin is the burnin size for genome planning, excluding ligation buffer (default= %(default)s bp)")
+                        help="burnin is the chromosome tip skip size for genome planning to avoid tip padding Ns, default: %(default)s bp")
+	parser.add_argument('-e', '--edgein', dest='edgein', type=int, default=100000,
+                        help="edgein is the gap neibourgh region skip size for genome planning, default: %(default)s bp")
 	parser.add_argument('-q', '--mixfreq', dest='mixfreq', default="1",
 												help="generated spikein-in mixing frequency, homozygous=1")
 	parser.add_argument('-n', '--nprocs', dest='nprocs', type=int, default=1,

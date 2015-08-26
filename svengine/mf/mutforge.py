@@ -137,6 +137,7 @@ def main(args):
 	layout = args.layout
 	outbam = args.outbam
 	burnin = args.burnin
+	edgein = args.edgein
 	tempfile.tempdir = args.tmpdir
 	try:
 		os.mkdir(tempfile.tempdir)
@@ -173,7 +174,6 @@ def main(args):
 	parlist.readfp(parfile)
 	metafile = args.metafile
 	varfile = args.varfile
-	edgesize = 100000
 	if varfile != None: print varfile.name.rstrip("var").rstrip(".") #weird behavior of rstrip(".meta") -> exampl
 	if metafile != None: print metafile.name.rstrip("meta").rstrip(".")
 	oname = metafile.name.rstrip("meta").rstrip(".") if metafile != None else varfile.name.rstrip(".var").rstrip(".")
@@ -192,14 +192,13 @@ def main(args):
 		sizefile = fas2size(hapseq[0].filename)		 #require hap file to be the same size and gap applies to all
 		#FIXME: this sizefile has also to be hapseq dependent 
 		gaptab=pybedtools.BedTool(gapfile.read(),from_string=True)
-		gaptab=gaptab.flank(g=sizefile, b=edgesize)							#need to merge
+		gaptab=gaptab.flank(g=sizefile, b=edgein)							#need to merge
 	except pybedtools.cbedtools.BedToolsFileError:
 		raise Exception("incorrect gapfile provided, must in BED format")
 
 	dic={} #common dictionary interface for passing parameters
-	for i in ('hapseq','gaptab','reffile','plansize','nligation','nploid','oprefix','nprocs','edgesize'):
+	for i in ('hapseq','gaptab','reffile','plansize','nligation','nploid','oprefix','nprocs','burnin','edgein'):
 		dic[i] = locals()[i]
-	dic['burnin'] = burnin
 
 	print >>sys.stderr, "entering runmode", runmode
 	print dic
@@ -907,7 +906,6 @@ def makevar(bun,metatab):
 	hapseq = bun.hapseq
 	nploid = bun.nploid
 	plansize = bun.plansize
-	edgesize = bun.edgesize
 	nligation = bun.nligation
 	burnin = bun.burnin
 	varlist = bun.varlist
@@ -1011,14 +1009,14 @@ def makevar(bun,metatab):
 			#print metatype
 			donor=demultiplex(donorvec[i]) #this is a list of donor haplos
 			recpt=demultiplex(recptvec[i]) #this is a list of recpt haplos
-			dpick = random.sample(donor,1)[0] #have to randomly choose a donor sequence
+			dpick = random.sample(donor,1)[0] #randomly choose a donor sequence
 			vartag = 'VAR'
 			
 			try:
 				if metatype == 'DEL':		#this should be only operations to donors
 					dtid,stretches=maketid(stretches,sizevec[i]/(plansize+2*nligation)+1)
 					for d in donor:
-						varcnt+=1
+						varcnt += 1
 						varid = vartag+"_"+str(varcnt)
 						varlist[varid]=[varid,mid,donorfreq[i],d,str(trunks.iloc[dtid,0]),trunks.iloc[dtid,1],True,sizevec[i],False,None]
 				elif metatype == 'TRA' or metatype == 'ITRA':	#one deletion at donor followed by a insertion at recepient
@@ -1103,19 +1101,22 @@ def blocktrunks(trunks,gaptab):
 	nr = len(remains)
 	cnt=1; stretches = [0] * nr; j=0;
 	for feat in remains:
-		if j==0:
-			j = j+1; pfeat=feat; continue
+		if j == 0:
+			j += 1; pfeat=feat; continue
 		if feat.chrom == pfeat.chrom and feat.start == pfeat.end:
-			cnt+=1 #continue counting from j-1 to j
-		else:		#stop counting, j-1 in stretch starts from , j is not in
-			stretches[j-cnt]=cnt
-			for k in xrange(j-cnt+1,j): stretches[k] = 0
+			cnt += 1 #continue counting from j-1 to j
+		else:		#stop counting, i.e. j-1 in old, j is new
+			stretches[j-cnt] = cnt # e.g. s[0]=2, s[1]=0, s[2]=1
+			for k in xrange(j-cnt+1,j): stretches[k] = 0 #marking a stretch by its first
 			cnt=1	#start new counting
 		if j == nr-1 : #this is forced ending, we need to trace back (cnt-1)
 			stretches[j-cnt+1]=cnt
 			for k in xrange(j-cnt+2,j): stretches[k] = 0
-		j=j+1; pfeat=feat
+		j += 1; pfeat=feat
 	return remains,stretches
+  #remains: trunks that remains, BED formatted
+  #stretches: if a trunk remain, how far it stretches;
+  #           counting from 1
 
 def maketrunks(bun):
 	#one trunk will be [ sv_pos-buffer, sv_pos+maxsv+buffer ]
@@ -1150,6 +1151,40 @@ def maketid(stretches,varstretch):
 	for i in xrange(tid,tid+varstretch): stretches[i]=0;						#mark head of stretch used
 	if vtid-varstretch>0: stretches[tid+varstretch]=vtid-varstretch; #mark remaining stretch by its head
 	return tid, stretches
+
+#maketid tests
+#>>> ts=[2,0,1,1,2,0,3,0,0,1]
+#>>> s=copy.deepcopy(ts)
+#>>> maketid(s,1)
+#(9, [2, 0, 1, 1, 2, 0, 3, 0, 0, 0])
+#>>> maketid(s,1)
+#(3, [2, 0, 1, 0, 2, 0, 3, 0, 0, 0])
+#>>> maketid(s,1)
+#(6, [2, 0, 1, 0, 2, 0, 0, 2, 0, 0])
+#>>> maketid(s,1)
+#(4, [2, 0, 1, 0, 0, 1, 0, 2, 0, 0])
+#>>> maketid(s,1)
+#(0, [0, 1, 1, 0, 0, 1, 0, 2, 0, 0])
+#>>> maketid(s,1)
+#(1, [0, 0, 1, 0, 0, 1, 0, 2, 0, 0])
+#>>> maketid(s,1)
+#(2, [0, 0, 0, 0, 0, 1, 0, 2, 0, 0])
+#>>> maketid(s,1)
+#(5, [0, 0, 0, 0, 0, 0, 0, 2, 0, 0])
+#>>> maketid(s,1)
+#(7, [0, 0, 0, 0, 0, 0, 0, 0, 1, 0])
+#>>> maketid(s,1)
+#(8, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+#>>> s=copy.deepcopy(ts)
+#>>> maketid(s,2)
+#(4, [2, 0, 1, 1, 0, 0, 3, 0, 0, 1])
+#>>> maketid(s,2)
+#(6, [2, 0, 1, 1, 0, 0, 0, 0, 1, 1])
+#>>> maketid(s,2)
+#(0, [0, 0, 1, 1, 0, 0, 0, 0, 1, 1])
+#>>> s=copy.deepcopy(ts)
+#>>> maketid(s,3)
+#(6, [2, 0, 1, 1, 2, 0, 0, 0, 0, 1])
 
 def expanddist(diststring, cnt):
 	dist=diststring.split('_')
@@ -1247,7 +1282,9 @@ def run():
 	parser.add_argument('-v', '--varfile', dest='varfile', type=argparse.FileType('rU'),	#example.var/op
 												help="inputfile of variant specification")
 	parser.add_argument('-b', '--burnin', dest='burnin', type=int, default=1000000,
-                        help="burnin is the burnin size for genome planning, excluding ligation buffer default: %(default)s bp")
+                        help="burnin is the chromosome tip skip size for genome planning to avoid tip padding Ns, default: %(default)s bp")
+	parser.add_argument('-e', '--edgein', dest='edgein', type=int, default=100000,
+                        help="edgein is the gap neibourgh region skip size for genome planning, default: %(default)s bp")
 	parser.add_argument('-i', '--bamfile', dest='inbamfilenames', #in1.bam,in2.bam,in3.bam
 												help="inputfile of library-wise bam file(s)")
 	parser.add_argument('-o', '--oprefix', dest='oprefix', default=None, #output1,output2,output3,...
