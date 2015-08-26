@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+#import svengine.mf.mutforge as mf
 
 import copy, time, re, os, shutil, sys, random, csv, subprocess, traceback, argparse, tempfile, itertools, operator, collections, ConfigParser, json, imp, string
 from itertools import izip
@@ -76,20 +77,17 @@ def deovlpvar(dic,maxdeovlp=2):
 	return varlist
 	
 def runcmd(cmd):
-	#try:
-	run=subprocess.Popen(cmd,shell=True,stderr=subprocess.PIPE,stdout=subprocess.PIPE)
+	print >>sys.stderr, cmd
+	run=subprocess.Popen(cmd.split(),env=os.environ,cwd=os.getcwd(),stderr=subprocess.PIPE,stdout=subprocess.PIPE)
 	run_info=run.communicate() 
 	return run_info
-		#FIXME, this is nonblocked, why?
-		#subprocess.call(cmd,shell=True)
-	#except OSError:
-	#	raise Exception("cmd %s didn't run successfully" % cmd)
 
 def run2cmd(cmd1,cmd2):
-	run1=subprocess.Popen(cmd1, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-	run2=subprocess.Popen(cmd2, shell=True, stdin=run1.stdout,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+  print >>sys.stderr, cmd1, "|", cmd2
+	run2=subprocess.Popen(cmd2.split(),env=os.environ,cwd=os.getcwd(),stdin=subprocess.PIPE,stdout=subprocess.PIPE)
+	run1=subprocess.Popen(cmd1.split(),env=os.environ,cwd=os.getcwd(),stdout=run2.stdin)
+  run2_info=run2.communicate()
 	run1_info=run1.wait()
-	run2_info=run2.wait()
 	return run1_info,run2_info
 
 def CountUnique(mylist):
@@ -267,11 +265,12 @@ def fq2bam(ffq,bun):
 		ssam = tempfile.NamedTemporaryFile('w',delete=False).name
 		bwasw_cmd1="bwa mem -t %s %s %s %s >%s" % (nprocs,reffile,fq1,fq2,ssam) 
 		bwasw_cmd2="samtools view -bS -o %s %s" % (sbam,ssam) #it auto gives bam if not provided
-		bwasw_cmd3="rm -f %s" % ssam
-		print >>sys.stderr, bwasw_cmd1, "\n", bwasw_cmd2, "\n", bwasw_cmd3
+		#bwasw_cmd3="rm -f %s" % ssam
+		print >>sys.stderr, bwasw_cmd1, "\n", bwasw_cmd2
 		runcmd(bwasw_cmd1)
 		runcmd(bwasw_cmd2)
-		runcmd(bwasw_cmd3)
+		#runcmd(bwasw_cmd3)
+		os.remove(ssam)
 		#bwasw_cmd="bwa mem -t %s %s %s %s | samtools view -bS -o %s - " % (nprocs,reffile,fq1,fq2,sbam) 
 		#print >>sys.stderr, bwasw_cmd #
 		#runcmd(bwasw_cmd)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#TODO: add FINSERIONS and DINSERTIONS
+#import svengine.mf.mutforge as mf
 
 import copy, time, re, os, shutil, sys, random, csv, subprocess, traceback, argparse, tempfile, itertools, operator, collections, ConfigParser, json, imp, StringIO, string
 from multiprocessing import Pool
