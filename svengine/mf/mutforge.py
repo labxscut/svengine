@@ -76,19 +76,19 @@ def deovlpvar(dic,maxdeovlp=2):
 	
 def runcmd(cmd):
 	#try:
-	subprocess.Popen(cmd,shell=True,stderr=devnull,stdout=devnull).communicate() 
+	run=subprocess.Popen(cmd,shell=True,stderr=subprocess.PIPE,stdout=subprocess.PIPE)
+	run.communicate() 
+	return run
 		#FIXME, this is nonblocked, why?
 		#subprocess.call(cmd,shell=True)
 	#except OSError:
 	#	raise Exception("cmd %s didn't run successfully" % cmd)
 
-def callcmd(cmd):
-	#try:
-	os.system(cmd)
-		#FIXME, this is nonblocked, why?
-		#subprocess.call(cmd,shell=True)
-	#except OSError:
-	#	raise Exception("cmd %s didn't run successfully" % cmd)
+def run2cmd(cmd1,cmd2):
+	run1=subprocess.Popen(cmd1, shell=True, stdout=subprocess.PIPE)
+	run2=subprocess.check_output(cmd2, shell=True, stdin=run1.stdout)
+	run1.wait()
+	return run1,run2
 
 def CountUnique(mylist):
 	h = {}
@@ -261,9 +261,13 @@ def fq2bam(ffq,bun):
 	for lib in range(0,nlibrary):
 		fq1 = ffq[lib][0]; fq2 =	ffq[lib][1]
 		sbam = '.'.join([oprefix,libnames[lib],"bam"])
-		bwasw_cmd="bwa mem -t %s %s %s %s | samtools view -bS -o %s - " % (nprocs,reffile,fq1,fq2,sbam) 
-		print >>sys.stderr, bwasw_cmd #
-		runcmd(bwasw_cmd)
+		bwasw_cmd1="bwa mem -t %s %s %s %s" % (nprocs,reffile,fq1,fq2) 
+		bwasw_cmd2="samtools view -bS -o %s -" % sbam #it auto gives bam if not provided
+		print >>sys.stderr, bwasw_cmd1, " | ", bwasw_cmd2
+		run2cmd(bwasw_cmd1,bwasw_cmd2)
+		#bwasw_cmd="bwa mem -t %s %s %s %s | samtools view -bS -o %s - " % (nprocs,reffile,fq1,fq2,sbam) 
+		#print >>sys.stderr, bwasw_cmd #
+		#runcmd(bwasw_cmd)
 		fbam[lib] = sbam #post processing: librarywise merging bams
 	return fbam
 
@@ -703,9 +707,10 @@ def runwgs(parlist,nligation,reffile,nploid,seq,lib,freq): #create bam file for 
 				runcmd(wgs_cmd) #fastq file
 				#fq3,fq4=filterfq(fq1,fq2,nligation,len(seq)-nligation) #half ligation region reads
 				#print (fq1,fq2,fq3,fq4,nligation,len(seq)-nligation)
-				bwasw_cmd="bwa mem -t 4 %s %s %s | samtools view -bS -o %s - " % (reffile,fq1,fq2,mbam+".bam") #it auto gives bam if not provided
-				print >>sys.stderr, bwasw_cmd
-				runcmd(bwasw_cmd)
+				bwasw_cmd1="bwa mem -t 4 %s %s %s" % (reffile,fq1,fq2) 
+				bwasw_cmd2="samtools view -bS -o %s -" % mbam+".bam" #it auto gives bam if not provided
+				print >>sys.stderr, bwasw_cmd1, " | ", bwasw_cmd2
+				run2cmd(bwasw_cmd1,bwasw_cmd2)
 				#TODO: for tmpfile in (fq1,fq2,fq3,fq4): os.remove(tmpfile)
 				mode[m]=mbam+".bam"
 			else:

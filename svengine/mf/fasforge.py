@@ -191,7 +191,7 @@ def main(args):
 	#					"\t".join(['DINS',str(2),'fix_100_200','fix_1','fix_1','fix_1','fix_1','fix_1' ]) ])
 	varlist = collections.OrderedDict()
 	dic={'nligation':nligation,'varlist':varlist,'oprefix':oprefix,'reffile':reffile,'nploid':nploid,'plansize':plansize,'varcnt':0,'edgesize':edgesize,'gaptab':gaptab,'varfile':varfile,'parfile':parfile,'parlist':parlist,'nprocs':nprocs,'burnin':burnin}
-	print sys.stderr, "runmode=", runmode
+	print >>sys.stderr, "runmode=", runmode
 	dic['hapseq']=[pysam.Fastafile(reffile.name)];
 
 	if runmode > 1: #have var input
