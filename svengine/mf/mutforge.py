@@ -87,8 +87,8 @@ def runcmd(cmd):
 def run2cmd(cmd1,cmd2):
 	run1=subprocess.Popen(cmd1, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	run2=subprocess.Popen(cmd2, shell=True, stdin=run1.stdout,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-	run1_info=run1.communicate()
-	run2_info=run2.communicate()
+	run1_info=run1.wait()
+	run2_info=run2.wait()
 	return run1_info,run2_info
 
 def CountUnique(mylist):
