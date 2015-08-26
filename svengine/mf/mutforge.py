@@ -77,8 +77,8 @@ def deovlpvar(dic,maxdeovlp=2):
 def runcmd(cmd):
 	#try:
 	run=subprocess.Popen(cmd,shell=True,stderr=subprocess.PIPE,stdout=subprocess.PIPE)
-	run.communicate() 
-	return run
+	run_info=run.communicate() 
+	return run_info
 		#FIXME, this is nonblocked, why?
 		#subprocess.call(cmd,shell=True)
 	#except OSError:
@@ -86,9 +86,10 @@ def runcmd(cmd):
 
 def run2cmd(cmd1,cmd2):
 	run1=subprocess.Popen(cmd1, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-	run2=subprocess.check_output(cmd2, shell=True, stdin=run1.stdout,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-	run1.wait()
-	return run1,run2
+	run2=subprocess.Popen(cmd2, shell=True, stdin=run1.stdout,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+	run1_info=run1.communicate()
+	run2_info=run2.communicate()
+	return run1_info,run2_info
 
 def CountUnique(mylist):
 	h = {}
