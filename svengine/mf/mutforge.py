@@ -19,7 +19,7 @@ devnull=open(os.devnull, 'w')
 io_quote = "this is for end user"
 code_quote = 'this is for program'
 maxrefnum = 24 			#for debugging and human, should set to a big number afterwards
-#burnin = 100000		  #burnin region for each chromosome, to avoid N rich regions
+#burnin = 100000			#burnin region for each chromosome, to avoid N rich regions
 varfile_names = ['#VID','MID','VARFREQ','VARHAP','VARCHR','VARPOS','VARDEL','VARDELSIZE','VARINS','VARINSSEQ(HAP/SEQFILE,CHR:START-END,COPY,REVCOMP)']
 varbed_names = ['#CHROM','START','END','VID','MID','VARFREQ','VARHAP','VARCHR','VARPOS','VARDEL','VARDELSIZE','VARINS','VARINSSEQ(HAP/SEQFILE,CHR:START-END,COPY,REVCOMP)']
 
@@ -112,21 +112,21 @@ def locatemin(a):
 def demultiplex(m):
 	return [i for i, x in enumerate([int(x) for x in bin(m)[2:][::-1]]) if x == 1]
 
-def CountUnique(mylist):
-	h = {}
-	for x in mylist: h[x] = h.get(x, 0) + 1
-	return h
+#def CountUnique(mylist):
+#	h = {}
+#	for x in mylist: h[x] = h.get(x, 0) + 1
+#	return h
 
-def isint(s):
-	try: int(s); return True;
-	except ValueError: return False;
+#def isint(s):
+#	try: int(s); return True;
+#	except ValueError: return False;
 
-def locatemin(a):
-	smallest = min(a)
-	return smallest, [index for index, element in enumerate(a) if smallest == element]
+#def locatemin(a):
+#	smallest = min(a)
+#	return smallest, [index for index, element in enumerate(a) if smallest == element]
 
-def demultiplex(m):
-	return [i for i, x in enumerate([int(x) for x in bin(m)[2:][::-1]]) if x == 1]
+#def demultiplex(m):
+#	return [i for i, x in enumerate([int(x) for x in bin(m)[2:][::-1]]) if x == 1]
 
 def test_map(a,b):
 	print a,b
@@ -594,8 +594,8 @@ def fqwgs(parlist,nligation,reffile,nploid,seq,lib,freq,mergemax): #create bam f
 				print >>sys.stderr, wgs_cmd
 				runcmd(wgs_cmd) #fastq file
 				#we opt for speed instead of space
-				#gzfq1_cmd="gzip %s" % fq1 #  fq1.gz, fq1 auto deleted
-				#gzfq2_cmd="gzip %s" % fq2 #  fq2.gz, fq2 auto deleted
+				#gzfq1_cmd="gzip %s" % fq1 #	fq1.gz, fq1 auto deleted
+				#gzfq2_cmd="gzip %s" % fq2 #	fq2.gz, fq2 auto deleted
 				#print >>sys.stderr, gzfq1_cmd
 				#print >>sys.stderr, gzfq2_cmd
 				#runcmd(gzfq1_cmd) #fastq file
@@ -929,7 +929,7 @@ def var2bed(bun):
 	#	ofile.writerow([varcopy[var][4],varcopy[var][5],varcopy[var][5]+varcopy[var][7]+1]+varcopy[var])
 	return varbed
 
-def makevar(bun,metatab):
+def makevar(bun,metatab,fas=False):
 	#metatab = bun.metatab
 	#FIXME: this has to be modified to disallow streteching Ns and random selection in similar size
 	gaptab = bun.gaptab
@@ -979,7 +979,9 @@ def makevar(bun,metatab):
 	
 	rows=[]
 	for row in metatab:
+		if fas: row[4:8]=['fix_1']*4  #override by 'fix_1' for fasforge
 		rows.append(row)
+		
 	rowix=range(0,len(rows))
 	#print rowix, rows
 	#random.shuffle(rowix) #randomized between metatypes
@@ -1003,6 +1005,7 @@ def makevar(bun,metatab):
 				randseq = True
 				sizedist = expanddist(sizeopt[1],cnt)
 
+		#distributions are marginal/independent and mixed/combinatorics
 		copydist = expanddist(row[3],cnt)
 		donordist = expanddist(row[4],cnt)
 		recptdist = expanddist(row[5],cnt)
@@ -1036,9 +1039,8 @@ def makevar(bun,metatab):
 		for i in xrange(0,cnt): #this could be parallelized? yes if we preallocate trunks
 			metacnt[metatype] = metacnt.get(metatype,0) + 1
 			mid = metatype + "_" + str(metacnt[metatype])
-			#print metatype
-			donor=demultiplex(donorvec[i]) #this is a list of donor haplos
-			recpt=demultiplex(recptvec[i]) #this is a list of recpt haplos
+			donor = demultiplex(donorvec[i]) #this is a list of donor haplos, 0-indexed, empty if none
+			recpt = demultiplex(recptvec[i]) #this is a list of recpt haplos, 0-indexed, empty if none
 			dpick = random.sample(donor,1)[0] #randomly choose a donor sequence
 			vartag = 'VAR'
 			
@@ -1144,9 +1146,9 @@ def blocktrunks(trunks,gaptab):
 			for k in xrange(j-cnt+2,j): stretches[k] = 0
 		j += 1; pfeat=feat
 	return remains,stretches
-  #remains: trunks that remains, BED formatted
-  #stretches: if a trunk remain, how far it stretches;
-  #           counting from 1
+	#remains: trunks that remains, BED formatted
+	#stretches: if a trunk remain, how far it stretches;
+	#					 counting from 1
 
 def maketrunks(bun):
 	#one trunk will be [ sv_pos-buffer, sv_pos+maxsv+buffer ]
@@ -1312,9 +1314,9 @@ def run():
 	parser.add_argument('-v', '--varfile', dest='varfile', type=argparse.FileType('rU'),	#example.var/op
 												help="inputfile of variant specification")
 	parser.add_argument('-b', '--burnin', dest='burnin', type=int, default=1000000,
-                        help="burnin is the chromosome tip skip size for genome planning to avoid tip padding Ns, default: %(default)s bp")
+												help="burnin is the chromosome tip skip size for genome planning to avoid tip padding Ns, default: %(default)s bp")
 	parser.add_argument('-e', '--edgein', dest='edgein', type=int, default=100000,
-                        help="edgein is the gap neibourgh region skip size for genome planning, default: %(default)s bp")
+												help="edgein is the gap neibourgh region skip size for genome planning, default: %(default)s bp")
 	parser.add_argument('-i', '--bamfile', dest='inbamfilenames', #in1.bam,in2.bam,in3.bam
 												help="inputfile of library-wise bam file(s)")
 	parser.add_argument('-o', '--oprefix', dest='oprefix', default=None, #output1,output2,output3,...

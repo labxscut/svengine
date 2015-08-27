@@ -95,24 +95,26 @@ starttime=time.time()
 #	return varlist
 
 def var2seq(brpt,reffile,nligation,oprefix): #assume varbed is checked for nonoverlapping
-	segst=0; ref=pysam.Fastafile(reffile.name); seq=[]
-	for i in xrange(0,ref.nreferences):
-		rname=ref.references[i]; rlen=ref.lengths[i]
+	#print brpt,reffile,nligation,oprefix
+	ref=pysam.Fastafile(reffile.name); seq=[]
+	for i in xrange(0,ref.nreferences): #iterate through
+		rname=ref.references[i]; rlen=ref.lengths[i]; segst=0;
 		rseq=Seq(ref.fetch(rname,0,rlen), generic_dna)
 		if brpt.get(rname,None) == None: #no var at all
 			seg = [ rseq ]
-		else:
+		else: #1+ vars
 			brs = collections.OrderedDict(sorted(brpt[rname].items(), key=lambda t: t[0]))
 			seg = []; nbrs=len(brs) #member of seg are Seqs
+			#if i==1: print nbrs
 			for j in xrange(0,nbrs):
 				#VID MID VARFRQ VARHAP VARCHR VARPOS VARDEL VARDELSZ VARINS VARINSSZ
 				try:
 					var=brs.values()[j]
-					if j == (nbrs-1): #last var
+					if j == (nbrs-1): #last var, seged is 
 						seged=rlen
 					else:
 						seged=brs.values()[j+1][5]
-					if j == 0: #first seg appended without var
+					if j == 0: #the first seg is appended without var
 						seg.append(rseq[segst:var[5]]); segst=var[5] 
 					seq1 = rseq[segst:seged] #seg if connected is the new seq 
 					if var[6]: #work on deletion
@@ -174,7 +176,7 @@ def main(args):
 	else:
 		raise Exception("must provide meta and/or var files!")
 	oprefix = oname if not args.oprefix else args.oprefix
-	nligation = 0; nploid = 1; 
+	nligation = 0; nploid = 1; #in fasforge, niligation is always 0 and nploid always is 1 
 	freq1 = [ float(f) for f in args.mixfreq.split(",") ]
 	for f in freq1:
 		assert f>=0 and f<=1, "mixfreq must be a float between 0 and 1" 
@@ -226,9 +228,9 @@ def main(args):
 
 	if runmode%2 == 1: #have meta input, merge var with meta
 		metatab = mf.CommentedFile(metafile)
-		for row in metatab: #force input of fix_1 columns 5-8 
-			row[4:8]=['fix_1']*4
-		varlist,varcnt = mf.makevar(mf.Bunch(dic),metatab)
+		#for row in metatab: #force input of fix_1 columns 5-8 
+		#	row[4:8]=['fix_1']*4
+		varlist,varcnt = mf.makevar(mf.Bunch(dic),metatab,fas=True)
 		dic['varlist'] = varlist
 		dic['varcnt'] = varcnt
 		vartab=mf.var2bed(mf.Bunch(dic))
@@ -253,7 +255,7 @@ def main(args):
 			brpt[var[4]][var[5]]=var	#brpt[chr][pos]
 	#print "br5"
 	ref = pysam.Fastafile(reffile.name)
-	seq0 = { 'filename':reffile.name, 'seq':[ SeqRecord(Seq(ref.fetch(ref.references[i],0,ref.lengths[i]) ),id=ref.references[i],name=ref.references[i],description=ref.references[i]) for i in xrange(0,ref.nreferences) ] }
+	seq0 = { 'filename':reffile.name, 'seq':[ SeqRecord(Seq(ref.fetch(ref.references[i],0,ref.lengths[i]) ),id=ref.references[i],name=ref.references[i],description=ref.references[i]) for i in xrange(0,ref.nreferences) ] } #input sequence
 	#print "br6"
 	seq1 = var2seq(brpt,reffile,nligation,oprefix)
 	print >>sys.stderr, "done var2seq", time.time()-starttime, " seconds" 
