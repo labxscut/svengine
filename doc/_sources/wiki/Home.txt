@@ -1,0 +1,63 @@
+.. |Logo| image:: https://bytebucket.org/charade/svengine/wiki/images/logo.png
+   :height: 40px
+   :width: 50px
+
+|Logo| SVEngine: Allele Specific and Haplotype Aware Structural Variants Simulator
+==================================================================================
+
+.. contents:: Navigator
+
+
+QUICK LINKS
+-----------
+
+`Install <README>`_
+
+`Examples <Example>`_
+
+`Manuals <Manual>`_
+
+`FAQ <FAQ>`_
+
+
+INTRODUCTION
+------------
+
+The rapid maturing of next generation sequencing (NGS) technology and sharply declining sequencing cost have made genomic sequencing and the detection of structural variants, including deletions, insertions, inversions, tandem duplications and translocations routine analysis (Alkan et al., 2011). While many methods have been developed and applied for structural variant calling in NGS data, the problem remains significantly challenging,given the complicacy of underlying mechanisms and varied experimental designs as well as qualities, in particular when the alternative allele is pre-sented only in a low fraction of bulk sequenced molecules (Xia et al., 2015). Prospective sensitivity analyses of the sequencing design and benchmark of structural variant callers are of times crucial to success. However, generating real sequencing data for competing experiment de-signs with various settings is cost-prohibitive and tedious. Thus simulation-based evaluation can be an inexpensive alternative to achieve comprehensive and realistic understanding of analysis programs. Simulated datasets can incorporate multiple levels of variations such as coverage, number of libraries and insert size at the sequencing design level; base error rate, tool chain and parameters at data analysis level; number, type, size of SVs at the genomic landscape level and exact break breakpoint, variant fraction and haplotype at the allele-specific level. The overall performance based on varied settings can be judge with known truth set to traded-off with antici-pated cost. We designed SVEngine to be a multi-purpose and self-contained simulator for whole genome scale spike-in of thousands of SV events of various types in both single-sample and matched sample scenarios. SVEn-gine offers especially detailed haploid and allelic control as well as stream-lined operations:  for its simplest mode, users only need to specify the FASTA sequences and desired composition of SVs in variant files.
+
+  .. image:: https://bytebucket.org/charade/svengine/wiki/images/pipeline.png
+   :alt: svengine_figure1.png
+   :height: 320px
+   :width: 400px
+  
+  Figure 1. The workflow and schematics of SVEngine.
+
+The overall workflow and schematics of SVEngine are illustrated in Fig-ure.1. Here an insertion of m1 fraction is spiked into haploid 2 and a dele-tion of m2 fraction is spiked into haploid 1 in two neighboring regions. By utilizing the divide-and-conquer and parallelization we greatly increased the simulating throughput for complex events such as translocations, which can be treated as one local deletion plus a local insertion. We also ad-dressed the technical difficulty of merging trunked BAM files in the later ligating stage by amending the popular wgsim (Li et al., 2009) program to properly create read pairs overlapping the ligation point with correct coverage, insert size and other sequencing features.
+
+
+IMPLEMENTATION
+--------------
+
+Currently, SVEngine is implemented as a standard Python Package.
+
+AVAILABILITY
+--------------
+
+- Download released master branch source code package at: https://bitbucket.org/charade/svengine/get/master.zip and install. Look for the README.rst file within the package for detailed installation instructions and others.
+- Git-based developmental source code access at: https://bitbucket.org/charade/svengine. The SVEngine is made open source for advanced users to pipeline the analysis or implement their own variants.
+
+
+WIKI
+--------
+
+SVEngine's https://bitbucket.org/charade/svengine/wiki page is a growing resource for manuals, FAQs and other information. This is a MUST read place before you actually using the SWAN tool. These documentations are also openly editable. You are more than welcome to contribute to this ongoing documentation.
+
+CONTACTS
+--------
+
+Questions and comments shall be addressed to lixia at stanford dot edu.
+
+CITATIONS
+---------
+
+The SVEngine manuscript is under preparation.

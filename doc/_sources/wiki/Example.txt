@@ -1,0 +1,191 @@
+.. contents:: Navigator
+
+Examples
+========
+
+A simple example run using *fasforge* :
+--------------------------------------- 
+
+`test/test_fa.sh: <https://bitbucket.org/charade/svengine/src/master/test/test_fa.sh>`_
+
+::
+
+	### A simple sanity checking script for fasforge ###
+	
+	## input files:
+	# example.gap.bed #masked out regions in BED (.bed) format
+	# simple.par #PAR file to specify library type: insert distribution, coverage, read length, ... 
+	# example.fna #fasta input 
+	# test_fa.meta #META file to specify event distribution
+	# test_fa.var #VAR file to specify exact events
+
+	## simulating using a META file (.meta) input
+	PYTHONPATH=$HOME/setup/svengine/svengine/ python -m mf.fasforge -m test_fa.meta example.gap.bed simple.par example.fna
+
+	## simulating using a VAR file (.var) input
+	PYTHONPATH=$HOME/setup/svengine/svengine/ python -m mf.fasforge -v test_fa.var example.gap.bed simple.par example.fna
+
+	## simulating using both a VAR file (.var) and a META file (.meta) input
+	PYTHONPATH=$HOME/setup/svengine/svengine/ python -m mf.fasforge -m test_fa.meta -v test_fa.var example.gap.bed simple.par example.fna
+
+	## output files:
+	# test_fa.lib1.fq1/2 #fastq output, test_fa.lib2.fq1/2, ... if have multiple libs sepcified in PAR (.par) file
+	# test_fa.lib1.bam #bam output, test_fa.lib2.bam, ... if have multiple libs sepcified in PAR (.par) file
+	# test_fa.out.bed #bed output for ground truth 
+	# test_fa.out.var #var output for ground truth 
+	# test_fa.fnv #fasta output after ground truth spiked-in 
+
+A simple example run using *mutforge* :
+---------------------------------------
+
+`test/test_mf.sh: <https://bitbucket.org/charade/svengine/src/master/test/test_mf.sh>`_
+
+::
+	
+	### A simple sanity checking script for mutforge ###
+	
+	## input files:
+	# example.gap.bed #masked out regions in BED (.bed) format
+	# simple.par #PAR file to specify library type: insert distribution, coverage, read length, ... 
+	# example.fna #nploid sequence fasta input, use comma to separate if multiple
+	# example.fna #reference sequence fasta input
+	# test_mf.meta #META file to specify event distribution
+	# test_mf.var #VAR file to specify exact events
+
+	## simulating using a META file (.meta) input
+	PYTHONPATH=$HOME/setup/svengine/svengine/ python -m mf.mutforge -m test_mf.meta example.fna example.gap.bed simple.par example.fna
+
+	## simulating using a VAR file (.var) input
+	PYTHONPATH=$HOME/setup/svengine/svengine/ python -m mf.mutforge -v test_mf.var example.fna example.gap.bed simple.par example.fna
+
+	## simulating using both a VAR file (.var) and a META file (.meta) input
+	PYTHONPATH=$HOME/setup/svengine/svengine/ python -m mf.mutforge -m test_mf.meta -v test_mf.var example.fna example.gap.bed simple.par example.fna
+
+	## output files:
+	# test_mf.lib1.fq1/2 #fastq output, test_mf.lib2.fq1/2, ... if have multiple libs sepcified in PAR (.par) file
+	# test_mf.lib1.bam #bam output, test_mf.lib2.bam, ... if have multiple libs sepcified in PAR (.par) file
+	# test_mf.out.bed #bed output for ground truth 
+	# test_mf.out.var #var output for ground truth	 
+
+
+
+Example of SVEngine install (no root with vritualenv):
+---------------------------------------------------------
+
+::
+
+	##Download and unpack virtualenv:
+	wget https://pypi.python.org/packages/source/v/virtualenv/virtualenv-13.1.1.tar.gz#md5=22d36ae617d6e962d8a486f58b5ebd2a
+	tar -xvf virtualenv-13.1.1.tar.gz
+	
+	##Install and run virtualenv
+	cd virtualenv-13.1.1/
+	PYTHONPATH=$HOME/Downloads/lib/python2.7/site-packages/ python
+	setup.py install --prefix=$HOME/Downloads/
+	PYTHONPATH=/home/nandor/Downloads//lib/python2.7/site-packages/
+	$HOME/Downloads/bin/virtualenv
+	PYTHONPATH=/home/nandor/Downloads//lib/python2.7/site-packages/
+	$HOME/Downloads/bin/virtualenv sve_vpy --no-site-packages
+	source sve_vpy/bin/activate
+	
+	##Install	cython
+	pip install -U cython
+	
+	##Download and install SVengine
+	git clone https://bitbucket.org/charade/svengine.git
+	cd svengine
+	python setup.py install
+
+Example of SVEngine install (no root without virtualenv):
+-----------------------------------------------------------
+A fully automated script to setup SVEngine on a CentOS machine which I don't have root privilege from scratch.
+
+::
+
+	#master doc: http://dl.dropbox.com/u/35182955/development_environment.html
+	#start from your home directory clean: ~
+	#assuming using BASH
+	#add following to ~/.bashrc
+	export PATH="$HOME/usr/bin:$PATH"
+	export PYTHONPATH="$HOME/usr/lib/python/python2.7/site-packages:$PATH"
+	. .bashrc
+	env | grep PATH # to check
+	#make necessary directories
+	mkdir ~/bin ~/setup ~/scripts
+	#return to ~/setup after every block installation
+	cd ~/setup
+	#Python (not necessary if you are using system Python)
+	export PVER=2.7.8
+	wget https://www.python.org/ftp/python/$PVER/Python-$PVER.tgz
+	tar -zxvf Python-$PVER.tgz
+	cd Python-$PVER
+	./configure --prefix=$HOME/usr --enable-shared
+	make && make install
+	#Python Packages
+	export PVER=15.1
+	wget https://pypi.python.org/packages/source/s/setuptools/setuptools-$PVER.tar.gz#md5=10407f6737d8dc37e5310e68c1f1f6ec
+	tar -zxvf setuptools-$PVER.tar.gz
+	cd setuptools-$PVER
+	python setup.py install
+	~/usr/bin/easy_install cython
+	#SVEngine
+	git clone https://bitbucket.org:charade/svengine.git
+	cd svengine
+	git checkout devel
+	~/usr/bin/easy_install .
+
+Examples of spiked-in events:
+----------------------------- 
+
+	Showing in each figure are plottings of four sequencing feature tracks from a simulated BAM file : read coverage, read pair insert size, hanging read pairs and soft clipped reads of the region harboring the spiked-in SV. X-axis is genomic position. The background genome is simulated at 30x coverage. Two dashed virtical bar were used to delinate the SV region boundry (+/- 200bp).	 
+
+Example Deletion (DEL):
+
+.. image:: https://bytebucket.org/charade/svengine/wiki/images/DEL.png
+	 :width: 400px
+
+Example Duplication (DUP):
+
+.. image:: https://bytebucket.org/charade/svengine/wiki/images/DUP.png
+	 :width: 400px
+
+Example Domestic Insertion (DINS):
+
+.. image:: https://bytebucket.org/charade/svengine/wiki/images/DINS.png
+	 :width: 400px
+
+
+Example Foreign Insertion (FINS):
+
+.. image:: https://bytebucket.org/charade/svengine/wiki/images/FINS.png
+	 :width: 400px
+
+Example Inversion (INV):
+
+.. image:: https://bytebucket.org/charade/svengine/wiki/images/INV.png
+	 :width: 400px
+
+Example Inverted Domestic Insersion (IDINS):
+
+.. image:: https://bytebucket.org/charade/svengine/wiki/images/IDINS.png
+	 :width: 400px
+
+Example Inverted Duplication (IDUP):
+
+.. image:: https://bytebucket.org/charade/svengine/wiki/images/IDUP.png
+	 :width: 400px
+
+Example Translocation (TRA):
+
+.. image:: https://bytebucket.org/charade/svengine/wiki/images/TRAD.png
+	 :width: 400px
+.. image:: https://bytebucket.org/charade/svengine/wiki/images/TRAI.png
+	 :width: 400px
+
+Example Inverted Translocation (ITRA):
+
+.. image:: https://bytebucket.org/charade/svengine/wiki/images/ITRAD.png
+	 :width: 400px
+.. image:: https://bytebucket.org/charade/svengine/wiki/images/ITRAI.png
+	 :width: 400px
+

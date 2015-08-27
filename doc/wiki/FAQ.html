@@ -1,0 +1,172 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Usage Related &mdash; SVEngine 0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="SVEngine 0 documentation" href="../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SVEngine 0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="contents topic" id="navigator">
+<p class="topic-title first">Navigator</p>
+<ul class="simple">
+<li><a class="reference internal" href="#usage-related" id="id1">Usage Related</a><ul>
+<li><a class="reference internal" href="#error-unexpected-file-format-please-use-tab-delimited-bed-gff-or-vcf-perhaps-you-have-non-integer-starts-or-ends-at-line-1" id="id2">1. Error &#8220;Unexpected file format.  Please use tab-delimited BED, GFF, or VCF. Perhaps you have non-integer starts or ends at line 1?&#8221;</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#installation-related" id="id3">Installation Related</a><ul>
+<li><a class="reference internal" href="#why-i-had-a-gzopen-error-from-bwa" id="id4">1. Why I had a &#8216;gzopen error&#8217; from bwa ?</a></li>
+<li><a class="reference internal" href="#what-is-the-error-recognized-as-from-samtools-means" id="id5">2. What is the error: &#8216; recognized as * from samtools means?</a></li>
+<li><a class="reference internal" href="#why-i-get-empty-fq-file-even-non-empty-reads-were-generated-from-wgsim" id="id6">3. Why I get empty .fq file even non-empty reads were generated from wgsim?</a></li>
+<li><a class="reference internal" href="#why-i-get-error-csamtools-c-not-found-from-installing-of-pysam" id="id7">4. Why I get error, &#8220;csamtools.c not found&#8221;, from installing of pysam?</a></li>
+<li><a class="reference internal" href="#why-i-get-error-python-h-not-found-from-installing-of-cython" id="id8">5. Why I get error, &#8220;Python.h not found&#8221;, from installing of cython?</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="usage-related">
+<h1><a class="toc-backref" href="#id1">Usage Related</a><a class="headerlink" href="#usage-related" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="error-unexpected-file-format-please-use-tab-delimited-bed-gff-or-vcf-perhaps-you-have-non-integer-starts-or-ends-at-line-1">
+<h2><a class="toc-backref" href="#id2">1. Error &#8220;Unexpected file format.  Please use tab-delimited BED, GFF, or VCF. Perhaps you have non-integer starts or ends at line 1?&#8221;</a><a class="headerlink" href="#error-unexpected-file-format-please-use-tab-delimited-bed-gff-or-vcf-perhaps-you-have-non-integer-starts-or-ends-at-line-1" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><dl class="docutils">
+<dt>ANS:   Your gap.bed file, your haploid sequence file and/or your reference file are not consistent in format.</dt>
+<dd><ol class="first last arabic simple">
+<li>Make sure all the sequence ids in .bed, .fasta files are consistent (e.g.) all with &#8220;chr&#8221; or all without &#8220;chr&#8221;. To correct the fasta file, you need to rename the chromosome id and reindex the fasta file.</li>
+<li>Make sure the gap bed file doesn&#8217;t contain gap information for extra chromosomes not found in fasta files. e.g. if you are spiking only into &#8220;chr22&#8221;, remove any gaps defined for all other chromosomes.</li>
+</ol>
+</dd>
+</dl>
+</div></blockquote>
+</div>
+</div>
+<div class="section" id="installation-related">
+<h1><a class="toc-backref" href="#id3">Installation Related</a><a class="headerlink" href="#installation-related" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="why-i-had-a-gzopen-error-from-bwa">
+<h2><a class="toc-backref" href="#id4">1. Why I had a &#8216;gzopen error&#8217; from bwa ?</a><a class="headerlink" href="#why-i-had-a-gzopen-error-from-bwa" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div>ANS: Please update libz version to 1.2.8 or later.</div></blockquote>
+</div>
+<div class="section" id="what-is-the-error-recognized-as-from-samtools-means">
+<h2><a class="toc-backref" href="#id5">2. What is the error: &#8216; recognized as * from samtools means?</a><a class="headerlink" href="#what-is-the-error-recognized-as-from-samtools-means" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div>ANS: There is one of your bam file empty.</div></blockquote>
+</div>
+<div class="section" id="why-i-get-empty-fq-file-even-non-empty-reads-were-generated-from-wgsim">
+<h2><a class="toc-backref" href="#id6">3. Why I get empty .fq file even non-empty reads were generated from wgsim?</a><a class="headerlink" href="#why-i-get-empty-fq-file-even-non-empty-reads-were-generated-from-wgsim" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div>ANS: This is a bug of wgsim, which is giving empty fq file even given non-empty but only a small number of generated reads. The way to avoid this is to increase your allele fraction or coverage.</div></blockquote>
+</div>
+<div class="section" id="why-i-get-error-csamtools-c-not-found-from-installing-of-pysam">
+<h2><a class="toc-backref" href="#id7">4. Why I get error, &#8220;csamtools.c not found&#8221;, from installing of pysam?</a><a class="headerlink" href="#why-i-get-error-csamtools-c-not-found-from-installing-of-pysam" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div>ANS: To install pysam, you need to complie Samtools by default. Please fix samtools&#8217;s dependencies first. For instance, uncurse_ may be missed in Linux system.</div></blockquote>
+</div>
+<div class="section" id="why-i-get-error-python-h-not-found-from-installing-of-cython">
+<h2><a class="toc-backref" href="#id8">5. Why I get error, &#8220;Python.h not found&#8221;, from installing of cython?</a><a class="headerlink" href="#why-i-get-error-python-h-not-found-from-installing-of-cython" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div>ANS: need to install python-dev on Linux. e.g. on Ubuntu try: sudo apt-get install python-dev</div></blockquote>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Usage Related</a><ul>
+<li><a class="reference internal" href="#error-unexpected-file-format-please-use-tab-delimited-bed-gff-or-vcf-perhaps-you-have-non-integer-starts-or-ends-at-line-1">1. Error &#8220;Unexpected file format.  Please use tab-delimited BED, GFF, or VCF. Perhaps you have non-integer starts or ends at line 1?&#8221;</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#installation-related">Installation Related</a><ul>
+<li><a class="reference internal" href="#why-i-had-a-gzopen-error-from-bwa">1. Why I had a &#8216;gzopen error&#8217; from bwa ?</a></li>
+<li><a class="reference internal" href="#what-is-the-error-recognized-as-from-samtools-means">2. What is the error: &#8216; recognized as * from samtools means?</a></li>
+<li><a class="reference internal" href="#why-i-get-empty-fq-file-even-non-empty-reads-were-generated-from-wgsim">3. Why I get empty .fq file even non-empty reads were generated from wgsim?</a></li>
+<li><a class="reference internal" href="#why-i-get-error-csamtools-c-not-found-from-installing-of-pysam">4. Why I get error, &#8220;csamtools.c not found&#8221;, from installing of pysam?</a></li>
+<li><a class="reference internal" href="#why-i-get-error-python-h-not-found-from-installing-of-cython">5. Why I get error, &#8220;Python.h not found&#8221;, from installing of cython?</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/wiki/FAQ.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2015, Li Charlie XIa.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.3</a>
+      
+      |
+      <a href="../_sources/wiki/FAQ.txt"
+          rel="nofollow">Page source</a></li>
+    </div>
+
+    
+
+    
+  </body>
+</html>

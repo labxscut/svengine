@@ -1,0 +1,200 @@
+.. contents:: Navigator
+
+Manual
+========
+SVEngine takes i) variant (VAR) and/or meta-variant (META), ii) library parameter file (PAR), iii) a bed file for masking region (no bed for using whole sequence), iv) haploid FASTA files as input.
+
+Two mode of running;
+  * Using var file; fasforge -n 16 -b 100 -f 100 -v test.var example.gap.bed simple.par example.fna
+  * Using meta file; fasforge -n 16 -b 100 -f 100 -m test_fa.meta example.gap.bed simple.par example.fna
+
+1. Example PAR file
+-------------------
+
+The `test/example.par <https://bitbucket.org/charade/svengine/src/master/test/example.par>`_ file shows an example of library parameter file, in which multiple libraries can be defined. It is a standard python config file with only one section 'xwgsim'. The defined values are either simple variable type, list or dictionary objects in python. Under the section: **nlibrary** defines number of libraries (int); For these libraries: **libnames** defines names (list); **coverage** defines coverage (dict); **isize** defines insert size distribution (dict of list of lists); **read1/2** defines read length.
+
+  ::
+
+    [xwgsim]
+    #number of libraries
+    #haplotype option should be always set on wgsim
+    nlibrary=2
+    #library-wise option=optbam"lib1":optbam2
+    libnames=["lib1","lib2"]
+    coverage: {"lib1":40,"lib2":5}
+    # for the tuple in isize, [mode_weight, mode_mean, mode_sd]
+    isize: {"lib1":[[0.7,250,20],[0.3,400,40]],"lib2":[[1,300,30]]}
+    read1: {"lib1":100,"lib2":100}
+    read2: {"lib1":100,"lib2":100}
+
+2. Example VAR file
+-------------------
+
+The `test/example.var <https://bitbucket.org/charade/svengine/src/master/test/example.var>`_ file shows an example of variant file, in which specific structural variants can be defined. It is a tab delimited txt file and each row defines one event. Columns defined for this distribution are: **VID** is index of this variant; **MID** index of this variant's parent event (an insertion and deletion of the same TRA shall have the same MID); **VARFREQ** the allele fraction of this event; **VARHAP** zygosity of this event; **VARCHR** chromosome of this event; **VARPOS** first position of this event; **VARDEL** if a deletion is in this event; **VARDELSIZE** size of deleted sequence; **VARDEL** if a insertion is in this event; **VARINSSEQ** what sequence is inserted (formatted as "filename, chromosomename:startPosition-endPosition,duplicatedNumber,forward/reverseComplemented); 
+  
+  ::
+
+	#VID	MID	VARFREQ	VARHAP	VARCHR	VARPOS	VARDEL	VARDELSIZE	VARINS	VARINSSEQ(HAP/SEQFILE,CHR:START-END,COPY,REVCOMP)
+	VAR_1	FINS_1	0.5	0	1	1038000	False	0	True	example.fas,fins1:1-1200,1,f
+	VAR_2	FINS_1	0.5	1	1	1038000	False	0	True	example.fas,fins1:1-1200,1,f
+	VAR_3	FINS_2	0.5	0	1	1142000	False	0	True	example.fas,fins2:1-1200,1,f
+	VAR_4	FINS_2	0.5	1	1	1142000	False	0	True	example.fas,fins2:1-1200,1,f
+	VAR_5	ITRA_1	0.5	0	2	102000	True	1000	False	None
+	VAR_6	ITRA_1	0.5	1	2	102000	True	1000	False	None
+	VAR_7	ITRA_1	0.5	0	1	1246000	False	0	True	example.fna,2:102001-103000,1,r
+	VAR_8	ITRA_1	0.5	1	1	1246000	False	0	True	example.fna,2:102001-103000,1,r
+	VAR_9	ITRA_2	0.5	0	1	1350000	True	1000	False	None
+	VAR_10	ITRA_2	0.5	1	1	1350000	True	1000	False	None
+	VAR_11	ITRA_2	0.5	0	2	206000	False	0	True	example.fna,1:1350001-1351000,1,r
+	VAR_12	ITRA_2	0.5	1	2	206000	False	0	True	example.fna,1:1350001-1351000,1,r
+	VAR_13	DEL_1	1.0	0	1	1454000	True	1000	False	None
+	VAR_14	DEL_1	1.0	1	1	1454000	True	1000	False	None
+	VAR_15	DEL_2	1.0	0	2	310000	True	2000	False	None
+	VAR_16	DEL_2	1.0	1	2	310000	True	2000	False	None
+	VAR_17	DEL_3	1.0	0	2	414000	True	2000	False	None
+	VAR_18	DEL_3	1.0	1	2	414000	True	2000	False	None
+	VAR_19	DEL_4	1.0	0	2	518000	True	500	False	None
+	VAR_20	DEL_4	1.0	1	2	518000	True	500	False	None
+	VAR_21	TRA_1	1.0	0	2	622000	True	1000	False	None
+	VAR_22	TRA_1	1.0	1	2	622000	True	1000	False	None
+	VAR_23	TRA_1	0.5	0	2	726000	False	0	True	example.fna,2:622001-623000,1,f
+	VAR_24	TRA_1	0.5	1	2	726000	False	0	True	example.fna,2:622001-623000,1,f
+	VAR_25	TRA_2	1.0	0	2	830000	True	1000	False	None
+	VAR_26	TRA_2	1.0	1	2	830000	True	1000	False	None
+	VAR_27	TRA_2	0.5	0	2	934000	False	0	True	example.fna,2:830001-831000,1,f
+	VAR_28	TRA_2	0.5	1	2	934000	False	0	True	example.fna,2:830001-831000,1,f
+	VAR_29	INV_1	0.5	0	2	1038000	True	1000	True	example.fna,2:1038001-1039000,1,r
+	VAR_30	INV_1	0.5	1	2	1038000	True	1000	True	example.fna,2:1038001-1039000,1,r
+	VAR_31	INV_2	0.5	0	2	1142000	True	1000	True	example.fna,2:1142001-1143000,1,r
+	VAR_32	INV_2	0.5	1	2	1142000	True	1000	True	example.fna,2:1142001-1143000,1,r
+	VAR_33	IDUP_1	0.5	0	2	1246000	True	1000	True	example.fna,2:1246001-1247000,2,r
+	VAR_34	IDUP_1	0.5	1	2	1246000	True	1000	True	example.fna,2:1246001-1247000,2,r
+	VAR_35	IDUP_2	0.5	0	2	1350000	True	1000	True	example.fna,2:1350001-1351000,2,r
+	VAR_36	IDUP_2	0.5	1	2	1350000	True	1000	True	example.fna,2:1350001-1351000,2,r
+	VAR_37	DINS_1	0.5	0	2	1558000	False	0	True	example.fna,2:1454001-1455000,1,f
+	VAR_38	DINS_1	0.5	1	2	1558000	False	0	True	example.fna,2:1454001-1455000,1,f
+	VAR_39	DINS_2	0.5	0	2	1766000	False	0	True	example.fna,2:1662001-1663000,1,f
+	VAR_40	DINS_2	0.5	1	2	1766000	False	0	True	example.fna,2:1662001-1663000,1,f
+	VAR_41	DUP_1	0.5	0	2	1870000	True	1000	True	example.fna,2:1870001-1871000,2,f
+	VAR_42	DUP_1	0.5	1	2	1870000	True	1000	True	example.fna,2:1870001-1871000,2,f
+	VAR_43	DUP_2	0.5	0	2	1974000	True	1000	True	example.fna,2:1974001-1975000,2,f
+	VAR_44	DUP_2	0.5	1	2	1974000	True	1000	True	example.fna,2:1974001-1975000,2,f
+
+3. Example META file
+--------------------
+
+The `test/example.meta <https://bitbucket.org/charade/svengine/src/master/test/example.meta>`_ file shows an example of meta-variant file, in which genomic distribution of structural variants can be defined. It is a tab delimited txt file and each row defines one distribution. Columns defined for this distribution are: **METATYPE** is event type:
+      i) DEL (deletion)
+      ii) DUP (tandem duplication)
+      iii) DIN (domestic insertion i.e. distant duplication, which is 1 bp or more bp apart each other)
+      iv) INV and IDIN (inverted DIN, which is inversion if inverted place)
+      v) TRA (translocation)
+      vi) FIN(foreign insertion)
+      vii) ITRA and IDUP (inverted TRA and DUP)
+
+**NumEvent** is number of events; **SIZEDIST/SEQ** the distribution of deleting/inserting/duplicating/inverting segment size (e.g. "fix\_x\_y_...": evenly taking fixed values x,y,...; this histogram like way can be used to set any arbitrary distribution); **COPY/DIST** is distribution of deleting/inserting/duplicating/inverting segment copy number; **DONORDIST** is the distribution for zygosity in donor site (combinatorially 0, 1, 2, 3, ..., 2^nploid-1 stands for all combinations of nploid; a site is a donor site if it has a deletion); **RECPTDIST** is the distribution for zygosity in recipient site (a site is a recepient site if it has a deletion); **DONORFREQ** is the distribution for allele fraction in donor site; **RECPTFREQ** is the distribution for allele fraction in recipient site; **NOTE** is the notes for the specified distribution. In this template file, the note explains how variants composed of local deletions + insertions of operated sequence. **NOTE**: fasforge will NOT use the DONORDIST,RECPTDIST,DONORFREQ,RECPTFREQ fields.
+
+  ::
+
+    #example meta table
+    #DONORDIST 0, 1, 2, 3, ..., 2^nploid-1; this is basically deletion or nothing
+    #RECPTDIST 0, 1, 2, 3, ..., 2^nploid-1; this is basically insertion or nothing
+    #IF DONOR is multiple and is providing sequence, a random one among them is chosen
+    #IF RECPT is multiple and every in the multiple is receiving the chosen donor seq
+    #FOR HOMOZYGOUS EVENTS TO HAPPEN at nploid=2:
+    #DONOR must be fix_3, RECPT must be fix_3
+    #And Sequence Content Should be the same for any donor sequence
+    #FOR HEMIZYGOUS EVENTS TO HAPPEN at nploid=2:
+    #DONOR must be fix_1/fix_2, RECPT must be fix_1/fix_2
+    #And Sequence Content Should be the same for any donor sequence
+    #METATYPE	NumEvent	SIZEDIST/SEQ	COPYDIST	DONORDIST	RECPTDIST	DONORFREQ	RECPTFREQ	NOTE
+    FINS	2	example.fas	fix_1	fix_3	fix_3	fix_0.5	fix_0.5	#FINS=COPY*INS, foreign insertion
+    ITRA	2	fix_1000	fix_1	fix_3	fix_3	fix_0.5	fix_0.5	#ITRA=1*DEL + COPY * INS, inverted translocation
+    DEL	4	fix_500_500_1000_2000_2000	fix_1	fix_3	fix_3	fix_1.0	fix_0.5	#DEL=1*DEL, deletion
+    TRA	2	fix_1000	fix_1	fix_3	fix_3	fix_1.0	fix_0.5	#TRA=1*DEL + COPY*INS, translocation
+    INV	2	fix_1000	fix_1	fix_3	fix_3	fix_0.5	fix_0.5	#INV=1*DEL + COPY*INS, inversion
+    IDUP	2	fix_1000	fix_2	fix_3	fix_3	fix_0.5	fix_0.5	#IDUP=1*DEL + COPY*INS, inverted duplication
+    DINS	2	fix_1000	fix_1	fix_3	fix_3	fix_0.5	fix_0.5	#DINS=COPY*INS, domestic insertion
+    DUP	2	fix_1000	fix_2	fix_3	fix_3	fix_0.5	fix_0.5	#DUP=COPY*INS, duplication
+
+
+4. fasforge
+-----------
+
+  The `svengine/mf/fasforge.py <https://bitbucket.org/charade/svengine/src/master/svengine/mf/fasforge.py>`_ script does faster spike-in without locus-specific allele fraction and zygosity control. The input is **reffile** "hg19.fasta", **gapfile** and **parfile**. User can optionally specify **varfile**: spX.var or **metafile**: spX.meta. The output is BED file spX.out.bed and spX.out.var (recording exact events) plus spX.fnv (sequence after spike-in) plus spX.lib*.fq1/2 (fastq files for multiple libraries) plus spX.lib*.bam (bam files for multiple libraries). 
+
+  ::
+
+    usage: fasforge [-h] [-m METAFILE] [-v VARFILE] [-o OPREFIX] [-f PLANSIZE]
+                [-q MIXFREQ] [-n NPROCS] [-l]
+                gapfile parfile reffile
+
+    spike-in mutations to fasta files, we insert mutations into a provided
+    reference this script is haplotype insensitive and ligation less
+
+    positional arguments:
+      gapfile               inputfile of gap or other banned regions, required
+      parfile               inputfile of library-wise parameters, required
+      reffile               inputfile of ref file(s), required
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      -m METAFILE, --metafile METAFILE
+                        inputfile of meta specification
+      -v VARFILE, --varfile VARFILE
+                        inputfile of variant specification
+      -o OPREFIX, --oprefix OPREFIX
+                        prefix for output files
+      -f PLANSIZE, --plansize PLANSIZE
+                        palnsize is the grain size for genome planning,
+                        nligation=0 here (default=100bp)
+      -q MIXFREQ, --mixfreq MIXFREQ
+                        generated spikein-in mixing frequency, homozygous=1
+      -n NPROCS, --nprocs NPROCS
+                        split into multiple processes (default=1)
+      --layout              only dry layout (default=False)
+      --outbam              wet run to bam
+
+5. mutforge
+-----------
+
+  The `svengine/mf/mutforge.py <https://bitbucket.org/charade/svengine/src/master/svengine/mf/mutforge.py>`_ script does sophisticated spike-in with locus-specific allele fraction and zygosity control. The input is **hapfiles** (n sequences for nploidity separated by commas), **reffile** (eg. "hg19.fasta"), **gapfile** and **parfile**. User can optionally specify **varfile**: spX.var or **metafile**: spX.meta. The output is BED file spX.out.bed and spX.out.var (recording exact events) plus spX.fnv (sequence after spike-in) plus spX.lib*.fq1/2 (fastq files for multiple libraries) plus spX.lib*.bam (bam files for multiple libraries).
+
+  ::
+
+    usage: mutforge [-h] [-m METAFILE] [-v VARFILE] [-b INBAMFILENAMES]
+                [-o OPREFIX] [-y NPLOID] [-f PLANSIZE] [-g NLIGATION]
+                [-n NPROCS] [--layout]
+                hapfiles gapfile parfile reffile
+
+    spike-in mutations to fasta/bam files, for bam files first assemble haplo-
+    types for fasta files we segment fasta files to confirm if the configuration
+    is viable
+
+    positional arguments:
+      hapfiles              inputfile of hap file(s), required
+      gapfile               inputfile of gap or other banned regions, required
+      parfile               inputfile of library-wise parameters, required
+      reffile               inputfile of ref file(s), required
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      -m METAFILE, --metafile METAFILE
+                        inputfile of meta specification
+      -v VARFILE, --varfile VARFILE
+                        inputfile of variant specification
+      -b INBAMFILENAMES, --bamfile INBAMFILENAMES
+                        inputfile of library-wise bam file(s)
+      -o OPREFIX, --oprefix OPREFIX
+                        prefix for output files
+      -y NPLOID, --nploid NPLOID
+                        genome ploidity (default=2)
+      -f PLANSIZE, --plansize PLANSIZE
+                        palnsize + ligation*2 is the grain size for genome
+                        planning, (default=100000bp)
+      -g NLIGATION, --nligation NLIGATION
+                        genome trunk ligation (default=2000bp)
+      -n NPROCS, --nprocs NPROCS
+                        split into multiple processes (default=1)
+      --layout              only dry layout (default=False)
+      --outbam              wet run to bam
