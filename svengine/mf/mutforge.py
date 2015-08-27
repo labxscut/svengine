@@ -209,7 +209,7 @@ def main(args):
 		raise Exception("incorrect gapfile provided, must in BED format")
 
 	dic={} #common dictionary interface for passing parameters
-	for i in ('hapseq','gaptab','reffile','plansize','nligation','nploid','oprefix','nprocs','edgein','mergemax'):
+	for i in ('hapseq','gaptab','reffile','plansize','nligation','nploid','oprefix','nprocs','edgein','burnin','mergemax'):
 		dic[i] = locals()[i]
 
 	print >>sys.stderr, "entering runmode", runmode

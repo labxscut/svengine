@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #A simple script to test if embedding SV regions are good
-#./test_fa.sh #generating bamfiles
-#./test_mf.sh #generating bamfiles
+./test_fa.sh #generating bamfiles
+./test_mf.sh #generating bamfiles
 samtools sort test_fa.lib1.bam test_fa.st
 samtools sort test_mf.lib1.bam test_mf.st
 samtools index test_fa.st.bam
