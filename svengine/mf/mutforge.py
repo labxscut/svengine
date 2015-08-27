@@ -159,6 +159,10 @@ def main(args):
 	print >>sys.stderr, "tmpdir=", tempfile.tempdir
 	pybedtools.set_tempdir(tempfile.tempdir)
 
+	if args.metafile != None and args.varfile != None:
+		print >>sys.stderr, "either a .meta or a .var file can be specified but not both"
+    quit()
+
 	runmode=0 #1 fasta+meta, 2 bam+meta, 3 fasta+var, 4 bam+var
 	if args.inbamfilenames!=None and args.metafile!=None:
 		runmode=2;
@@ -215,25 +219,25 @@ def main(args):
 	print >>sys.stderr, "entering runmode", runmode
 	print dic
 
-	if runmode==1 or runmode==2: #have meta input
+	if runmode==1 or runmode==2: #have meta input, no need of deovlapping
 		metatab = CommentedFile(metafile)
 		dic['varlist']=collections.OrderedDict()
 		dic['varcnt']=0
 		varlist,varcnt = makevar(Bunch(dic),metatab)
 		dic['varlist']=varlist
 		dic['varcnt']=varcnt
-		#print "can get here"
 		
 		var2file(Bunch(dic))
 		print >>sys.stderr, "done var2file"
 
-	if runmode==3 or runmode==4: #have var input
+	if runmode==3 or runmode==4: #have var input, assume deovlapping is done externally
 		dic['varfile'] = varfile
 		varlist = file2var(Bunch(dic))
 		dic['varlist'] = varlist
 		dic['varcnt'] = len(varlist)
 
 	#NOTE: we cannot allow deovlpvar here bc. varlist may well contain overlaps due to hetero zygosity
+	#			 this deovlapping is skiiped for mutforge for now
 	#varlist=deovlpvar(dic); dic['varcnt']=len(varlist); dic['varlist']=varlist; vartab=var2bed(Bunch(dic))
 	#assert chkvar(vartab) == True, "==Warn: varfile still contains self overlaps, which is not allowed, bail out"
 	vartab=var2bed(Bunch(dic))

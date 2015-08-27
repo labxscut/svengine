@@ -167,6 +167,9 @@ def main(args):
 	if varfile!=None and metafile!=None:
 		runmode=3;
 		oname=varfile.name.rsplit(".")[0]	
+		#don't allow mode 3
+		print >>sys.stderr, "either a .meta or a .var file can be specified but not both"
+		quit()
 	elif varfile!=None and metafile==None:
 		runmode=2;
 		oname=varfile.name.rsplit(".")[0]	
@@ -336,15 +339,15 @@ def run():
 	parser.add_argument('-f', '--plansize', dest='plansize', type=int, default=100000,
 												help="palnsize is the grain size for genome planning, exluding ligation buffer (default= %(default)s bp)")
 	parser.add_argument('-b', '--burnin', dest='burnin', type=int, default=1000000,
-                        help="burnin is the chromosome tip skip size for genome planning to avoid tip padding Ns, default: %(default)s bp")
+												help="burnin is the chromosome tip skip size for genome planning to avoid tip padding Ns, default: %(default)s bp")
 	parser.add_argument('-e', '--edgein', dest='edgein', type=int, default=100000,
-                        help="edgein is the gap neibourgh region skip size for genome planning, default: %(default)s bp")
+												help="edgein is the gap neibourgh region skip size for genome planning, default: %(default)s bp")
 	parser.add_argument('-q', '--mixfreq', dest='mixfreq', default="1",
 												help="generated spikein-in mixing frequency, homozygous=1")
 	parser.add_argument('-n', '--nprocs', dest='nprocs', type=int, default=1,
 												help="split into multiple processes (default= %(default)s )")
 	parser.add_argument('-r', '--mergemax', dest='mergemax', default=2000, type=int,
-                        help="max number of files in one iteration of merging (default: %(default)s )") 
+												help="max number of files in one iteration of merging (default: %(default)s )") 
 	parser.add_argument('-d', '--tmpdir', dest='tmpdir', default=os.path.join(os.environ['HOME'],'svetmp_'+''.join([random.choice(string.ascii_letters) for i in range(4)])),
 												help="root dir for keeping temporary files, default (last 4 digits random): %(default)s")
 	parser.add_argument('--layout', dest='layout', action='store_true', default=False,
