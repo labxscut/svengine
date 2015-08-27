@@ -88,6 +88,13 @@ def runcmd(cmd):
 	run_info=run.communicate() 
 	return run_info
 
+def pipecmd(cmd1,cmd2):
+	print >>sys.stderr, cmd1, "|", cmd2
+	#run=subprocess.Popen(cmd.split(),env=os.environ,cwd=os.getcwd(),stderr=subprocess.PIPE,stdout=subprocess.PIPE)
+	#run_info=run.communicate() 
+	run_info=os.system(" ".join([cmd1,"|",cmd2]))
+	return run_info
+
 def run2cmd(cmd1,cmd2):
 	print >>sys.stderr, cmd1, "|", cmd2
 	run2=subprocess.Popen(cmd2.split(),env=os.environ,cwd=os.getcwd(),stdin=subprocess.PIPE,stdout=subprocess.PIPE)
@@ -275,7 +282,7 @@ def fq2bam(ffq,bun):
 		bwasw_cmd2="samtools view -bS -o %s -" % (sbam) #it auto gives bam if not provided
 		#bwasw_cmd3="rm -f %s" % ssam
 		#print >>sys.stderr, bwasw_cmd1, "\n", bwasw_cmd2
-		run2cmd(bwasw_cmd1,bwasw_cmd2)
+		pipecmd(bwasw_cmd1,bwasw_cmd2)
 		#bwasw_cmd="bwa mem -t %s %s %s %s | samtools view -bS -o %s - " % (nprocs,reffile,fq1,fq2,sbam) 
 		#print >>sys.stderr, bwasw_cmd #
 		#runcmd(bwasw_cmd)
@@ -741,7 +748,7 @@ def runwgs(parlist,nligation,reffile,nploid,seq,lib,freq): #create bam file for 
 				bwasw_cmd1="bwa mem -t 4 %s %s %s" % (reffile,fq1,fq2) 
 				bwasw_cmd2="samtools view -bS -o %s -" % mbam+".bam" #it auto gives bam if not provided
 				#print >>sys.stderr, bwasw_cmd1, " | ", bwasw_cmd2
-				run2cmd(bwasw_cmd1,bwasw_cmd2)
+				pipecmd(bwasw_cmd1,bwasw_cmd2)
 				#TODO: for tmpfile in (fq1,fq2,fq3,fq4): os.remove(tmpfile)
 				mode[m]=mbam+".bam"
 			else:
