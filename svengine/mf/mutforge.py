@@ -60,7 +60,7 @@ def merge_file(inlist,output):
 def deovlpvar(dic,maxdeovlp=2):
 	nowdeovlp=0; 
 	varlist=copy.deepcopy(dic['varlist'])
-	print varlist
+	#print varlist
 	vartab=var2bed(Bunch(dic)) #vartab is a BedTool
 	#print vartab
 	while chkvar(vartab) != True and nowdeovlp<maxdeovlp: 
@@ -83,20 +83,20 @@ def deovlpvar(dic,maxdeovlp=2):
 	return varlist
 	
 def runcmd(cmd):
-	print >>sys.stderr, cmd
+	#print >>sys.stderr, cmd
 	run=subprocess.Popen(cmd.split(),env=os.environ,cwd=os.getcwd(),stderr=subprocess.PIPE,stdout=subprocess.PIPE)
 	run_info=run.communicate() 
 	return run_info
 
 def pipecmd(cmd1,cmd2):
-	print >>sys.stderr, cmd1, "|", cmd2
+	#print >>sys.stderr, cmd1, "|", cmd2
 	#run=subprocess.Popen(cmd.split(),env=os.environ,cwd=os.getcwd(),stderr=subprocess.PIPE,stdout=subprocess.PIPE)
 	#run_info=run.communicate() 
 	run_info=os.system(" ".join([cmd1,"|",cmd2]))
 	return run_info
 
 def run2cmd(cmd1,cmd2):
-	print >>sys.stderr, cmd1, "|", cmd2
+	#print >>sys.stderr, cmd1, "|", cmd2
 	run2=subprocess.Popen(cmd2.split(),env=os.environ,cwd=os.getcwd(),stdin=subprocess.PIPE,stdout=subprocess.PIPE)
 	run1=subprocess.Popen(cmd1.split(),env=os.environ,cwd=os.getcwd(),stdout=run2.stdin)
 	run2_info=run2.communicate()
@@ -161,7 +161,7 @@ def main(args):
 
 	if args.metafile != None and args.varfile != None:
 		print >>sys.stderr, "either a .meta or a .var file can be specified but not both"
-    quit()
+		quit()
 
 	runmode=0 #1 fasta+meta, 2 bam+meta, 3 fasta+var, 4 bam+var
 	if args.inbamfilenames!=None and args.metafile!=None:
@@ -190,8 +190,8 @@ def main(args):
 	parlist.readfp(parfile)
 	metafile = args.metafile
 	varfile = args.varfile
-	if varfile != None: print varfile.name.rstrip("var").rstrip(".") #weird behavior of rstrip(".meta") -> exampl
-	if metafile != None: print metafile.name.rstrip("meta").rstrip(".")
+	#if varfile != None: print varfile.name.rstrip("var").rstrip(".") #weird behavior of rstrip(".meta") -> exampl
+	#if metafile != None: print metafile.name.rstrip("meta").rstrip(".")
 	oname = metafile.name.rstrip("meta").rstrip(".") if metafile != None else varfile.name.rstrip(".var").rstrip(".")
 	oprefix = oname if not args.oprefix else args.oprefix
 
@@ -217,7 +217,7 @@ def main(args):
 		dic[i] = locals()[i]
 
 	print >>sys.stderr, "entering runmode", runmode
-	print dic
+	#print dic
 
 	if runmode==1 or runmode==2: #have meta input, no need of deovlapping
 		metatab = CommentedFile(metafile)
@@ -251,12 +251,12 @@ def main(args):
 	if runmode==1 or runmode==3:
 		dic['parlist'] = parlist
 		ffq = var2fq(Bunch(dic))
-		print ffq
+		#print ffq
 		print >>sys.stderr, "done var2fq", time.time()-starttime, " seconds"
 
 		if outbam:
 			fbam = fq2bam(ffq,Bunch(dic)) #FIXME: this has to be implemented
-			print fbam
+			#print fbam
 			print >>sys.stderr, "done fq2bam", time.time()-starttime, " seconds"
 
 	if runmode==2 or runmode==4:
@@ -294,7 +294,7 @@ def fq2bam(ffq,bun):
 	return fbam
 
 def var2bs(bun):
-	print >>sys.stderr, "this part will use bamsurgeon, it has not been implemented yet"; quit()
+	#print >>sys.stderr, "this part will use bamsurgeon, it has not been implemented yet"; quit()
 	numinbamfiles = len(inbamfilenames)
 	oprefix = args.oprefix.split(':') if args.oprefix!=None else args.oprefix.split(':')
 	return None
@@ -385,7 +385,7 @@ def var2wgs(bun):
 	else:
 		pool = Pool(processes=int(nprocs))
 		bedbams = pool.map(fakebam,hapiter,1)
-	print bedbams
+	#print bedbams
 	print >>sys.stderr, "done fakebam", 	time.time()-starttime, " seconds"	
 
 	libbams = {} #bamfiles to be merged: [ [hap1lib1, hap1lib2, ...], [hap2lib1, hap2lib2, ...] ]
@@ -415,7 +415,7 @@ def var2wgs(bun):
 		sbam = '.'.join([oprefix,libnames[lib]])
 		tbam = tempfile.NamedTemporaryFile('w',delete=False).name
 		sort_cmd = "samtools sort %s %s" % (mergebam(libbams[lib],tbam), sbam)
-		print >>sys.stderr, sort_cmd #
+		#print >>sys.stderr, sort_cmd #
 		runcmd(sort_cmd)
 		fbam[lib] = sbam+".bam" #post processing: librarywise merging bams
 
@@ -487,7 +487,7 @@ def var2fq(bun):
 	else:
 		pool = Pool(processes=int(nprocs))
 		bedfqs = pool.map(fakefq,hapiter,1)
-	print bedfqs
+	#print bedfqs
 	print >>sys.stderr, "done fakefq", 	time.time()-starttime, " seconds"	
 
 	libfqs = {} #fqfiles to be merged: [ [hap1lib1, hap1lib2, ...], [hap2lib1, hap2lib2, ...] ]
@@ -548,24 +548,24 @@ def fakefq(hapit): # makebam from a pair of seqs of representing the original an
 			return gd
 		#print seq0.seq
 		if not goodseq(seq0.seq, nligation, rl): empty0=True
-		print goodseq(seq0.seq, nligation, rl)
+		#print goodseq(seq0.seq, nligation, rl)
 		if empty0:
 			wgs0 = [None, None]
 		else:
 			wgs0 = fqwgs(parlist,nligation,reffile,nploid,[seq0],lib,freq0,mergemax)
 		#print seq1.seq
 		if not goodseq(seq1.seq, nligation, rl): empty1=True #FIXME, these N regions has to be masked from input
-		print goodseq(seq1.seq, nligation, rl)
+		#print goodseq(seq1.seq, nligation, rl)
 		if empty1:
 			wgs1 = [None, None]
 		else:
 			wgs1 = fqwgs(parlist,nligation,reffile,nploid,[seq1],lib,freq,mergemax)
 		fqopre = myTemporaryFile(prefix="fakefq_")
 		#only need the temporary filename here
-		print "wgs=",wgs0,wgs1
+		#print "wgs=",wgs0,wgs1
 		fqs[lib] = mergefq([wgs0,wgs1],fqopre,mergemax)
-		print "fqs[lib]=",fqs[lib]
-		assert all([ os.path.isfile(x) for x in fqs[lib] if x != None ])
+		#print "fqs[lib]=",fqs[lib]
+		#assert all([ os.path.isfile(x) for x in fqs[lib] if x != None ])
 		#assert all([ os.path.isfile(x[0]) for x in fqs[lib] if x[0] != None ])
 		#assert all([ os.path.isfile(x[1]) for x in fqs[lib] if x[1] != None ])
 		
@@ -602,7 +602,7 @@ def fqwgs(parlist,nligation,reffile,nploid,seq,lib,freq,mergemax): #create bam f
 				fq1=myTemporaryFile(prefix="fq1wgs_")
 				fq2=myTemporaryFile(prefix="fq2wgs_")
 				wgs_cmd="xwgsim -h -d %d -s %d -N %d -1 %d -2 %d -l %d %s %s %s " % (misize,misizesd,mnread,rl1[libn],rl2[libn],nligation,fa,fq1,fq2)
-				print >>sys.stderr, wgs_cmd
+				#print >>sys.stderr, wgs_cmd
 				runcmd(wgs_cmd) #fastq file
 				#we opt for speed instead of space
 				#gzfq1_cmd="gzip %s" % fq1 #	fq1.gz, fq1 auto deleted
@@ -623,11 +623,11 @@ def fqwgs(parlist,nligation,reffile,nploid,seq,lib,freq,mergemax): #create bam f
 				mode[m]=[fq1,fq2]
 			else:
 				mode[m]=[None,None]
-	assert all([ os.path.isfile(x[0]) for x in mode if x[0] != None ])
-	assert all([ os.path.isfile(x[1]) for x in mode if x[1] != None ])
+	#assert all([ os.path.isfile(x[0]) for x in mode if x[0] != None ])
+	#assert all([ os.path.isfile(x[1]) for x in mode if x[1] != None ])
 	libfq = mergefq(mode,myTemporaryFile(prefix="libfq_"),mergemax)
-	print "libfq=", libfq
-	assert all([ os.path.isfile(x) for x in libfq if x != None ])
+	#print "libfq=", libfq
+	#assert all([ os.path.isfile(x) for x in libfq if x != None ])
 	#quit()
 	#assert all([ os.path.isfile(x[0]) for x in libfq if x[0] != None ])
 	#assert all([ os.path.isfile(x[1]) for x in libfq if x[1] != None ])
@@ -640,14 +640,14 @@ def mergefq(fqs,oprefix,mergemax):
 	assert len(fq1s)==len(fq2s)	 #all reads have to be properly paired
 	#check all fq1s are good
 	nfqs = len(fq1s); ffq1=oprefix+".fq1"; ffq2=oprefix+".fq2";
-	print "nfqs,fq1s,fq2s=",nfqs,fq1s,fq2s
-	assert all([ os.path.isfile(x) for x in fq1s ])
-	assert all([ os.path.isfile(x) for x in fq2s ])
+	#print "nfqs,fq1s,fq2s=",nfqs,fq1s,fq2s
+	#assert all([ os.path.isfile(x) for x in fq1s ])
+	#assert all([ os.path.isfile(x) for x in fq2s ])
 	if nfqs==0:
 		return [None, None]
 	elif nfqs==1:
-		print >>sys.stderr, "mv %s %s" % (fq1s[0],ffq1)
-		print >>sys.stderr, "mv %s %s" % (fq2s[0],ffq2)
+		#print >>sys.stderr, "mv %s %s" % (fq1s[0],ffq1)
+		#print >>sys.stderr, "mv %s %s" % (fq2s[0],ffq2)
 		shutil.move(fq1s[0],ffq1) #if merge only one file, just move it to new name
 		shutil.move(fq2s[0],ffq2) #if merge only one file, just move it to new name
 	else:
@@ -687,7 +687,7 @@ def mergefq(fqs,oprefix,mergemax):
 	return [ffq1,ffq2]
 
 def fakebam(hapit): # makebam from a pair of seqs of representing the original and sved haplotype
-	hap=hapit[0]; hapfas=hapit[1]; nligation=hapit[2]; parlist=hapit[3]; reffile=hapit[4]; nploid=hapit[5]; bed=hapit[8]; mergemax=hapit[9]; print mergemax
+	hap=hapit[0]; hapfas=hapit[1]; nligation=hapit[2]; parlist=hapit[3]; reffile=hapit[4]; nploid=hapit[5]; bed=hapit[8]; mergemax=hapit[9]; #print mergemax
 	print >>sys.stderr, "processing %d out of %d regions" % (hapit[6],hapit[7])
 	seq0=SeqRecord(Seq(pysam.Fastafile(hapfas).fetch(bed[0],int(bed[1])+1,int(bed[2])), generic_dna),id=bed[0], name="", description="")
 	seq1=seq0
@@ -745,7 +745,7 @@ def runwgs(parlist,nligation,reffile,nploid,seq,lib,freq): #create bam file for 
 				mbam=tempfile.NamedTemporaryFile('w',delete=False).name
 				#print (misize,misizesd,mnread,rl1[libn],rl2[libn],fa,fq1,fq2)
 				wgs_cmd="xwgsim -h -d %d -s %d -N %d -1 %d -2 %d -l %d %s %s %s " % (misize,misizesd,mnread,rl1[libn],rl2[libn],nligation,fa,fq1,fq2)
-				print >>sys.stderr, wgs_cmd
+				#print >>sys.stderr, wgs_cmd
 				runcmd(wgs_cmd) #fastq file
 				#fq3,fq4=filterfq(fq1,fq2,nligation,len(seq)-nligation) #half ligation region reads
 				#print (fq1,fq2,fq3,fq4,nligation,len(seq)-nligation)
@@ -764,7 +764,7 @@ def runwgs(parlist,nligation,reffile,nploid,seq,lib,freq): #create bam file for 
 def filterfq(fq1,fq2,leftcut,rightcut): #half ligation region reads, this is no longer needed for xwgsim
 	fq3seq = []; fq4seq=[]; thincnt=0
 	for rfq1,rfq2 in zip(SeqIO.parse(open(fq1,'rU'),'fastq'),SeqIO.parse(open(fq2,'rU'),'fastq')):
-		assert rfq1.id[:-1] == rfq2.id[:-1], "unmatching fastq1 and fastq2, error in simulation"
+		assert rfq1.id[:-1] == rfq2.id[:-1], "unmatching fastq1 and fastq2, error in read simulation, quit"
 		#@fins.seq1_461_964_1:0:0_1:0:0_0/1
 		rdpl = int(rfq1.id.split('_')[1]); rdpr = int(rfq1.id.split('_')[2])
 		if (rdpl < leftcut and rdpr < leftcut) or (rdpl > rightcut and rdpr > rightcut):
@@ -799,7 +799,7 @@ def mergebam(bams,oprefix):
 				cbam = mbam
 				mbam = tempfile.NamedTemporaryFile('w',delete=False).name
 			merge_cmd = "samtools merge -f %s %s %s " % (mbam, cbam, " ".join([bam for bam in bams[i*mergemax:min((i+1)*mergemax,nbams)]]))
-			print >>sys.stderr, merge_cmd #unsorted
+			#print >>sys.stderr, merge_cmd #unsorted
 			runcmd(merge_cmd)
 	#FIXME: who do we clean up this mess of temporary files here?
 	return fbam
@@ -951,7 +951,7 @@ def makevar(bun,metatab,fas=False):
 	burnin = bun.burnin
 	varlist = bun.varlist
 	varcnt = bun.varcnt
-	print >>sys.stderr, "input varcnt", varcnt												#total number of input vars
+	#print >>sys.stderr, "input varcnt:", varcnt												#total number of input vars
 	trunks = maketrunks(bun)	 													#trunks is in bed format
 	trunks,stretches = blocktrunks(trunks,gaptab)				#block trunks that not usable
 	trunks=trunks.to_dataframe()
@@ -990,7 +990,7 @@ def makevar(bun,metatab,fas=False):
 	
 	rows=[]
 	for row in metatab:
-		if fas: row[4:8]=['fix_1']*4  #override by 'fix_1' for fasforge
+		if fas: row[4:8]=['fix_1']*4	#override by 'fix_1' for fasforge
 		rows.append(row)
 		
 	rowix=range(0,len(rows))

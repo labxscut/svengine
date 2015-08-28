@@ -283,12 +283,12 @@ def main(args):
 	else:
 		pool = Pool(processes=int(nprocs))
 		ffq=pool.map(makefq,pariter,1)
-	print ffq
+	#print ffq
 	print >>sys.stderr, "done var2fq", time.time()-starttime, " seconds"
 
 	if outbam:
 		fbam = mf.fq2bam(ffq,mf.Bunch(dic)) #FIXME: this has to be implemented
-		print fbam
+		#print fbam
 		print >>sys.stderr, "done fq2bam", time.time()-starttime, " seconds"
 
 	shutil.rmtree(tempfile.tempdir) #clean temp files
