@@ -264,7 +264,8 @@ def main(args):
 	print >>sys.stderr, "done var2seq", time.time()-starttime, " seconds" 
 
 	nlibrary=parlist.getint('xwgsim', 'nlibrary')
-	bams = [None] * nlibrary
+	libnames=parlist.get('xwgsim', 'libnames')
+	#bams = [None] * nlibrary
 
 	if layout:
 		print >>sys.stderr, "done layout and fas file generation"
@@ -283,13 +284,23 @@ def main(args):
 	else:
 		pool = Pool(processes=int(nprocs))
 		ffq=pool.map(makefq,pariter,1)
-	#print ffq
 	print >>sys.stderr, "done var2fq", time.time()-starttime, " seconds"
 
 	if outbam:
-		fbam = mf.fq2bam(ffq,mf.Bunch(dic)) #FIXME: this has to be implemented
-		#print fbam
+		libbams = mf.fq2bam(ffq,mf.Bunch(dic))
+		
 		print >>sys.stderr, "done fq2bam", time.time()-starttime, " seconds"
+
+	fbam = [None] * nlibrary
+	for lib in range(0,nlibrary):
+		sbam = '.'.join([oprefix,libnames[lib]])
+		tbam = tempfile.NamedTemporaryFile('w',delete=False).name
+		sort_cmd = "samtools sort -@ %s %s %s" % (nprocs, mf.mergebam(libbams[lib],tbam), sbam)
+		#print >>sys.stderr, sort_cmd #
+		runcmd(sort_cmd)
+		fbam[lib] = sbam+".bam" #post processing: librarywise merging bams
+
+	print >>sys.stderr, "done merge to final bam:", fbam, time.time()-starttime, " seconds"
 
 	shutil.rmtree(tempfile.tempdir) #clean temp files
 	print >>sys.stderr, "done fasforge"

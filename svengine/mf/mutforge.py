@@ -256,7 +256,6 @@ def main(args):
 
 		if outbam:
 			fbam = fq2bam(ffq,Bunch(dic)) #FIXME: this has to be implemented
-			#print fbam
 			print >>sys.stderr, "done fq2bam", time.time()-starttime, " seconds"
 
 	if runmode==2 or runmode==4:
@@ -414,7 +413,7 @@ def var2wgs(bun):
 	for lib in range(0,nlibrary):
 		sbam = '.'.join([oprefix,libnames[lib]])
 		tbam = tempfile.NamedTemporaryFile('w',delete=False).name
-		sort_cmd = "samtools sort %s %s" % (mergebam(libbams[lib],tbam), sbam)
+		sort_cmd = "samtools sort -@ %s %s %s" % (nprocs, mergebam(libbams[lib],tbam), sbam)
 		#print >>sys.stderr, sort_cmd #
 		runcmd(sort_cmd)
 		fbam[lib] = sbam+".bam" #post processing: librarywise merging bams
