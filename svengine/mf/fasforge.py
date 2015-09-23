@@ -291,16 +291,16 @@ def main(args):
 		
 		print >>sys.stderr, "done fq2bam", time.time()-starttime, " seconds"
 
-	fbam = [None] * nlibrary
-	for lib in range(0,nlibrary):
-		sbam = '.'.join([oprefix,libnames[lib]])
-		tbam = tempfile.NamedTemporaryFile('w',delete=False).name
-		sort_cmd = "samtools sort -@ %s %s %s" % (nprocs, mf.mergebam(libbams[lib],tbam), sbam)
-		#print >>sys.stderr, sort_cmd #
-		runcmd(sort_cmd)
-		fbam[lib] = sbam+".bam" #post processing: librarywise merging bams
+		fbam = [None] * nlibrary
+		for lib in range(0,nlibrary):
+			sbam = '.'.join([oprefix,libnames[lib]])
+			tbam = tempfile.NamedTemporaryFile('w',delete=False).name
+			sort_cmd = "samtools sort -@ %s %s %s" % (nprocs, mf.mergebam(libbams[lib],tbam), sbam)
+			#print >>sys.stderr, sort_cmd #
+			runcmd(sort_cmd)
+			fbam[lib] = sbam+".bam" #post processing: librarywise merging bams
 
-	print >>sys.stderr, "done merge to final bam:", fbam, time.time()-starttime, " seconds"
+		print >>sys.stderr, "done merge to final bam:", fbam, time.time()-starttime, " seconds"
 
 	shutil.rmtree(tempfile.tempdir) #clean temp files
 	print >>sys.stderr, "done fasforge"
