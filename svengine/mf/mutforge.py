@@ -413,7 +413,7 @@ def var2wgs(bun):
 	for lib in range(0,nlibrary):
 		sbam = '.'.join([oprefix,libnames[lib]])
 		tbam = tempfile.NamedTemporaryFile('w',delete=False).name
-		sort_cmd = "samtools sort -@ %s %s %s" % (nprocs, mergebam(libbams[lib],tbam), sbam)
+		sort_cmd = "samtools sort -@ %s %s %s" % (nprocs, mergebam(libbams[lib],tbam,mergemax), sbam)
 		#print >>sys.stderr, sort_cmd #
 		runcmd(sort_cmd)
 		fbam[lib] = sbam+".bam" #post processing: librarywise merging bams
@@ -714,7 +714,7 @@ def fakebam(hapit): # makebam from a pair of seqs of representing the original a
 		freq0 = 1-freq
 		bam0 = runwgs(parlist,nligation,reffile,nploid,[seq0],lib,freq0)
 		bam1 = runwgs(parlist,nligation,reffile,nploid,[seq1],lib,freq)
-		bams[lib] = mergebam([bam0,bam1],tempfile.NamedTemporaryFile('w',delete=False).name)
+		bams[lib] = mergebam([bam0,bam1],tempfile.NamedTemporaryFile('w',delete=False).name,mergemax)
 	print >>sys.stderr, "processed %d out of %d regions" % (hapit[6],hapit[7])
 	return [hap,bams]
 
@@ -756,7 +756,7 @@ def runwgs(parlist,nligation,reffile,nploid,seq,lib,freq): #create bam file for 
 				mode[m]=mbam+".bam"
 			else:
 				mode[m]=None
-	libbam = mergebam(mode,tempfile.NamedTemporaryFile('w',delete=False).name)
+	libbam = mergebam(mode,tempfile.NamedTemporaryFile('w',delete=False).name,mergemax)
 	#TODO: for tmpfile in mode + [fa]: os.remove(tmpfile)
 	return libbam
 
@@ -779,7 +779,7 @@ def filterfq(fq1,fq2,leftcut,rightcut): #half ligation region reads, this is no 
 	SeqIO.write(fq4seq,fq4,'fastq')
 	return fq3,fq4 #NOTE: these are freeed in upper level
 
-def mergebam(bams,oprefix):
+def mergebam(bams,oprefix,mergemax):
 	bams = [x for x in bams if x is not None] #remove empty components
 	nbams = len(bams); fbam=oprefix+".bam";
 	#print nbams

@@ -264,7 +264,7 @@ def main(args):
 	print >>sys.stderr, "done var2seq", time.time()-starttime, " seconds" 
 
 	nlibrary=parlist.getint('xwgsim', 'nlibrary')
-	libnames=parlist.get('xwgsim', 'libnames')
+	libnames=json.loads(parlist.get('xwgsim', 'libnames'))
 	#bams = [None] * nlibrary
 
 	if layout:
@@ -293,14 +293,21 @@ def main(args):
 
 		fbam = [None] * nlibrary
 		for lib in range(0,nlibrary):
-			sbam = '.'.join([oprefix,libnames[lib]])
+			#print "libnames=",libnames
+			#print "oprefix=",oprefix
+			#print "lib=",lib
+			#print libnames[lib]
+			#print '.'.join([oprefix,libnames[lib]])
+			sbam = '.'.join([oprefix,libnames[lib]]) # oprefix.lib.st
+			#print "sbam=",sbam
+			#print "mergemax=",mergemax
 			tbam = tempfile.NamedTemporaryFile('w',delete=False).name
-			sort_cmd = "samtools sort -@ %s %s %s" % (nprocs, mf.mergebam(libbams[lib],tbam), sbam)
+			sort_cmd = "samtools sort -@ %s %s %s" % (nprocs, mf.mergebam(libbams[lib],tbam,mergemax), sbam)
 			#print >>sys.stderr, sort_cmd #
-			runcmd(sort_cmd)
-			fbam[lib] = sbam+".bam" #post processing: librarywise merging bams
+			mf.runcmd(sort_cmd)
+			fbam[lib] = sbam+".bam" #post processing: librarywise merging bams;
 
-		print >>sys.stderr, "done merge to final bam:", fbam, time.time()-starttime, " seconds"
+		print >>sys.stderr, "done merge to final bam:", str(fbam), time.time()-starttime, " seconds"
 
 	shutil.rmtree(tempfile.tempdir) #clean temp files
 	print >>sys.stderr, "done fasforge"
