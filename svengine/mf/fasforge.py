@@ -292,19 +292,13 @@ def main(args):
 		print >>sys.stderr, "done fq2bam", time.time()-starttime, " seconds"
 
 		fbam = [None] * nlibrary
-		for lib in range(0,nlibrary):
-			#print "libnames=",libnames
-			#print "oprefix=",oprefix
-			#print "lib=",lib
-			#print libnames[lib]
-			#print '.'.join([oprefix,libnames[lib]])
+		for lib in range(0,nlibrary): #there will be only one bam in libbams[lib]
 			sbam = '.'.join([oprefix,libnames[lib]]) # oprefix.lib.st
-			#print "sbam=",sbam
-			#print "mergemax=",mergemax
 			tbam = tempfile.NamedTemporaryFile('w',delete=False).name
-			sort_cmd = "samtools sort -@ %s %s %s" % (nprocs, mf.mergebam(libbams[lib],tbam,mergemax), sbam)
-			#print >>sys.stderr, sort_cmd #
-			mf.runcmd(sort_cmd)
+			mbam = mf.mergebam([libbams[lib]],tbam,mergemax)
+			sort_cmd = "samtools sort -@ %s %s %s" % (nprocs, mbam, sbam)
+			#print sort_cmd #
+			mf.syscmd(sort_cmd)
 			fbam[lib] = sbam+".bam" #post processing: librarywise merging bams;
 
 		print >>sys.stderr, "done merge to final bam:", str(fbam), time.time()-starttime, " seconds"
@@ -314,6 +308,7 @@ def main(args):
 	
 	return None
 
+#OBSOLETE
 def makebam(parit):		
 	print "processing lib %s freq %s regions" % (str(parit[5]),str(parit[6]))
 	parlist=parit[0]; nligation=parit[1]; rname=parit[2]; nploid=parit[3]; seq0=parit[4]; lib=parit[5]; freq1=parit[6]; freq0=1-freq1; seq0=parit[7]; seq1=parit[8]; lib=parit[9]; oprefix=parit[10]

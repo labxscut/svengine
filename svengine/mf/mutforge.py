@@ -95,6 +95,10 @@ def pipecmd(cmd1,cmd2):
 	run_info=os.system(" ".join([cmd1,"|",cmd2]))
 	return run_info
 
+def syscmd(cmd):
+	run_info=os.system(cmd)
+	return run_info
+
 def run2cmd(cmd1,cmd2):
 	#print >>sys.stderr, cmd1, "|", cmd2
 	run2=subprocess.Popen(cmd2.split(),env=os.environ,cwd=os.getcwd(),stdin=subprocess.PIPE,stdout=subprocess.PIPE)
@@ -255,7 +259,7 @@ def main(args):
 		print >>sys.stderr, "done var2fq", time.time()-starttime, " seconds"
 
 		if outbam:
-			fbam = fq2bam(ffq,Bunch(dic)) #FIXME: this has to be implemented
+			fbam = fq2bam(ffq,Bunch(dic))
 			print >>sys.stderr, "done fq2bam", time.time()-starttime, " seconds"
 
 	if runmode==2 or runmode==4:
@@ -274,22 +278,34 @@ def fq2bam(ffq,bun):
 	nprocs=bun.nprocs
 	mergemax=bun.mergemax
 	oprefix=bun.oprefix
-	fbam = [None] * nlibrary
+	libbams = [None] * nlibrary
 	for lib in range(0,nlibrary):
 		fq1 = ffq[lib][0]; fq2 =	ffq[lib][1]
-		sbam = '.'.join([oprefix,libnames[lib],"bam"])
+		#sbam = '.'.join([oprefix,libnames[lib],"bam"])
+		tbam = tempfile.NamedTemporaryFile('w',delete=False).name
 		#ssam = tempfile.NamedTemporaryFile('w',delete=False).name
 		#bwasw_cmd1="bwa mem -t %s %s %s %s >%s" % (nprocs,reffile,fq1,fq2,ssam) 
 		#bwasw_cmd2="samtools view -bS -o %s %s" % (sbam,ssam) #it auto gives bam if not provided
 		bwasw_cmd1="bwa mem -t %s %s %s %s" % (nprocs,reffile,fq1,fq2) 
-		bwasw_cmd2="samtools view -bS -o %s -" % (sbam) #it auto gives bam if not provided
+		bwasw_cmd2="samtools view -bS -o %s -" % (tbam) #it auto gives bam if not provided
 		#bwasw_cmd3="rm -f %s" % ssam
 		#print >>sys.stderr, bwasw_cmd1, "\n", bwasw_cmd2
 		pipecmd(bwasw_cmd1,bwasw_cmd2)
 		#bwasw_cmd="bwa mem -t %s %s %s %s | samtools view -bS -o %s - " % (nprocs,reffile,fq1,fq2,sbam) 
 		#print >>sys.stderr, bwasw_cmd #
 		#runcmd(bwasw_cmd)
-		fbam[lib] = sbam #post processing: librarywise merging bams
+		libbams[lib] = tbam #post processing: librarywise merging bams
+
+	fbam = [None] * nlibrary
+	for lib in range(0,nlibrary):
+		sbam = '.'.join([oprefix,libnames[lib]])
+		tbam = tempfile.NamedTemporaryFile('w',delete=False).name
+		mbam = mergebam([libbams[lib]],tbam,mergemax)
+		sort_cmd = "samtools sort -@ %s %s %s" % (nprocs, mbam, sbam)
+		#print >>sys.stderr, sort_cmd #
+		syscmd(sort_cmd)
+		fbam[lib] = sbam+".bam" #post processing: librarywise merging bams
+
 	return fbam
 
 def var2bs(bun):
@@ -413,9 +429,10 @@ def var2wgs(bun):
 	for lib in range(0,nlibrary):
 		sbam = '.'.join([oprefix,libnames[lib]])
 		tbam = tempfile.NamedTemporaryFile('w',delete=False).name
-		sort_cmd = "samtools sort -@ %s %s %s" % (nprocs, mergebam(libbams[lib],tbam,mergemax), sbam)
+		mbam = mergebam([libbams[lib]],tbam,mergemax)
+		sort_cmd = "samtools sort -@ %s %s %s" % (nprocs, mbam, sbam)
 		#print >>sys.stderr, sort_cmd #
-		runcmd(sort_cmd)
+		syscmd(sort_cmd)
 		fbam[lib] = sbam+".bam" #post processing: librarywise merging bams
 
 	print >>sys.stderr, "done merge to final bam"
@@ -799,8 +816,7 @@ def mergebam(bams,oprefix,mergemax):
 				mbam = tempfile.NamedTemporaryFile('w',delete=False).name
 			merge_cmd = "samtools merge -f %s %s %s " % (mbam, cbam, " ".join([bam for bam in bams[i*mergemax:min((i+1)*mergemax,nbams)]]))
 			#print >>sys.stderr, merge_cmd #unsorted
-			runcmd(merge_cmd)
-	#FIXME: who do we clean up this mess of temporary files here?
+			runcmd(merge_cmd) #merging is possible with unsorted bams
 	return fbam
 
 def lumpy2var(bp,ref,nligation):
