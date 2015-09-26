@@ -61,19 +61,17 @@ INSTALL
 
       (1.4) Now under your virtualenv, the dependencies will be automatically setup by SVEngine installation itself:
       ::
-        >python setup.py install --prefix="local/python/prefix" #if using your local python under your/own/prefix
-        sve_vpy> python setup.py install #if using your virtualenv python in sve_vpy
+        sve_vpy> python setup.py install 
 
       (1.5) On some platforms, you might run into error and it prompts you to install Cython, just install Cython and try again:
       ::
         sve_vpy>pip install -U cython
       
-      (1.6) Now the SVEngine executables will be available from "sve_vpy/bin". Because you installed SVEngine via virtualenv, remember to activate the virtualenv first every time you use SVEngine.
+      (1.6) Now the SVEngine executables will be available from "$PWD/sve_vpy/bin". Because you installed SVEngine via virtualenv, remember to activate the virtualenv first every time you use SVEngine. Also export the environmental variable $SVENGINE_BIN=$PWD/sve_vpy/bin
        
     (2) Other ways to install SVEngine
 
       (2.1) If you have root, these can be easily installed using:
-    
       ::
         > sudo apt-get install sqlite3 libcurses-dev python-dev python-pip
         > sudo pip install -U Pysam
@@ -83,25 +81,26 @@ INSTALL
         > sudo pip install -U Biopython
         > sudo python setup.py install
       
+      The executables are at $SVENGINE_BIN=$(dirname `which python`)
+      
       (2.2) For installations without root priviledge you need your local python installation and virtualenv. Please see the Author's http://dl.dropbox.com/u/35182955/Development_environment.html for details to install your own python. Also see the install script examples in https://bitbucket.org/charade/svengine/wiki/Example for detailed steps.
 
       With your own python, download virtualenv from: https://pypi.python.org/pypi/virtualenv then unzip and change into your virtualenv directory and run:
-    
       ::
-        >PYTHONPATH="local/python/prefix/lib/python2.x/site-packages" python setup.py install --prefix="local/python/prefix"
-        >PYTHONPATH="local/python/prefix/lib/python2.x/site-packages" local/python/prefix/bin/virtualenv sve_vpy --no-site-packages
+        >PYTHONPATH="/local/python/prefix/lib/python2.x/site-packages" python setup.py install --prefix="/local/python/prefix"
+        >PYTHONPATH="/local/python/prefix/lib/python2.x/site-packages" /local/python/prefix/bin/virtualenv sve_vpy --no-site-packages
 
       Then the rest steps are just exactly the same to (1.3) - (1.6).
       Or, you can elect to install SVEngine to your local python directly: 
       ::
-        >python setup.py install --prefix="local/python/prefix" #if using your local python under your/own/prefix
+        >python setup.py install --prefix="/local/python/prefix" #if using your local python under your own /local/python/prefix
 
-      The executables are in "local/python/prefix/bin" and remember to add it to your $PATH.
+      The executables are in "/local/python/prefix/bin". So set $SVENGINE_BIN="/local/python/prefix/bin" and remember to add it to your $PATH.
 
-    3. There is also the possibility to install with your system site python without root. The installation process is not much different but please first ask your system admin to install pysam, pandas, pybedtools and cython to the system site python for you. Then change your PYTHONPATH to include "local/python/prefix" which is writable to you as your user python library path. i.e.
+    3. There is also the possibility to install with your system site python without root. The installation process is not much different but please first ask your system admin to install pysam, pandas, pybedtools and cython to the system site python for you. Then change your PYTHONPATH to include "/local/python/prefix" which is writable to you as your user python library path. i.e.
       ::
-        export PYTHONPATH="PYTHONPATH:local/python/prefix/lib/python2.7/site-packages/"
-    
+        export PYTHONPATH="PYTHONPATH:/local/python/prefix/lib/python2.7/site-packages/"
+
     The rest are the same with local python installation (either using virtualenv or not). But you might encounter other permission related problems, please consult your admin. Also, please consult the author's development document on how to setup a working environment: http://dl.dropbox.com/u/35182955/Development_environment.html
 
 EXECUTABLES
@@ -109,9 +108,9 @@ EXECUTABLES
 
     xwgsim        --  enhanced wgsim
     
-    mutforge            --  engineer structure variants 
+    mutforge      --  engineer structure variants 
     
-    fasforge            --  engineer structure variants 
+    fasforge      --  engineer structure variants 
 
 
 USAGE
