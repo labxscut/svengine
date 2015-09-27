@@ -97,8 +97,8 @@ INSTALL
 
       The executables are in "/local/python/prefix/bin". So set $SVENGINE_BIN="/local/python/prefix/bin" and remember to add it to your $PATH.
 
-    3. There is also the possibility to install with your system site python without root. The installation process is not much different but please first ask your system admin to install pysam, pandas, pybedtools and cython to the system site python for you. Then change your PYTHONPATH to include "/local/python/prefix" which is writable to you as your user python library path. i.e.
-    
+    3. There is also the possibility to install with your system site python without root. 
+      The installation process is not much different but please first ask your system admin to install pysam, pandas, pybedtools and cython to the system site python for you. Then change your PYTHONPATH to include "/local/python/prefix" which is writable to you as your user python library path. i.e.
       ::
         export PYTHONPATH="PYTHONPATH:/local/python/prefix/lib/python2.7/site-packages/"
       
