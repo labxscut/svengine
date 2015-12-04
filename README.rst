@@ -49,26 +49,37 @@ INSTALL
       
       **This is the MOST RECOMMENDED WAY for installation**
       
-      (1.1) virtualenv command is standard with Python 2.7 or later. If it is not present, please see https://virtualenv.pypa.io for details to install virtualenv for your python. Ask your IT manager to help install it for you if you have permission difficulties.
+      (1.1) virtualenv command is standard with Python 2.7 or later. If it is not present, please see https://virtualenv.pypa.io for details to install virtualenv for your python. Possibly as simple as:
+      
+      ::
+
+        sudo easy_install pip
+        sudo pip install virtualenv
+
+      Ask your IT manager to help install it for you if you have permission difficulties.
       
       (1.2) When your system python has virtualenv, make sure your $PYTHONPATH is set to empty and follow steps below:
       
       ::
+        
         >virtualenv sve_vpy --no-site-packages
 
       (1.3) Then you can activate this virtual python for installing SVEngine:
       
       ::
+        
         >source sve_vpy/bin/activate
 
       (1.4) Now under your virtualenv, the dependencies will be automatically setup by SVEngine installation itself:
       
       ::
+        
         sve_vpy> python setup.py install 
 
       (1.5) On some platforms, you might run into error and it prompts you to install Cython, just install Cython and try again:
       
       ::
+        
         sve_vpy>pip install -U cython
       
       (1.6) Now the SVEngine executables will be available from "$PWD/sve_vpy/bin". Because you installed SVEngine via virtualenv, remember to activate the virtualenv first every time you use SVEngine. Also export the environmental variable $SVENGINE_BIN=$PWD/sve_vpy/bin
@@ -78,6 +89,7 @@ INSTALL
       (2.1) If you have root, these can be easily installed using:
       
       ::
+        
         > sudo apt-get install sqlite3 libcurses-dev python-dev python-pip
         > sudo pip install -U Pysam
         > sudo pip install -U Pandas
@@ -93,6 +105,7 @@ INSTALL
       With your own python, download virtualenv from: https://pypi.python.org/pypi/virtualenv then unzip and change into your virtualenv directory and run:
       
       ::
+        
         >PYTHONPATH="/local/python/prefix/lib/python2.x/site-packages" python setup.py install --prefix="/local/python/prefix"
         >PYTHONPATH="/local/python/prefix/lib/python2.x/site-packages" /local/python/prefix/bin/virtualenv sve_vpy --no-site-packages
 
@@ -100,6 +113,7 @@ INSTALL
       Or, you can elect to install SVEngine to your local python directly: 
       
       ::
+
         >python setup.py install --prefix="/local/python/prefix" #if using your local python under your own /local/python/prefix
 
       The executables are in "/local/python/prefix/bin". So set $SVENGINE_BIN="/local/python/prefix/bin" and remember to add it to your $PATH.
@@ -108,6 +122,7 @@ INSTALL
       The installation process is not much different but please first ask your system admin to install pysam, pandas, pybedtools and cython to the system site python for you. Then change your PYTHONPATH to include "/local/python/prefix" which is writable to you as your user python library path. i.e.
       
       ::
+
         export PYTHONPATH="PYTHONPATH:/local/python/prefix/lib/python2.7/site-packages/"
       
       The rest are the same with local python installation (either using virtualenv or not). But you might encounter other permission related problems, please consult your admin. Also, please consult the author's development document on how to setup a working environment: http://dl.dropbox.com/u/35182955/Development_environment.html
