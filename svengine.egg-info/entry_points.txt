@@ -1,6 +1,0 @@
-[console_scripts]
-fasforge = svengine.mf.fasforge:run
-freqsim = svengine.mf.freqsim:run
-mutforge = svengine.mf.mutforge:run
-var2vcf = svengine.mf.var2vcf:run
-
