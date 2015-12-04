@@ -528,9 +528,10 @@ def var2fq(bun):
 
 def fakefq(hapit): # makebam from a pair of seqs of representing the original and sved haplotype
 	hap=hapit[0]; hapfas=hapit[1]; nligation=hapit[2]; parlist=hapit[3]; reffile=hapit[4]; nploid=hapit[5]; bed=hapit[8]; mergemax=hapit[9]
-	print >>sys.stderr, "processing %d out of %d regions" % (hapit[6],hapit[7])
+	#print >>sys.stderr, "processing %d out of %d regions" % (hapit[6],hapit[7])
+	#print >>sys.stderr, "bed=", bed
 	tmpfas=pysam.Fastafile(hapfas)
-	seq0=SeqRecord(Seq(tmpfas.fetch(bed[0],int(bed[1])+1,int(bed[2])), generic_dna),id=bed[0], name="", description="")
+	seq0=SeqRecord(Seq(tmpfas.fetch(str(bed[0]),int(bed[1])+1,int(bed[2])), generic_dna),id=bed[0], name="", description="")
 	tmpfas.close()
 	seq1=seq0
 	#CHR ST	ED	VID	MID	FREQ	DEL	INS
@@ -539,7 +540,7 @@ def fakefq(hapit): # makebam from a pair of seqs of representing the original an
 	if bed[7]!="None": #work on insertion
 		info = readins(bed[7])
 		tmpfas=pysam.Fastafile(info[0])
-		seqi = SeqRecord(Seq(pysam.Fastafile(info[0]).fetch(info[1],info[2],info[2]+info[3]), generic_dna),id=info[0], name="", description="")
+		seqi = SeqRecord(Seq(pysam.Fastafile(info[0]).fetch(str(info[1]),info[2],info[2]+info[3]), generic_dna),id=info[0], name="", description="")
 		tmpfas.close() #reduce open handles
 		#['example.fasta', '22', 25202000, 1000, 2, False]
 		if info[5]:
@@ -603,7 +604,7 @@ def fqwgs(parlist,nligation,reffile,nploid,seq,lib,freq,mergemax): #create bam f
 	isize=json.loads(parlist.get('xwgsim', 'isize'))
 	rl1=json.loads(parlist.get('xwgsim', 'read1'))
 	rl2=json.loads(parlist.get('xwgsim', 'read2'))
-	par=' '.join(['%s %s' % (key, value) for (key, value) in json.loads(parlist.get('xwgsim', 'par')).items()a])
+	par=' '.join(['%s %s' % (key, value) for (key, value) in json.loads(parlist.get('xwgsim', 'par')).items()])
 	libn=libnames[lib]
 	nrdp = seql*coverage[libn]/nploid*freq/(rl1[libn]+rl2[libn])
 	nmode = len(isize[libn])
@@ -706,7 +707,7 @@ def mergefq(fqs,oprefix,mergemax):
 def fakebam(hapit): # makebam from a pair of seqs of representing the original and sved haplotype
 	hap=hapit[0]; hapfas=hapit[1]; nligation=hapit[2]; parlist=hapit[3]; reffile=hapit[4]; nploid=hapit[5]; bed=hapit[8]; mergemax=hapit[9]; #print mergemax
 	print >>sys.stderr, "processing %d out of %d regions" % (hapit[6],hapit[7])
-	seq0=SeqRecord(Seq(pysam.Fastafile(hapfas).fetch(bed[0],int(bed[1])+1,int(bed[2])), generic_dna),id=bed[0], name="", description="")
+	seq0=SeqRecord(Seq(pysam.Fastafile(hapfas).fetch(str(bed[0]),int(bed[1])+1,int(bed[2])), generic_dna),id=bed[0], name="", description="")
 	seq1=seq0
 	#CHR ST	ED	VID	MID	FREQ	DEL	INS
 	if int(bed[6])!=0: #work on deletion
@@ -715,7 +716,7 @@ def fakebam(hapit): # makebam from a pair of seqs of representing the original a
 		#print bed[7]
 		info = readins(bed[7])
 		#print info
-		seqi = SeqRecord(Seq(pysam.Fastafile(info[0]).fetch(info[1],info[2],info[2]+info[3]), generic_dna),id=info[0], name="", description="")
+		seqi = SeqRecord(Seq(pysam.Fastafile(info[0]).fetch(str(info[1]),info[2],info[2]+info[3]), generic_dna),id=info[0], name="", description="")
 		#['example.fasta', '22', 25202000, 1000, 2, False]
 		if info[5]:
 			seqi.seq = seqi.seq.reverse_complement();
@@ -745,7 +746,7 @@ def runwgs(parlist,nligation,reffile,nploid,seq,lib,freq): #create bam file for 
 	isize=json.loads(parlist.get('xwgsim', 'isize'))
 	rl1=json.loads(parlist.get('xwgsim', 'read1'))
 	rl2=json.loads(parlist.get('xwgsim', 'read2'))
-	par=' '.join(['%s %s' % (key, value) for (key, value) in json.loads(parlist.get('xwgsim', 'par')).items()a])
+	par=' '.join(['%s %s' % (key, value) for (key, value) in json.loads(parlist.get('xwgsim', 'par')).items()])
 	libn=libnames[lib]
 	nrdp = seql*coverage[libn]/nploid*freq/(rl1[libn]+rl2[libn])
 	nmode = len(isize[libn])
