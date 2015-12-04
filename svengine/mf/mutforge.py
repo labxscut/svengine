@@ -603,6 +603,7 @@ def fqwgs(parlist,nligation,reffile,nploid,seq,lib,freq,mergemax): #create bam f
 	isize=json.loads(parlist.get('xwgsim', 'isize'))
 	rl1=json.loads(parlist.get('xwgsim', 'read1'))
 	rl2=json.loads(parlist.get('xwgsim', 'read2'))
+	par=' '.join(['%s %s' % (key, value) for (key, value) in json.loads(parlist.get('xwgsim', 'par')).items()a])
 	libn=libnames[lib]
 	nrdp = seql*coverage[libn]/nploid*freq/(rl1[libn]+rl2[libn])
 	nmode = len(isize[libn])
@@ -617,7 +618,7 @@ def fqwgs(parlist,nligation,reffile,nploid,seq,lib,freq,mergemax): #create bam f
 				misize=isize[libn][m][1]; misizesd=isize[libn][m][2]
 				fq1=myTemporaryFile(prefix="fq1wgs_")
 				fq2=myTemporaryFile(prefix="fq2wgs_")
-				wgs_cmd="xwgsim -h -d %d -s %d -N %d -1 %d -2 %d -l %d %s %s %s " % (misize,misizesd,mnread,rl1[libn],rl2[libn],nligation,fa,fq1,fq2)
+				wgs_cmd="xwgsim -h -d %d -s %d -N %d -1 %d -2 %d -l %d %s %s %s %s " % (misize,misizesd,mnread,rl1[libn],rl2[libn],nligation,par,fa,fq1,fq2)
 				#print >>sys.stderr, wgs_cmd
 				runcmd(wgs_cmd) #fastq file
 				#we opt for speed instead of space
@@ -744,6 +745,7 @@ def runwgs(parlist,nligation,reffile,nploid,seq,lib,freq): #create bam file for 
 	isize=json.loads(parlist.get('xwgsim', 'isize'))
 	rl1=json.loads(parlist.get('xwgsim', 'read1'))
 	rl2=json.loads(parlist.get('xwgsim', 'read2'))
+	par=' '.join(['%s %s' % (key, value) for (key, value) in json.loads(parlist.get('xwgsim', 'par')).items()a])
 	libn=libnames[lib]
 	nrdp = seql*coverage[libn]/nploid*freq/(rl1[libn]+rl2[libn])
 	nmode = len(isize[libn])
@@ -760,7 +762,7 @@ def runwgs(parlist,nligation,reffile,nploid,seq,lib,freq): #create bam file for 
 				fq2=tempfile.NamedTemporaryFile('w',delete=False).name
 				mbam=tempfile.NamedTemporaryFile('w',delete=False).name
 				#print (misize,misizesd,mnread,rl1[libn],rl2[libn],fa,fq1,fq2)
-				wgs_cmd="xwgsim -h -d %d -s %d -N %d -1 %d -2 %d -l %d %s %s %s " % (misize,misizesd,mnread,rl1[libn],rl2[libn],nligation,fa,fq1,fq2)
+				wgs_cmd="xwgsim -h -d %d -s %d -N %d -1 %d -2 %d -l %d %s %s %s %s " % (misize,misizesd,mnread,rl1[libn],rl2[libn],nligation,par,fa,fq1,fq2)
 				#print >>sys.stderr, wgs_cmd
 				runcmd(wgs_cmd) #fastq file
 				#fq3,fq4=filterfq(fq1,fq2,nligation,len(seq)-nligation) #half ligation region reads
