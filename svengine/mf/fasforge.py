@@ -336,8 +336,8 @@ def makefq(parit):
 	print "processing lib %s freq %s regions" % (str(parit[5]),str(parit[6]))
 	parlist=parit[0]; nligation=parit[1]; rname=parit[2]; nploid=parit[3]; lib=parit[5]; freq1=parit[6]; freq0=1-freq1; seq0=parit[7]; seq1=parit[8]; lib=parit[9]; oprefix=parit[10]; mergemax=parit[11];tar_len=parit[12] #seq0=parit[4]; 
 	libnames = json.loads(parlist.get('xwgsim', 'libnames'))
-	wgs0 = mf.fqwgs(parlist,nligation,rname,nploid,seq0,lib,freq0,mergemax)
-	wgs1 = mf.fqwgs(parlist,nligation,rname,nploid,seq1,lib,freq1,mergemax)
+	wgs0 = mf.fqwgs(parlist,nligation,rname,nploid,seq0,lib,freq0,mergemax,tar_len)
+	wgs1 = mf.fqwgs(parlist,nligation,rname,nploid,seq1,lib,freq1,mergemax,tar_len)
 	#bam0 = mf.runwgs(parlist,nligation,rname,nploid,seq0,lib,freq0)
 	#bam1 = mf.runwgs(parlist,nligation,rname,nploid,seq1,lib,freq1)
 	#print [bam0,bam1]
