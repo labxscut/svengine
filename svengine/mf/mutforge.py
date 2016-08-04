@@ -607,12 +607,12 @@ def fqwgs(parlist,nligation,reffile,nploid,seq,lib,freq,mergemax,tar_len): #crea
 	#passing both filename and contents to save space
 	tmpfa=False #fa is temporary created or constant
 	if(type(seq)==type({})):
-		fa=seq['filename']; seqs=seq['seq'] #for fasforge calls
+		fa=seq['filename']; seqs=seq['seq'] #fasforge, seqs may have multiple sequences
 	else:
-		fa=myTemporaryFile(prefix="fawgs_") #this has to be removed
+		fa=myTemporaryFile(prefix="fawgs_") #mutforge, seqs only one sequence to be saved
 		tmpfa=True
 		seqs=seq
-	seql = sum( [ len(s) for s in seqs ] )-tar_len #len of all seqs
+	seql = sum( [ len(s) for s in seqs ] ) - tar_len #len of targeted region of all seqs
 	libnames=json.loads(parlist.get('xwgsim', 'libnames'))
 	coverage=json.loads(parlist.get('xwgsim', 'coverage'))
 	isize=json.loads(parlist.get('xwgsim', 'isize'))
