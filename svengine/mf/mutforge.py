@@ -15,6 +15,12 @@ from Bio.Alphabet import generic_dna
 import shelve
 import pybedtools.featurefuncs
 
+debug = True
+shelve_file = '/'.join([os.environ['HOME'],'setup','shelve'])
+if(debug): 
+	print "shelving to", shelve_file
+	save = shelve.open(shelve_file)
+
 starttime=time.time()
 devnull=open(os.devnull, 'w')
 io_quote = "this is for end user"
@@ -23,6 +29,19 @@ maxrefnum = 24 			#for debugging and human, should set to a big number afterward
 #burnin = 100000			#burnin region for each chromosome, to avoid N rich regions
 varfile_names = ['#VID','MID','VARFREQ','VARHAP','VARCHR','VARPOS','VARDEL','VARDELSIZE','VARINS','VARINSSEQ(HAP/SEQFILE,CHR:START-END,COPY,REVCOMP)']
 varbed_names = ['#CHROM','START','END','VID','MID','VARFREQ','VARHAP','VARCHR','VARPOS','VARDEL','VARDELSIZE','VARINS','VARINSSEQ(HAP/SEQFILE,CHR:START-END,COPY,REVCOMP)']
+
+#def pybed2file(pybed):
+#  fn=tempfile.NamedTemporaryFile('w',delete=False).name
+#	pybed.saveas(fn)
+#  return fn
+#
+#def df2bedfile(df):
+#  fn=tempfile.NamedTemporaryFile('w',delete=False).name
+#	df.to_csv(path_or_buf=fn, header=False, sep="\t", index=False)
+#  return fn
+#
+#def fn2pybed(fn):
+#	return pybedtools.BedTool(fn)
 
 def myTemporaryFile(prefix): #this provides a unique temporary file name only
 	return os.path.join(tempfile.tempdir,prefix+next(tempfile._get_candidate_names())+"tmp") 
@@ -211,16 +230,27 @@ def main(args):
 		raise Exception("incorrect number of hapfiles provided")
 
 	try:
-		sizefile = fas2size(hapseq[0].filename)		 #require hap file to be the same size and gap applies to all
+		sizefile = fas2size(hapseq[0].filename)	#require hap file to be the same size and gap applies to all
 		#FIXME: this sizefile has also to be hapseq dependent 
-		gaptab=pybedtools.BedTool(gapfile.read(),from_string=True)
+		#gapfile replace gaptab (temporary BedTool will be only created where it is used)
+		#only create BedTool from a permanent bedfile
+		if gapfile != None:
+			gaptab=pybedtools.BedTool(gapfile.name) #Permanent, OK
+		else:
+			gapfile=tempfile.NamedTemporaryFile('w',delete=False); gapfile.close()
+			gaptab=pybedtools.BedTool("",from_string=True).saveas(gapfile.name) 
+
 		#------------------add for targetfile---------------		
+		nontargfile=tempfile.NamedTemporaryFile('w',delete=False); nontargfile.close()
 		if targetfile != None:
-			targfile=pybedtools.BedTool(targetfile.read(),from_string=True)
-			targtab=targfile.complement(g=sizefile)
-			gaptab=targtab.cat(gaptab.each(pybedtools.featurefuncs.extend_fields,n=targtab.field_count()).saveas())
-		gaptab=gaptab.slop(g=sizefile, b=edgein)
-		gaptab=gaptab.merge()							#need to merge
+			targfile=pybedtools.BedTool(targetfile.name) #Permanent, OK
+			nontargtab=targfile.complement(g=sizefile).saveas(nontargfile.name)
+		else:
+			nontargtab=pybedtools.BedTool("",from_string=True).saveas(nontargfile.name)
+
+		allskipfile=tempfile.NamedTemporaryFile('w',delete=False); allskipfile.close()
+		allskiptab=nontargtab.cat(gaptab).saveas(allskipfile.name)
+		allskiptab=allskiptab.slop(g=sizefile, b=edgein).merge().saveas(allskipfile.name)
 	except pybedtools.cbedtools.BedToolsFileError:
 		raise Exception("incorrect gapfile provided, must in BED format")
 
@@ -325,7 +355,8 @@ def var2bs(bun):
 def fas2bed(fasfile):
 	fasseq = pysam.Fastafile(fasfile)
 	bed = [ fasseq.references[i]+"\t0\t"+str(fasseq.lengths[i]) for i in range(0,min(fasseq.nreferences,maxrefnum)) ]
-	return pybedtools.BedTool('\n'.join(bed),from_string=True)
+	bedfile = tempfile.NamedTemporaryFile('w',delete=False); bedfile.close()
+	return pybedtools.BedTool('\n'.join(bed),from_string=True).saveas(bedfile.name)
 
 def fas2size(fasfile):
 	sizefile = tempfile.NamedTemporaryFile('w',delete=False,prefix="fasize_")
@@ -370,20 +401,24 @@ def var2wgs(bun):
 	#hapvar{0: bed_features}
 	hapvar = collections.OrderedDict(); hapbed = collections.OrderedDict();
 	#print varlist.values()
+
 	for var in varlist.values():
 		#print var
 		#print [var[4],var[5],var[5]+var[7],var[0],var[1],var[2],var[6],var[8]]
 		#CHR ST	ED	VID	MID	FREQ	DEL	INS; adding one base size to ensure flanking regions are separate
 		hapvar[var[3]] = hapvar.get(var[3],[]) + [[var[4],var[5],var[5]+var[7]+2*nligation+1,var[0],var[1],var[2],var[7],formatins(var[9])]]
 	for hap in hapvar.keys():
-		hapvar[hap] = pybedtools.BedTool('\n'.join([ '\t'.join([str(c) for c in x]) for x in hapvar[hap] ]), from_string=True)
+		hapf = tempfile.NamedTemporaryFile('w',delete=False); hapf.close()
+		hapvar[hap] = pybedtools.BedTool('\n'.join([ '\t'.join([str(c) for c in x]) for x in hapvar[hap] ]), from_string=True).saveas(hapf.name)
 		#assert chkvar(hapvar[hap]) == True, "varfile contains self overlaps, which is not allowed"
+
 	for hap in hapvar.keys():
 		sizefile = fas2size(hapseq[hap].filename)		 #create genome size file
-		hapbed[hap] = hapvar[hap].complement(g=sizefile) #create complementary blocks
-		hapbed[hap] = hapbed[hap].slop(g=sizefile,b=nligation)
-		hapbed[hap] = pybedtools.BedTool('\n'.join([ f[0]+'\t'+str(f[1])+'\t'+str(f[2])+'\tNone\tNone\t0\t0\tNone' for f in hapbed[hap]]),from_string=True)
-		hapvar[hap] = hapvar[hap].cat(hapbed[hap],postmerge=False)
+		hapbed[hap] = tempfile.NamedTemporaryFile('w',delete=False); hapbed[hap].close()
+		hapbed[hap] = hapvar[hap].complement(g=sizefile).saveas(hapbed[hap].name) #create complementary blocks
+		hapbed[hap] = hapbed[hap].slop(g=sizefile,b=nligation).saveas(hapbed[hap].name)
+		hapbed[hap] = pybedtools.BedTool('\n'.join([ f[0]+'\t'+str(f[1])+'\t'+str(f[2])+'\tNone\tNone\t0\t0\tNone' for f in hapbed[hap]]),from_string=True).saveas(hapbed[hap].name)
+		hapvar[hap] = hapvar[hap].cat(hapbed[hap],postmerge=False).saveas(hapvar[hap].name)
 
 	hapiter=[]
 	#print len(hapvar[0])
@@ -481,9 +516,16 @@ def var2fq(bun):
 		hapvar[var[3]] = hapvar.get(var[3],[]) + [[var[4],var[5],var[5]+var[7]+2*nligation+1,var[0],var[1],var[2],var[7],formatins(var[9])]]
 	for hap in hapvar.keys():
 		hapvar[hap] = pybedtools.BedTool('\n'.join([ '\t'.join([str(c) for c in x]) for x in hapvar[hap] ]), from_string=True)
-		#assert chkvar(hapvar[hap]) == True, "varfile contains self overlaps, which is not allowed"
+	#this BedTools file got missing
+	#Solution: all BedTools convert to data_frame when defined
+	#					 all data_frame write into Temporary file when needed
+	#assert chkvar(hapvar[hap]) == True, "varfile contains self overlaps, which is not allowed"
 	for hap in hapvar.keys():
 		sizefile = fas2size(hapseq[hap].filename)		 #create genome size file
+		#save['sizefile'] = sizefile
+		#save['hapvar'] = hapvar
+		#save.close()
+		#quit()
 		hapbed[hap] = hapvar[hap].complement(g=sizefile) #create complementary blocks
 		hapbed[hap] = hapbed[hap].slop(g=sizefile,b=nligation)
 		hapbed[hap] = pybedtools.BedTool('\n'.join([ f[0]+'\t'+str(f[1])+'\t'+str(f[2])+'\tNone\tNone\t0\t0\tNone' for f in hapbed[hap]]),from_string=True)
@@ -500,10 +542,10 @@ def var2fq(bun):
 		hapfas=bun.hapseq[hap].filename
 		for feat in hapvar[hap]:
 			feat_bedtool=pybedtools.BedTool(str(feat),from_string=True)
-                        feat_bedtool=feat_bedtool.intersect(gaptab)#.end - gaptab.intersect(feat).start
-                        tar_len = 0
+			feat_bedtool=feat_bedtool.intersect(gaptab)#.end - gaptab.intersect(feat).start
+			tar_len = 0
 			for i in feat_bedtool:
-                                tar_len += (i.end - i.start) 
+				tar_len += (i.end - i.start) 
 			hapiter.append([hap,hapfas,nligation,parlist,reffile,nploid,idx,total,feat,mergemax,tar_len])
 			idx += 1
 	#for it in hapiter:
@@ -1346,11 +1388,9 @@ def run():
 																									to confirm if the configuration is viable")
 	parser.add_argument('hapfiles', metavar='hapfiles', #example.fasta
 												help="inputfile of hap file(s), required")
-	parser.add_argument('gapfile', metavar='gapfile', type=argparse.FileType('rU'), #example.bed
-												help="inputfile of gap or other banned regions, required")
-	parser.add_argument('parfile', metavar='parfile', type=argparse.FileType('rU'), #example.par
+	parser.add_argument('parfile', metavar='parfile', type=argparse.FileType('rU'), #required
 												help="inputfile of library-wise parameters, required"),
-	parser.add_argument('reffile', metavar='reffile', type=argparse.FileType('rU'), #example.fasta
+	parser.add_argument('reffile', metavar='reffile', type=argparse.FileType('rU'), #required
 												help="inputfile of ref file(s), required"),
 	parser.add_argument('-m', '--metafile', dest='metafile', type=argparse.FileType('rU'), #example.meta
 												help="inputfile of meta specification")
@@ -1376,9 +1416,13 @@ def run():
 												help="max number of bamfiles in one iteration of samtool merging (default: %(default)s )")
 	parser.add_argument('-d', '--tmpdir', dest='tmpdir', default=os.path.join(os.environ['HOME'],'svetmp_'+''.join([random.choice(string.ascii_letters) for i in range(4)])),
 												help="root dir for keeping temporary files, default (last 4 digits random): %(default)s")
+	parser.add_argument('-s', '--skipfile', dest='gapfile', type=argparse.FileType('rU'), default=None,
+												help="inputfile of gap or other banned regions to skip")
 	parser.add_argument('-t','--targetfile',dest='targetfile',type=argparse.FileType('rU'),default=None, help='inputfile of target region, for example Exome region, in bed format')											
 	parser.add_argument('--layout', action='store_true', dest='layout', default=False, help="dry run to layout")
 	parser.add_argument('--outbam', action='store_true', dest='outbam', default=False, help="wet run to bam")
+	parser.add_argument('--debug', action='store_true', dest='debug', default=False, help="debug run")
+
 	args = parser.parse_args()
 	main(args)
 
