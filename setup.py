@@ -18,12 +18,43 @@ doclines=__doc__.splitlines()
 #        ('build_clib', build.build.has_c_libraries), 
 #        ('build_scripts', build.build.has_scripts), ] 
 
-#install xwgsim
+#install bwa, samtools, bedtools, dwgsim
 
-print "gcc -g -O2 -Wall -o xwgsim/xwgsim xwgsim/xwgsim.c -lz -lm"
-os.system("gcc -g -O2 -Wall -o xwgsim/xwgsim xwgsim/xwgsim.c -lz -lm")
-print "cp xwgsim/xwgsim %s" % sys.prefix
-os.system("cp xwgsim/xwgsim %s/bin" % sys.prefix)
+#print "gcc -g -O2 -Wall -o xwgsim/xwgsim xwgsim/xwgsim.c -lz -lm"
+#os.system("gcc -g -O2 -Wall -o xwgsim/xwgsim xwgsim/xwgsim.c -lz -lm")
+
+
+"""samtools"""
+
+print "cd samtools && make"
+os.system("cd samtools && make")
+print "cp samtools/samtools %s" % sys.prefix
+os.system("cp samtools/samtools %s/bin" % sys.prefix)
+
+"""bwa"""
+
+print "cd bwa && make"
+os.system("cd bwa && make")
+print "cp bwa/bwa %s" % sys.prefix
+os.system("cp bwa/bwa %s/bin" % sys.prefix)
+
+"""dwgsim"""
+
+if not os.path.exists("dwgsim/samtools"):  
+	print "cp -r samtools dwgsim/"
+	os.system("cp -r samtools dwgsim/")
+print "cd dwgsim && make"
+os.system("cd dwgsim && make")
+print "cp dwgsim/dwgsim %s" % sys.prefix
+os.system("cp dwgsim/dwgsim %s/bin" % sys.prefix)
+
+"""bedtools"""
+
+
+print "cd bedtools && make"
+os.system("cd bedtools && make")
+print "cp bedtools/bin/* %s/bin" % sys.prefix
+os.system("cp bedtools/bin/* %s/bin" % sys.prefix)
 
 dist=setup(name="svengine",
     version="1.0.0",
@@ -50,7 +81,7 @@ dist=setup(name="svengine",
 		'svengine.mf.mutforge'],
 		scripts = ['xwgsim/xwgsim'],
     #cmdclass = {'build': my_build},
-    data_files = [('',['README.rst','LICENSE.txt'])],
+    data_files = [('',['README.rst','LICENSE'])],
     entry_points = { 
       'console_scripts': [
 	#'addindel = svengine.bs.addindel:run',

@@ -40,6 +40,7 @@ INSTALL
         Sqlite3 http://sqlite.org
        
       BWA http://samtools.org/
+        (executables have to be in $PATH and within the sve_py virtual env)
       
 
     *Installation*
@@ -121,7 +122,8 @@ INSTALL
 
       The executables are in "/local/python/prefix/bin". So set $SVENGINE_BIN="/local/python/prefix/bin" and remember to add it to your $PATH.
 
-    3. There is also the possibility to install with your system site python without root. 
+    (3) There is also the possibility to install with your system site python without root. 
+
       The installation process is not much different but please first ask your system admin to install pysam, pandas, pybedtools and cython to the system site python for you. Then change your PYTHONPATH to include "/local/python/prefix" which is writable to you as your user python library path. i.e.
       
       ::
@@ -129,6 +131,7 @@ INSTALL
         export PYTHONPATH="PYTHONPATH:/local/python/prefix/lib/python2.7/site-packages/"
       
       The rest are the same with local python installation (either using virtualenv or not). But you might encounter other permission related problems, please consult your admin. Also, please consult the author's development document on how to setup a working environment: http://dl.dropbox.com/u/35182955/Development_environment.html
+
 
 EXECUTABLES
 ===========
