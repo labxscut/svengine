@@ -155,6 +155,8 @@ def main(args):
 	mergemax = args.mergemax
 	layout = args.layout
 	tempfile.tempdir = args.tmpdir
+	targetfile=args.targetfile
+	tar_len = 0
 	try:
 		os.mkdir(tempfile.tempdir)
 	except:
@@ -186,7 +188,17 @@ def main(args):
 	try:
 		sizefile = mf.fas2size(reffile.name) #create genome size file
 		gaptab=pybedtools.BedTool(gapfile.read(),from_string=True)
+		#------------------add for targetfile---------------		
+		if targetfile != None:
+			targfile=pybedtools.BedTool(targetfile.read(),from_string=True)
+			targtab=targfile.complement(g=sizefile)
+			gaptab=targtab.cat(gaptab.each(pybedtools.featurefuncs.extend_fields,n=targtab.field_count()).saveas())
 		gaptab=gaptab.slop(g=sizefile, b=edgein)
+		gaptab=gaptab.merge()
+		for i in xrange(gaptab.count()):
+		#	print gaptab[i].start
+			tar_len += (gaptab[i].end-gaptab[i].start)
+		#print tar_len
 	except pybedtools.cbedtools.BedToolsFileError:
 		raise Exception("incorrect gapfile provided, must in BED format")
 	#create a string meta file:
@@ -274,7 +286,7 @@ def main(args):
 	pariter=[]
 	for lib in range(0,nlibrary):
 		for fi in range(0,len(freq1)):
-			pariter.append([parlist,nligation,reffile.name,nploid,seq0,lib,freq1[fi],seq0,seq1,lib,oprefix,mergemax])
+			pariter.append([parlist,nligation,reffile.name,nploid,seq0,lib,freq1[fi],seq0,seq1,lib,oprefix,mergemax,tar_len])
 
 	#NOTE: debug code
 	ffq=[]
@@ -322,10 +334,10 @@ def makebam(parit):
 
 def makefq(parit):		
 	print "processing lib %s freq %s regions" % (str(parit[5]),str(parit[6]))
-	parlist=parit[0]; nligation=parit[1]; rname=parit[2]; nploid=parit[3]; lib=parit[5]; freq1=parit[6]; freq0=1-freq1; seq0=parit[7]; seq1=parit[8]; lib=parit[9]; oprefix=parit[10]; mergemax=parit[11] #seq0=parit[4]; 
+	parlist=parit[0]; nligation=parit[1]; rname=parit[2]; nploid=parit[3]; lib=parit[5]; freq1=parit[6]; freq0=1-freq1; seq0=parit[7]; seq1=parit[8]; lib=parit[9]; oprefix=parit[10]; mergemax=parit[11];tar_len=parit[12] #seq0=parit[4]; 
 	libnames = json.loads(parlist.get('xwgsim', 'libnames'))
-	wgs0 = mf.fqwgs(parlist,nligation,rname,nploid,seq0,lib,freq0,mergemax)
-	wgs1 = mf.fqwgs(parlist,nligation,rname,nploid,seq1,lib,freq1,mergemax)
+	wgs0 = mf.fqwgs(parlist,nligation,rname,nploid,seq0,lib,freq0,mergemax,tar_len)
+	wgs1 = mf.fqwgs(parlist,nligation,rname,nploid,seq1,lib,freq1,mergemax,tar_len)
 	#bam0 = mf.runwgs(parlist,nligation,rname,nploid,seq0,lib,freq0)
 	#bam1 = mf.runwgs(parlist,nligation,rname,nploid,seq1,lib,freq1)
 	#print [bam0,bam1]
@@ -367,6 +379,7 @@ def run():
 												help="only dry layout")
 	parser.add_argument('--outbam', action='store_true', dest='outbam', default=False, 
 												help="wet run to bam")
+	parser.add_argument('-t','--targetfile',dest='targetfile',type=argparse.FileType('rU'),default=None, help='inputfile of target region, for example Exome region, in bed format')
 	args = parser.parse_args()
 	main(args)
 
