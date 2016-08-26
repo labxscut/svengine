@@ -50,7 +50,6 @@ os.system("cp dwgsim/dwgsim %s/bin" % sys.prefix)
 
 """bedtools"""
 
-
 print "cd bedtools && make"
 os.system("cd bedtools && make")
 print "cp bedtools/bin/* %s/bin" % sys.prefix

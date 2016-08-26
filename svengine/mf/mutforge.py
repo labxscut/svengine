@@ -15,11 +15,6 @@ from Bio.Alphabet import generic_dna
 import shelve
 import pybedtools.featurefuncs
 
-debug = True
-shelve_file = '/'.join([os.environ['HOME'],'setup','shelve'])
-if(debug): 
-	print "shelving to", shelve_file
-	save = shelve.open(shelve_file)
 
 starttime=time.time()
 devnull=open(os.devnull, 'w')
@@ -173,6 +168,7 @@ def main(args):
 	outbam = args.outbam
 	burnin = args.burnin
 	edgein = args.edgein
+  debug = args.debug
 	mergemax = args.mergemax
 	tempfile.tempdir = args.tmpdir
 	try:
@@ -182,6 +178,16 @@ def main(args):
 		quit()
 	print >>sys.stderr, "tmpdir=", tempfile.tempdir
 	pybedtools.set_tempdir(tempfile.tempdir)
+
+  if(debug): 
+    shelve_file = '/'.join([tempfile.tempdir,'shelve'])
+	  print "shelving to", shelve_file
+	  save = shelve.open(shelve_file) #shelve file 
+  #NOTE: for debuggingusing shelve: 
+  #      save['var'] = var
+  #      save.close()
+  #      load = shelve.open(shelve_file)
+  #      load['var']
 
 	if args.metafile != None and args.varfile != None:
 		print >>sys.stderr, "either a .meta or a .var file can be specified but not both"
