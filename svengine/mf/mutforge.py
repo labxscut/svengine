@@ -15,7 +15,6 @@ from Bio.Alphabet import generic_dna
 import shelve
 import pybedtools.featurefuncs
 
-
 starttime=time.time()
 devnull=open(os.devnull, 'w')
 io_quote = "this is for end user"
