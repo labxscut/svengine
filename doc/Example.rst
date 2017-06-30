@@ -1,3 +1,7 @@
+.. |TREE| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/TREE.png
+   :alt: TREE.png
+   :width: 800px
+
 .. contents:: Navigator
 
 Examples
@@ -152,11 +156,7 @@ $SVENGINEPATH/test/test_tv.sh
 
 text plot of the example tree:
 
-.. |TREE| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/TREE.png
-   :alt: TREE.png
-   :width: 800px
-
-  |TREE|
+|TREE|
 
 Example of SVEngine install (Mac with home brew):
 ---------------------------------------------------------
