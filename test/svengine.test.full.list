@@ -1,7 +1,6 @@
 egTree.newick
 egTree.tree.var
-egTree.tree.var
-egTree.var
+egTree.tree.plot
 egTree.var
 example.fas
 example.fas.fai
@@ -14,9 +13,7 @@ example.fna.pac
 example.fna.sa
 example.gap.bed
 example.meta
-example.meta
 example.par
-example.var
 example.var
 simple.par
 test_fa.meta

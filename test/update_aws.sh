@@ -3,7 +3,7 @@
 #export PATH=$AWS_PATH:$PATH
 
 #update svengine ami as needed
-ssh bkd@ec2-54-190-36-93.us-west-2.compute.amazonaws.com
+ssh bkd@ec2-54-202-133-252.us-west-2.compute.amazonaws.com
 
 #now clone back to sake and upload a new svengine test package
 tar -czvf svengine.test.full.tgz -T svengine.test.full.list
