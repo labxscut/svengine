@@ -56,7 +56,7 @@ $SVENGINEPKG/svengine/mf/fasforge.py
                             (default: 2000 )
       -d TMPDIR, --tmpdir TMPDIR
                             root dir for keeping temporary files, default (last 4
-                            digits random): /Users/charlie/svetmp_vhho
+                            digits random): /Users/charlie/svetmp_UzwB
       --layout              only dry layout
       --outbam              wet run to bam
       -t TARGETFILE, --targetfile TARGETFILE
@@ -113,7 +113,7 @@ $SVENGINEPKG/svengine/mf/mutforge.py
                             merging (default: 4000 )
       -d TMPDIR, --tmpdir TMPDIR
                             root dir for keeping temporary files, default (last 4
-                            digits random): /Users/charlie/svetmp_ludG
+                            digits random): /Users/charlie/svetmp_ZWtl
       -s GAPFILE, --skipfile GAPFILE
                             inputfile of gap or other banned regions to skip
       -t TARGETFILE, --targetfile TARGETFILE
