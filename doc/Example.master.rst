@@ -80,78 +80,78 @@ Example Deletion (DEL):
 
 .. |DEL| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/DEL.png
    :alt: DEL.png
-   :width: 400px
+   :width: 200px
 
-  |DEL|
+|DEL|
 
 Example Duplication (DUP):
 
 .. |DUP| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/DUP.png
    :alt: DUP.png
-   :width: 400px
+   :width: 200px
 
-  |DUP|
+|DUP|
 
 Example Domestic Insertion (DINS):
 
 .. |DINS| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/DINS.png
    :alt: DINS.png
-   :width: 400px
+   :width: 200px
 
-  |DINS|
+|DINS|
 
 Example Foreign Insertion (FINS):
 
 .. |FINS| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/FINS.png
    :alt: FINS.png
-   :width: 400px
+   :width: 200px
 
-  |FINS|
+|FINS|
 
 Example Inversion (INV):
 
 .. |INV| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/INV.png
    :alt: INV.png
-   :width: 400px
+   :width: 200px
 
-  |INV|
+|INV|
 
 Example Inverted Domestic Insersion (IDINS):
 
 .. |IDINS| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/IDINS.png
    :alt: IDINS.png
-   :width: 400px
+   :width: 200px
 
-  |IDINS|
+|IDINS|
 
 Example Inverted Duplication (IDUP):
 
 .. |IDUP| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/IDUP.png
    :alt: IDUP.png
-   :width: 400px
+   :width: 200px
 
-  |IDUP|
+|IDUP|
 
 Example Translocation (TRA):
 
 .. |TRAD| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/TRAD.png
    :alt: TRAD.png
-   :width: 400px
+   :width: 200px
 .. |TRAI| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/TRAI.png
    :alt: TRAI.png
-   :width: 400px
+   :width: 200px
 
-  |TRAD|
-  |TRAI|
+|TRAD|
+|TRAI|
 
 Example Inverted Translocation (ITRA):
 
 .. |ITRAD| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/ITRAD.png
    :alt: ITRAD.png
-   :width: 400px
+   :width: 200px
 .. |ITRAI| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/ITRAI.png
    :alt: ITRAI.png
-   :width: 400px
+   :width: 200px
 
-  |ITRAD|
-  |ITRAI|
+|ITRAD|
+|ITRAI|
