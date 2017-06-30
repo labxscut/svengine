@@ -152,19 +152,19 @@ $SVENGINEPATH/test/test_tv.sh
 
 text plot of the example tree:
 
-                                                                                /-------------------------------------- C1
-    /---------------------------------------------------------------------------V5                                        
-    |                                                                           \-------------------------------------- C2
-    |                                                                                                                     
-    V1                                                                          /-------------------------------------- C3
-    |                                     /-------------------------------------V4                                        
-    |                                     |                                     \-------------------------------------- C4
-    \-------------------------------------V2                                                                              
-                                          |                                     /-------------------------------------- C5
-                                          \-------------------------------------V3                                        
-                                                                                \-------------------------------------- C6
-                                                                                                                          
-                                                                                                                          
+                                                                   /------------------------------- C1
+    /--------------------------------------------------------------V5                                 
+    |                                                              \------------------------------- C2
+    |                                                                                                 
+    V1                                                             /------------------------------- C3
+    |                              /-------------------------------V4                                 
+    |                              |                               \------------------------------- C4
+    \------------------------------V2                                                                 
+                                   |                               /------------------------------- C5
+                                   \-------------------------------V3                                 
+                                                                   \------------------------------- C6
+                                                                                                      
+                                                                                                      
 
 
 Example of SVEngine install (Mac with home brew):
@@ -184,13 +184,14 @@ $SVENGINEPATH/test/install_mac.sh
     pip install virtualenv #optional
     ## install python dependencies
     ##   optionally, inside a virtual python
-    pip install scipy
-    pip install pysam
-    pip install biopython
-    pip install pybedtools
-    pip install pandas
-    pip install dendropy
+    pip install -U scipy
+    pip install -U pysam
+    pip install -U biopython
+    pip install -U pybedtools
+    pip install -U pandas
+    pip install -U dendropy
     pip install -U cython
+    pip install -U tables
     ## install svengine
     git clone https://bitbucket.org/charade/svengine.git
     git submodule update --init --recursive

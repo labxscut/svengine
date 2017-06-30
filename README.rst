@@ -1,22 +1,22 @@
 .. |Logo| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/logo.png
    :alt: logo.png
-   :height: 50px
-   :width: 50px
+   :height: 25px
+   :width: 25px
 
-.. |Rationale| image:: https://bitbucket.org/charade/zoomx/raw/master/doc/images/rationale.png
+.. |Rationale| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/rationale.png
    :alt: rationale.png
-   :height: 450px
-   :width: 540px
+   :height: 200px
+   :width: 200px
 
-.. |Pipeline| image:: https://bitbucket.org/charade/zoomx/raw/master/doc/images/pipeline.png
+.. |Pipeline| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/pipeline.png
    :alt: pipeline.png
    :height: 320px
    :width: 520px
 
-|Logo| SVEngine: Allele Specific and Haplotype Aware Structural Variants Simulator
+SVEngine: Allele Specific and Haplotype Aware Structural Variants Simulator
 ==================================================================================
 
-.. contents:: Navigator
+|Logo| 
 
 QUICK LINKS
 -----------
@@ -30,8 +30,8 @@ QUICK LINKS
 
 INTRODUCTION
 ------------
-    
-    SVEngine (Structural Variants Engine)
+
+  SVEngine (Structural Variants Engine)
 
   - SVEngine is a multi-purpose and self-contained simulator for whole genome scale spike-in of thousands of SV events of various types in both single-sample and matched sample scenarios.
 
@@ -47,8 +47,7 @@ INTRODUCTION
 
   Figure 2. The bioinformatics pipeline of SVEngine.
 
-  |Pipeline|
-    
+
   Currently the package works for Linux (tested with Ubuntu) and Mac (tested with Homebrew).
   It might also work for Windows with Cygwin (not tested).
   SVEngine documentation is on wiki and it is available:
@@ -66,7 +65,7 @@ TRYOUT
 
     .. code::
 
-      ssh bkd@ec2-54-190-36-93.us-west-2.compute.amazonaws.com # secret is the same as user
+      ssh bkd@ec2-54-202-133-252.us-west-2.compute.amazonaws.com # secret is the same as user
 
   Testing data and scripts are available in ~/setup/svengine/test. Run ./clean.sh to clean up the directory first. Examples are offered and explained in `Examples <https://bitbucket.org/charade/svengine/wiki/Example>`__ .
 
@@ -85,7 +84,6 @@ INSTALL
     Python2(>=2.7)  http://www.python.org/
 
       pybedtools, pysam, pandas, tables, scipy, dendropy, cython
-
 
     A script to confirm all dependencies are met is here:
 
@@ -127,13 +125,13 @@ INSTALL
 
       # in svengine_vpy>
       source svengine_vpy/bin/activate
-      pip install scipy
-      pip install tables
-      pip install pandas
-      pip install pysam
-      pip install pybedtools
-      pip install dendropy
-      pip install biopython
+      pip install -U scipy
+      pip install -U tables
+      pip install -U pandas
+      pip install -U pysam
+      pip install -U pybedtools
+      pip install -U dendropy
+      pip install -U biopython
       pip install -U cython
 
     Then install svengine as an standard python package:
@@ -141,9 +139,10 @@ INSTALL
     .. code::
 
       # in svengine_vpy>
-      git clone git@bitbucket.org:charade/svengine.git
+      git clone https://charade@bitbucket.org/charade/svengine.git
       cd svengine
       git submodule update --init --recursive
+      test/test_dep.sh
       python setup.py install
 
     Now the SVEngine executables will be available from "$PWD/svengine_vpy/bin".
@@ -154,9 +153,9 @@ EXECUTABLES
 -----------
 
     xwgsim        --  enhanced Heng Li's wgsim
-    
+
     mutforge      --  spiking in structure variants without fasta output 
-    
+
     fasforge      --  spiking in structure variants with fasta output  
 
     tree2var      --  updating variant with a phylogenetic tree structured frequency
@@ -172,12 +171,12 @@ WIKI
 ------------
 
   SVEngine's https://bitbucket.org/charade/svengine/wiki page is a growing resource for manuals, FAQs and other information. This is a MUST read place before you actually using the SVEngine tool. These documentations are also openly editable in reSructuredText format. You are more than welcome to contribute to this ongoing documentation.
-    
+
 FAQ
 ------------
 
   http://bitbucket.org/charade/svengine/wiki/FAQ
-    
+
 BUG
 ------------
 
