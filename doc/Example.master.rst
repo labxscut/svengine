@@ -54,8 +54,11 @@ REPLACE_WITH_SVENGINETESTTV
 
 text plot of the example tree:
 
-REPLACE_WITH_SVENGINETREEPLOT
+.. |TREE| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/TREE.png
+   :alt: TREE.png
+   :width: 800px
 
+  |TREE|
 
 Example of SVEngine install (Mac with home brew):
 ---------------------------------------------------------
@@ -75,50 +78,80 @@ Examples of spiked-in events:
 
 Example Deletion (DEL):
 
-.. image:: https://bytebucket.org/charade/svengine/wiki/images/DEL.png
-	 :width: 400px
+.. |DEL| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/DEL.png
+   :alt: DEL.png
+   :width: 400px
+
+  |DEL|
 
 Example Duplication (DUP):
 
-.. image:: https://bytebucket.org/charade/svengine/wiki/images/DUP.png
-	 :width: 400px
+.. |DUP| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/DUP.png
+   :alt: DUP.png
+   :width: 400px
+
+  |DUP|
 
 Example Domestic Insertion (DINS):
 
-.. image:: https://bytebucket.org/charade/svengine/wiki/images/DINS.png
-	 :width: 400px
+.. |DINS| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/DINS.png
+   :alt: DINS.png
+   :width: 400px
+
+  |DINS|
 
 Example Foreign Insertion (FINS):
 
-.. image:: https://bytebucket.org/charade/svengine/wiki/images/FINS.png
-	 :width: 400px
+.. |FINS| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/FINS.png
+   :alt: FINS.png
+   :width: 400px
+
+  |FINS|
 
 Example Inversion (INV):
 
-.. image:: https://bytebucket.org/charade/svengine/wiki/images/INV.png
-	 :width: 400px
+.. |INV| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/INV.png
+   :alt: INV.png
+   :width: 400px
+
+  |INV|
 
 Example Inverted Domestic Insersion (IDINS):
 
-.. image:: https://bytebucket.org/charade/svengine/wiki/images/IDINS.png
-	 :width: 400px
+.. |IDINS| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/IDINS.png
+   :alt: IDINS.png
+   :width: 400px
+
+  |IDINS|
 
 Example Inverted Duplication (IDUP):
 
-.. image:: https://bytebucket.org/charade/svengine/wiki/images/IDUP.png
-	 :width: 400px
+.. |IDUP| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/IDUP.png
+   :alt: IDUP.png
+   :width: 400px
+
+  |IDUP|
 
 Example Translocation (TRA):
 
-.. image:: https://bytebucket.org/charade/svengine/wiki/images/TRAD.png
-	 :width: 400px
-.. image:: https://bytebucket.org/charade/svengine/wiki/images/TRAI.png
-	 :width: 400px
+.. |TRAD| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/TRAD.png
+   :alt: TRAD.png
+   :width: 400px
+.. |TRAI| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/TRAI.png
+   :alt: TRAI.png
+   :width: 400px
+
+  |TRAD|
+  |TRAI|
 
 Example Inverted Translocation (ITRA):
 
-.. image:: https://bytebucket.org/charade/svengine/wiki/images/ITRAD.png
-	 :width: 400px
-.. image:: https://bytebucket.org/charade/svengine/wiki/images/ITRAI.png
-	 :width: 400px
+.. |ITRAD| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/ITRAD.png
+   :alt: ITRAD.png
+   :width: 400px
+.. |ITRAI| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/ITRAI.png
+   :alt: ITRAI.png
+   :width: 400px
 
+  |ITRAD|
+  |ITRAI|
