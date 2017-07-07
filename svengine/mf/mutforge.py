@@ -20,9 +20,10 @@ devnull = open(os.devnull, 'w')
 io_quote = "this is for end user"
 code_quote = 'this is for program'
 maxrefnum = 24       #for debugging and human, should set to a big number afterwards
-#burnin = 100000      #burnin region for each chromosome, to avoid N rich regions
 varfile_names = ['#VID','MID','VARFREQ','VARHAP','VARCHR','VARPOS','VARDEL','VARDELSIZE','VARINS','VARINSSEQ(HAP/SEQFILE,CHR:START-END,COPY,REVCOMP)']
 varbed_names = ['#CHROM','START','END','VID','MID','VARFREQ','VARHAP','VARCHR','VARPOS','VARDEL','VARDELSIZE','VARINS','VARINSSEQ(HAP/SEQFILE,CHR:START-END,COPY,REVCOMP)']
+#HAPVAR = { hapidx: [ [hapvar1], [hapvar2], ... ] } 
+#HAPVAR_ENTRY = [(CHR, ST, ED), VID, MID, VARDELSIZE, VARINSSEQ]
 
 #def pybed2file(pybed):
 #  fn=tempfile.NamedTemporaryFile('w',delete=False).name
@@ -165,10 +166,23 @@ def main(args):
   nprocs = args.nprocs
   layout = args.layout
   outbam = args.outbam
-  burnin = args.burnin
-  edgein = args.edgein
+  nligation = args.nligation            #this input has default
+  burnin = max(args.burnin, nligation)  #lower bound is nligation
+  trunksize = args.trunksize
   debug = args.debug
   mergemax = args.mergemax
+  hapfiles = args.hapfiles.split(':')     #this is required input
+  skipfile = args.skipfile                 #this is required input
+  parfile = args.parfile                #parfile controls WGS
+  reffile = args.reffile                 #this is required input
+  nploid = args.nploid                   #this input has default
+  plansize = args.plansize              #this input has default
+  parlist = ConfigParser.ConfigParser()
+  parlist.readfp(parfile)
+  metafile = args.metafile
+  varfile = args.varfile
+  targetfile = args.targetfile
+
   tempfile.tempdir = args.tmpdir
   try:
     os.mkdir(tempfile.tempdir)
@@ -182,11 +196,11 @@ def main(args):
     shelve_file = '/'.join([tempfile.tempdir,'shelve'])
     print "shelving to", shelve_file
     save = shelve.open(shelve_file) #shelve file 
-  #NOTE: for debuggingusing shelve: 
-  #      save['var'] = var
-  #      save.close()
-  #      load = shelve.open(shelve_file)
-  #      load['var']
+    #NOTE: for debuggingusing shelve: 
+    #      save['var'] = var
+    #      save.close()
+    #      load = shelve.open(shelve_file)
+    #      load['var']
 
   if args.metafile != None and args.varfile != None:
     print >>sys.stderr, "either a .meta or a .var file can be specified but not both"
@@ -208,18 +222,6 @@ def main(args):
     sys.stderr.write("inccorrect input specification, please use on of following: \n \
                           (1) fasta+meta, (2) bam+meta, (3) fasta+var, (4) bam+var")
 
-  hapfiles = args.hapfiles.split(':')     #this is required input
-  gapfile = args.gapfile                 #this is required input
-  parfile = args.parfile                #parfile controls WGS
-  reffile = args.reffile                 #this is required input
-  nploid = args.nploid                   #this input has default
-  plansize = args.plansize              #this input has default
-  nligation = args.nligation            #this input has default
-  parlist = ConfigParser.ConfigParser()
-  parlist.readfp(parfile)
-  metafile = args.metafile
-  varfile = args.varfile
-  targetfile = args.targetfile
   #if varfile != None: print varfile.name.rstrip("var").rstrip(".") #weird behavior of rstrip(".meta") -> exampl
   #if metafile != None: print metafile.name.rstrip("meta").rstrip(".")
   oname = metafile.name.rstrip("meta").rstrip(".") if metafile != None else varfile.name.rstrip(".var").rstrip(".")
@@ -234,33 +236,39 @@ def main(args):
   else:
     raise Exception("incorrect number of hapfiles provided")
 
+  print >>sys.stderr, "preparing simulation regions...",
+  sizefile, burninbed = fas2size(hapseq[0].filename, burnin)  #require hap file to be the same size and gap applies to all
   try:
-    sizefile = fas2size(hapseq[0].filename)  #require hap file to be the same size and gap applies to all
     #FIXME: this sizefile has also to be hapseq dependent 
-    #gapfile replace gaptab (temporary BedTool will be only created where it is used)
+    #skipfile replace gaptab (temporary BedTool will be only created where it is used)
     #only create BedTool from a permanent bedfile
-    if gapfile != None:
-      gaptab=pybedtools.BedTool(gapfile.name) #Permanent, OK
+    if skipfile != None:
+      skiptab=pybedtools.BedTool(skipfile.name) #Permanent, OK
     else:
-      gapfile=tempfile.NamedTemporaryFile('w',delete=False); gapfile.close()
-      gaptab=pybedtools.BedTool("",from_string=True).saveas(gapfile.name) 
+      skipfile=tempfile.NamedTemporaryFile('w',delete=False); skipfile.close()
+      skiptab=pybedtools.BedTool("",from_string=True).saveas(skipfile.name) 
+    skiptab=skiptab.cat(burninbed).sort().merge() #skipping edges of input chromosome
+    print "skiptab\n", skiptab
 
-    #------------------add for targetfile---------------    
     nontargfile=tempfile.NamedTemporaryFile('w',delete=False); nontargfile.close()
     if targetfile != None:
-      targfile=pybedtools.BedTool(targetfile.name) #Permanent, OK
-      nontargtab=targfile.complement(g=sizefile).saveas(nontargfile.name)
+      targbed=pybedtools.BedTool(targetfile.name) #Permanent, OK
+      nontargtab=targbed.complement(g=sizefile).saveas(nontargfile.name)
     else:
       nontargtab=pybedtools.BedTool("",from_string=True).saveas(nontargfile.name)
+    print "nontargtab\n", nontargtab
 
     allskipfile=tempfile.NamedTemporaryFile('w',delete=False); allskipfile.close()
-    allskiptab=nontargtab.cat(gaptab).saveas(allskipfile.name)
-    allskiptab=allskiptab.slop(g=sizefile, b=edgein).merge().saveas(allskipfile.name)
+    allskiptab=nontargtab.cat(skiptab).sort().merge().saveas(allskipfile.name) #merging all skipped region to allskiptab
   except pybedtools.cbedtools.BedToolsFileError:
-    raise Exception("incorrect gapfile provided, must in BED format")
+    raise Exception("incorrect skipfile provided, must in BED format")
+
+  print "allskiptab\n", allskiptab
+  print >>sys.stderr, "done",
 
   dic={} #common dictionary interface for passing parameters
-  for i in ('hapseq','gaptab','reffile','plansize','nligation','nploid','oprefix','nprocs','edgein','burnin','mergemax'):
+  gaptab = allskiptab #although not ideal, use the old name gaptab to refer to all regions should be omitted from simulation
+  for i in ('hapseq','gaptab','reffile','plansize','nligation','nploid','oprefix','nprocs','burnin','mergemax','sizefile','parlist','trunksize'):
     dic[i] = locals()[i]
 
   print >>sys.stderr, "entering runmode", runmode
@@ -271,9 +279,9 @@ def main(args):
     dic['varlist']=collections.OrderedDict()
     dic['varcnt']=0
     varlist,varcnt = makevar(Bunch(dic),metatab)
-    dic['varlist']=varlist
-    dic['varcnt']=varcnt
-    
+    dic['varlist'] = varlist
+    dic['varcnt'] = varcnt
+    print >>sys.stderr, "in var2file...",
     var2file(Bunch(dic))
     print >>sys.stderr, "done var2file"
 
@@ -287,8 +295,9 @@ def main(args):
   #       this deovlapping is skiiped for mutforge for now
   #varlist=deovlpvar(dic); dic['varcnt']=len(varlist); dic['varlist']=varlist; vartab=var2bed(Bunch(dic))
   #assert chkvar(vartab) == True, "==Warn: varfile still contains self overlaps, which is not allowed, bail out"
+  print "in var2bed ...",
   vartab=var2bed(Bunch(dic))
-  var2bed(Bunch(dic))
+  #if(debug): print vartab,
   print >>sys.stderr, "done var2bed"
 
   if layout:
@@ -296,9 +305,7 @@ def main(args):
     quit()
   
   if runmode==1 or runmode==3:
-    dic['parlist'] = parlist
     ffq = var2fq(Bunch(dic))
-    #print ffq
     print >>sys.stderr, "done var2fq", time.time()-starttime, " seconds"
 
     if outbam:
@@ -363,13 +370,19 @@ def fas2bed(fasfile):
   bedfile = tempfile.NamedTemporaryFile('w',delete=False); bedfile.close()
   return pybedtools.BedTool('\n'.join(bed),from_string=True).saveas(bedfile.name)
 
-def fas2size(fasfile):
+def fas2size(fasfile, burnin):
   sizefile = tempfile.NamedTemporaryFile('w',delete=False,prefix="fasize_")
+  burninbedfile = tempfile.NamedTemporaryFile('w',delete=False,prefix="burninbed_")
   fasseq = pysam.Fastafile(fasfile)
   size = [ fasseq.references[i]+'\t'+str(fasseq.lengths[i]) for i in range(0,min(fasseq.nreferences,maxrefnum)) ]
-  sizefile.write('\n'.join(size))
+  sizefilestring = '\n'.join(size)
+  sizefile.write(sizefilestring)
   sizefile.close()
-  return sizefile.name
+  burninbed = [ fasseq.references[i]+'\t0\t'+str(burnin)+'\n'+ 
+              fasseq.references[i]+'\t'+str(max(0,fasseq.lengths[i]-burnin))+'\t'+str(fasseq.lengths[i]) \
+              for i in range(0,min(fasseq.nreferences,maxrefnum)) ]
+  burninbed = pybedtools.BedTool('\n'.join(burninbed),from_string=True).saveas(burninbedfile.name)
+  return sizefile.name, burninbed
 
 def chkvar(varbed):
   #print varbed.sort().merge()
@@ -393,6 +406,7 @@ def var2wgs(bun):
   varlist=bun.varlist
   reffile = bun.reffile.name
   parlist = bun.parlist
+  sizefile = bun.sizefile
   #parfile in python ConfigParser format
   #LibraryNumber = 3
   #Have to use very complex merging
@@ -403,22 +417,17 @@ def var2wgs(bun):
     quit()
   
   #1, construct continuous contig sets with ligations (nploid)*(variant/non-variant)
-  #hapvar{0: bed_features}
   hapvar = collections.OrderedDict(); hapbed = collections.OrderedDict();
-  #print varlist.values()
 
   for var in varlist.values():
-    #print var
-    #print [var[4],var[5],var[5]+var[7],var[0],var[1],var[2],var[6],var[8]]
-    #CHR ST  ED  VID  MID  FREQ  DEL  INS; adding one base size to ensure flanking regions are separate
-    hapvar[var[3]] = hapvar.get(var[3],[]) + [[var[4],var[5],var[5]+var[7]+2*nligation+1,var[0],var[1],var[2],var[7],formatins(var[9])]]
+    hapvar[var[3]] = hapvar.get(var[3],[]) + [[var[4],var[5],var[5]+var[7]+2*nligation+1,var[0],var[1],var[2],var[7],formatins(var[9])]] #hap var is in BED+VAR format
+
   for hap in hapvar.keys():
     hapf = tempfile.NamedTemporaryFile('w',delete=False); hapf.close()
     hapvar[hap] = pybedtools.BedTool('\n'.join([ '\t'.join([str(c) for c in x]) for x in hapvar[hap] ]), from_string=True).saveas(hapf.name)
     #assert chkvar(hapvar[hap]) == True, "varfile contains self overlaps, which is not allowed"
 
   for hap in hapvar.keys():
-    sizefile = fas2size(hapseq[hap].filename)     #create genome size file
     hapbed[hap] = tempfile.NamedTemporaryFile('w',delete=False); hapbed[hap].close()
     hapbed[hap] = hapvar[hap].complement(g=sizefile).saveas(hapbed[hap].name) #create complementary blocks
     hapbed[hap] = hapbed[hap].slop(g=sizefile,b=nligation).saveas(hapbed[hap].name)
@@ -426,8 +435,6 @@ def var2wgs(bun):
     hapvar[hap] = hapvar[hap].cat(hapbed[hap],postmerge=False).saveas(hapvar[hap].name)
 
   hapiter=[]
-  #print len(hapvar[0])
-  #print hapvar[0][0]
 
   idx = 1; total = 0; 
   for hap in hapvar.keys():
@@ -437,8 +444,6 @@ def var2wgs(bun):
     for feat in hapvar[hap]:
       hapiter.append([hap,hapfas,nligation,parlist,reffile,nploid,idx,total,feat,mergemax])
       idx += 1
-  #for it in hapiter:
-  #  print it
 
   #NOTE: debug code for series execution
   bedbams = []
@@ -488,87 +493,88 @@ def var2wgs(bun):
   return fbam
 
 def var2fq(bun):
-  hapseq=bun.hapseq
-  nprocs=bun.nprocs
-  oprefix=bun.oprefix
-  parlist=bun.parlist
-  nploid=bun.nploid
-  nligation=bun.nligation
-  nlibrary=bun.parlist.getint('xwgsim', 'nlibrary')
-  libnames=json.loads(parlist.get('xwgsim', 'libnames'))
-  varlist=bun.varlist
+  print >>sys.stderr, "in var2fq..."
+  hapseq = bun.hapseq
+  nprocs = bun.nprocs
+  oprefix = bun.oprefix
+  parlist = bun.parlist
+  nploid = bun.nploid
+  nligation = bun.nligation
+  nlibrary = bun.parlist.getint('xwgsim', 'nlibrary')
+  libnames = json.loads(parlist.get('xwgsim', 'libnames'))
+  varlist = bun.varlist
   reffile = bun.reffile.name
   parlist = bun.parlist
   mergemax = bun.mergemax
   gaptab = bun.gaptab
+  sizefile = bun.sizefile
+  trunksize = bun.trunksize
   #parfile in python ConfigParser format
   #LibraryNumber = 3
   #Have to use very complex merging
 
   #0, if no variant to be inserted, bail out. If some control is needed, try use fasforge for now
   if len(varlist)==0: #control case, this has to be implemented
-    print >>sys.stderr, "no variant specified, use fasforge/wgsim directly, bail out..."
+    print >>sys.stderr, "no variant specified, please use wgsim directly, quit..."
     quit()
   
-  #1, construct continuous contig sets with ligations (nploid)*(variant/non-variant)
-  #hapvar{0: bed_features}
-  hapvar = collections.OrderedDict(); hapbed = collections.OrderedDict();
-  #print varlist.values()
+  #1, construct continuous contig sets with ligations (nploid)*(variant + non-variant)
+  #hapvar{hap0: list_of_vars, hap1:list_of_vars}
+  hapvar = collections.OrderedDict()
+  hapbed = collections.OrderedDict()
+  #1.1 hapvar is the exact var span in each haplotype
   for var in varlist.values():
-    #print var
-    #print [var[4],var[5],var[5]+var[7],var[0],var[1],var[2],var[6],var[8]]
-    #CHR ST  ED  VID  MID  FREQ  DEL  INS; adding one base size to ensure flanking regions are separate
-    hapvar[var[3]] = hapvar.get(var[3],[]) + [[var[4],var[5],var[5]+var[7]+2*nligation+1,var[0],var[1],var[2],var[7],formatins(var[9])]]
-  for hap in hapvar.keys():
+    hapvar[var[3]] = hapvar.get(var[3],[]) + [[var[4],var[5]+nligation,var[5]+var[7]+nligation+1, var[0], var[1], var[2], var[7], formatins(var[9])]] #hap var is in BED+VAR format; BED encodes true variant start and end
+  print "hapvar", (hapvar) 
+
+  #1.2 convert each hapvar to a BedTool
+  for hap in hapvar.keys(): 
     hapvar[hap] = pybedtools.BedTool('\n'.join([ '\t'.join([str(c) for c in x]) for x in hapvar[hap] ]), from_string=True)
-  #this BedTools file got missing
-  #Solution: all BedTools convert to data_frame when defined
-  #           all data_frame write into Temporary file when needed
-  #assert chkvar(hapvar[hap]) == True, "varfile contains self overlaps, which is not allowed"
-  for hap in hapvar.keys():
-    sizefile = fas2size(hapseq[hap].filename)     #create genome size file
-    #save['sizefile'] = sizefile
-    #save['hapvar'] = hapvar
-    #save.close()
-    #quit()
-    #try:
-    hapbed[hap] = hapvar[hap].sort().complement(g=sizefile) #create complementary blocks, first need to sort
-    #except:
-    #  print hapvar[hap]
-    #  print sizefile
-    hapbed[hap] = hapbed[hap].slop(g=sizefile,b=nligation)
-    hapbed[hap] = pybedtools.BedTool('\n'.join([ f[0]+'\t'+str(f[1])+'\t'+str(f[2])+'\tNone\tNone\t0\t0\tNone' for f in hapbed[hap]]),from_string=True)
-    hapvar[hap] = hapvar[hap].cat(hapbed[hap],postmerge=False)
+    print "hapvar[hap]", (hapvar[hap])
+  
+  #1.3 create all targeted region BedTool
+  simtab = gaptab.complement(g=sizefile)
+  simsize = sum([ len(x) for x in simtab ])
+  print "simtab:", simtab
+  print "simsize:", simsize
 
-  hapiter=[]
-  #print len(hapvar[0])
-  #print hapvar[0][0]
+  #1.4 the input has to make sure all hapvar fits into target region
+  for hap in hapvar.keys():
+    #only feature region intersected with target region will be generated
+    if len(hapvar[hap].intersect(simtab, v=True))>0:
+      print >>sys.stderr, "ERROR: feature\n",  \
+                          hapvar[hap].intersect(simtab, v=True), \
+                          "\nnot overlapping any simulation region, correct your input" 
+      quit()
 
-  idx = 1; total = 0; 
-  for hap in hapvar.keys():
-    total += len(hapvar[hap])
-  for hap in hapvar.keys():
-    hapfas=bun.hapseq[hap].filename
+  #1.5 additional non-var region to hap var 
+  for hap in hapvar.keys(): #create complementary blocks of hapvars
+    novarbed = simtab.subtract(hapvar[hap].slop(g=sizefile,b=nligation)).sort().slop(g=sizefile,b=nligation)  
+    novarbed = novarbed.window_maker(b=novarbed, w=trunksize, s=trunksize)
+    #novarbed: representing non-var targeted region and splitted to trunks for simulation
+    novarbed = pybedtools.BedTool('\n'.join([ f[0]+'\t'+str(f[1])+'\t'+str(f[2])+'\tNone\tNone\t0\t0\tNone' for f in novarbed]),from_string=True) #add dummy data, the complementary may have multiple segs
+    hapvar[hap] = hapvar[hap].slop(g=sizefile,b=nligation).cat(novarbed,postmerge=False).sort()  #add all blocks together
+    print "hapvar[hap]:\n", hapvar[hap] #1.1 hapvar is exact var span
+
+  hapiter=[] #all blocks to be simulated and ligated
+  placeHolder=None #this option is not needed yet
+
+  idx = 1;
+  total = sum( [ len(hapvar[hap]) for hap in hapvar.keys() ])
+  for hap in hapvar.keys(): #create complementary blocks of hapvars
+    hapfas = bun.hapseq[hap].filename
     for feat in hapvar[hap]:
-      feat_bedtool=pybedtools.BedTool(str(feat),from_string=True)
-      feat_bedtool=feat_bedtool.intersect(gaptab)#.end - gaptab.intersect(feat).start
-      tar_len = 0
-      for i in feat_bedtool:
-        tar_len += (i.end - i.start) 
-      hapiter.append([hap,hapfas,nligation,parlist,reffile,nploid,idx,total,feat,mergemax,tar_len])
-      idx += 1
-  #for it in hapiter:
-  #  print it
+      hapiter.append([hap,hapfas,nligation,parlist,reffile,nploid,idx,total, feat, mergemax,placeHolder])
+      idx = idx + 1
 
-  #NOTE: debug code for series execution
   bedfqs = []
   if nprocs<2:
+    #NOTE: debug code for simple serialized execution
     for hapit in hapiter:
       bedfqs.append(fakefq(hapit))
   else:
     pool = Pool(processes=int(nprocs))
     bedfqs = pool.map(fakefq,hapiter,1)
-  #print bedfqs
   print >>sys.stderr, "done fakefq",   time.time()-starttime, " seconds"  
 
   libfqs = {} #fqfiles to be merged: [ [hap1lib1, hap1lib2, ...], [hap2lib1, hap2lib2, ...] ]
@@ -590,92 +596,116 @@ def var2fq(bun):
 
   return ffq
 
+# a successful region would be almost no N (max 1 in 20) in variant + not all N in ligation; 
+#goodseq holds if Ns are consecutive
+def goodseq(seq, nl, rl):
+  gd = (nl - seq[:nl].count('N')) > rl and (nl - seq[(len(seq)-nl):len(seq)].count('N')) > rl and seq[nl:(len(seq)-nl)].count('Nn') <= (rl/20)
+  return gd
 
 def fakefq(hapit): # makebam from a pair of seqs of representing the original and sved haplotype
-  hap=hapit[0]; hapfas=hapit[1]; nligation=hapit[2]; parlist=hapit[3]; reffile=hapit[4]; nploid=hapit[5]; bed=hapit[8]; mergemax=hapit[9];tar_len=hapit[10]
-  #print >>sys.stderr, "processing %d out of %d regions" % (hapit[6],hapit[7])
-  #print >>sys.stderr, "bed=", bed
+  hap=hapit[0]; hapfas=hapit[1]; nligation=hapit[2]; parlist=hapit[3]; reffile=hapit[4]; nploid=hapit[5]; 
+  bed=hapit[8]; mergemax=hapit[9];placeHolder=hapit[10]; idx=hapit[6]; total=hapit[7]
+  print >>sys.stderr, "processing %d out of %d regions" % (idx+1,total)
   tmpfas=pysam.Fastafile(hapfas)
   seq0=SeqRecord(Seq(tmpfas.fetch(str(bed[0]),int(bed[1])+1,int(bed[2])), generic_dna),id=bed[0], name="", description="")
   tmpfas.close()
-  seq1=seq0
-  #CHR ST  ED  VID  MID  FREQ  DEL  INS
-  if int(bed[6])!=0: #work on deletion
-    seq1.seq=seq1.seq[:nligation]+seq1.seq[nligation+int(bed[6]):];
-  if bed[7]!="None": #work on insertion
+  seq1=copy.deepcopy(seq0)  #this make sure the seq0 is actually copied to seq1
+  #BED: CHR ST  ED  VID  MID  FREQ  DEL  INS
+  if int(bed[6]) != 0: #spike-in deletion
+    placeHolder={ idx: bed }
+    seq1.seq = seq1.seq[:nligation]+seq1.seq[nligation+int(bed[6]):]
+  if bed[7] != "None": #spike-in insertion
+    placeHolder={ idx: bed }
     info = readins(bed[7])
     tmpfas=pysam.Fastafile(info[0])
     seqi = SeqRecord(Seq(pysam.Fastafile(info[0]).fetch(str(info[1]),info[2],info[2]+info[3]), generic_dna),id=info[0], name="", description="")
     tmpfas.close() #reduce open handles
+    # FILE             CHR   START     LEN   DUP REV-COM
     #['example.fasta', '22', 25202000, 1000, 2, False]
-    if info[5]:
+    if info[5]: #do reverse complementary
       seqi.seq = seqi.seq.reverse_complement();
     seqt=seqi
-    for i in range(1,info[4]):
+    for i in range(1,info[4]): #do duplications
       seqi.seq += seqt.seq
-    seq1.seq=seq1.seq[:nligation]+seqi.seq+seq1.seq[nligation:]
+    seq1.seq = seq1.seq[:nligation]+seqi.seq+seq1.seq[nligation:]
+
   nlibrary=parlist.getint('xwgsim', 'nlibrary')
   libnames=json.loads(parlist.get('xwgsim', 'libnames'))
   rl1=json.loads(parlist.get('xwgsim', 'read1'))
   rl2=json.loads(parlist.get('xwgsim', 'read2'))
-  freq=float(bed[5])
+  freq1=float(bed[5]) # seq1 frequency
 
   fqs = [None] * nlibrary
   for lib in range(0,nlibrary):
     libn=libnames[lib]; rl=min(rl1[libn],rl2[libn])
-    freq0 = 1-freq; empty0=False; empty1=False;
-    # a successful region would be no N in middle + not all N in ligation; goodseq holds if Ns are consecutive
-    def goodseq(seq, nl, rl):
-      gd = nl - seq[:nl].count('N') > rl and nl - seq[(len(seq)-nl):len(seq)].count('N') > rl and len(seq)-2*nl-seq[nl:len(seq)-nl].count('N') > rl
-      return gd
+    freq0 = 1-freq1; empty0=False; empty1=False;
+
+    #if seq0 is not good, nothing to simulate 
     #print seq0.seq
-    if not goodseq(seq0.seq, nligation, rl): empty0=True
+    empty0 = not goodseq(seq0.seq, nligation, rl)
     #print goodseq(seq0.seq, nligation, rl)
-    if empty0:
+    if empty0: 
       wgs0 = [None, None]
     else:
-      wgs0 = fqwgs(parlist,nligation,reffile,nploid,[seq0],lib,freq0,mergemax,tar_len)
+      wgs0 = fqwgs(parlist,nligation,reffile,nploid,[seq0],lib,freq0,mergemax,placeHolder)
+
+    #if seq0 is not good, nothing to simulate 
     #print seq1.seq
-    if not goodseq(seq1.seq, nligation, rl): empty1=True #FIXME, these N regions has to be masked from input
+    empty1 = not goodseq(seq1.seq, nligation, rl)
     #print goodseq(seq1.seq, nligation, rl)
     if empty1:
       wgs1 = [None, None]
     else:
-      wgs1 = fqwgs(parlist,nligation,reffile,nploid,[seq1],lib,freq,mergemax,tar_len)
+      wgs1 = fqwgs(parlist,nligation,reffile,nploid,[seq1],lib,freq1,mergemax,placeHolder)
+
     fqopre = myTemporaryFile(prefix="fakefq_")
     #only need the temporary filename here
+    if placeHolder != None: print >>sys.stderr,"idx:", idx, "lib", lib, \
+       "empty0", empty0, "empty1", empty1, "wgs0", wgs0, "wgs1", wgs1, "fqs", fqs
+       #"seq0", seq0.seq, "seq1", seq1.seq, \
     #print "wgs=",wgs0,wgs1
     fqs[lib] = mergefq([wgs0,wgs1],fqopre,mergemax)
+    if placeHolder != None: print >>sys.stderr,"idx:", idx, "lib", lib, \
+       "fqs", fqs[lib]
     #print "fqs[lib]=",fqs[lib]
     #assert all([ os.path.isfile(x) for x in fqs[lib] if x != None ])
     #assert all([ os.path.isfile(x[0]) for x in fqs[lib] if x[0] != None ])
     #assert all([ os.path.isfile(x[1]) for x in fqs[lib] if x[1] != None ])
     
-  print >>sys.stderr, "processed %d out of %d regions" % (hapit[6],hapit[7])
+  print >>sys.stderr, "processed %d out of %d regions" % (idx+1,total)
   return [hap,fqs]
 
-def fqwgs(parlist,nligation,reffile,nploid,seq,lib,freq,mergemax,tar_len): #create bam file for 1 library given seq and freq
+def fqwgs(parlist,nligation,reffile,nploid,seq,lib,freq,mergemax,placeHolder): #create bam file for 1 library given seq and freq
   #passing both filename and contents to save space
   tmpfa=False #fa is temporary created or constant
+  #coverage adjustment only need to be applied for fasforge
+  #if fasforge, seql will be all fnafile (deprecated)
+  #if mutforge, seql is length of local region that is to be sequenced
   if(type(seq)==type({})):
     fa=seq['filename']; seqs=seq['seq'] #fasforge, seqs may have multiple sequences
+    print >>sys.stderr, "fasforge is deprecated!"
+    quit() 
   else:
     fa=myTemporaryFile(prefix="fawgs_") #mutforge, seqs only one sequence to be saved
     tmpfa=True
     seqs=seq
-  seql = sum( [ len(s) for s in seqs ] ) - tar_len #len of targeted region of all seqs
-  libnames=json.loads(parlist.get('xwgsim', 'libnames'))
-  coverage=json.loads(parlist.get('xwgsim', 'coverage'))
-  isize=json.loads(parlist.get('xwgsim', 'isize'))
-  rl1=json.loads(parlist.get('xwgsim', 'read1'))
-  rl2=json.loads(parlist.get('xwgsim', 'read2'))
-  par=' '.join(['%s %s' % (key, value) for (key, value) in json.loads(parlist.get('xwgsim', 'par')).items()])
-  libn=libnames[lib]
+  seql = sum( [ len(s) for s in seqs ] )                        #len of targeted seq, should just be one either seq0 or seq1
+
+  libnames = json.loads(parlist.get('xwgsim', 'libnames'))
+  coverage = json.loads(parlist.get('xwgsim', 'coverage'))
+  isize = json.loads(parlist.get('xwgsim', 'isize'))
+  rl1 = json.loads(parlist.get('xwgsim', 'read1'))
+  rl2 = json.loads(parlist.get('xwgsim', 'read2'))
+  par = ' '.join(['%s %s' % (key, value) for (key, value) in json.loads(parlist.get('xwgsim', 'par')).items()])
+  libn = libnames[lib]
   nrdp = seql*coverage[libn]/nploid*freq/(rl1[libn]+rl2[libn])
   nmode = len(isize[libn])
   mode = [ None ] * nmode
+
+  if placeHolder != None:
+    print >>sys.stderr, placeHolder, "freq=", freq, "nrdp=", nrdp
   if freq == 0 or nrdp == 0:
-    return [ None, None ]
+    return [ None, None ] #nothing to simulate
   else:
     for m in range(0,nmode):
       mden=isize[libn][m][0]; mnread = int(nrdp * mden)
@@ -738,35 +768,6 @@ def mergefq(fqs,oprefix,mergemax):
     merge_file(fq2s,ffq2)
     for f in fq1s: os.remove(f)
     for f in fq2s: os.remove(f)
-  #else: #trunk merge nfqs 
-  #  for i in range(0,(nfqs/mergemax)+1):
-  #    if i == 0: #first iteration
-  #      cfq1 = ""
-  #      cfq2 = ""
-  #      mfq1 = myTemporaryFile(prefix="mfq1_")
-  #      mfq2 = myTemporaryFile(prefix="mfq2_")
-  #    if i == nfqs/mergemax: #last iteration
-  #      if cfq1 != "": cfq1 = mfq1
-  #      if cfq2 != "": cfq2 = mfq2
-  #      mfq1 = ffq1
-  #      mfq2 = ffq2
-  #    else:
-  #      cfq1 = mfq1
-  #      cfq2 = mfq2
-  #      mfq1 = myTemporaryFile(prefix="mfq1_")
-  #      mfq2 = myTemporaryFile(prefix="mfq2_")
-  #    merge1_cmd = "cat %s %s >%s" % ( cfq1, " ".join([fq1 for fq1 in fq1s[i*mergemax:min((i+1)*mergemax,nfqs)]]), mfq1 )
-  #    merge2_cmd = "cat %s %s >%s" % ( cfq2, " ".join([fq2 for fq2 in fq2s[i*mergemax:min((i+1)*mergemax,nfqs)]]), mfq2 )
-  #    #print >>sys.stderr, merge1_cmd #unsorted
-  #    #print >>sys.stderr, merge2_cmd #unsorted
-  #    runcmd(merge1_cmd)
-  #    runcmd(merge2_cmd)
-  #    #clean temp files
-  #    #for f in fq1s[i*mergemax:min((i+1)*mergemax,nfqs)]: os.remove(f)
-  #    #for f in fq2s[i*mergemax:min((i+1)*mergemax,nfqs)]: os.remove(f)
-  #    if cfq1 != "": os.remove(cfq1)
-  #    if cfq2 != "": os.remove(cfq2)
-  #FIXME: who do we clean up this mess of temporary files here?
   return [ffq1,ffq2]
 
 def fakebam(hapit): # makebam from a pair of seqs of representing the original and sved haplotype
@@ -1005,6 +1006,7 @@ def var2file(bun):
   return None
 
 def var2bed(bun):
+  #converts a varlist to bed file and save it as output
   #IMPORTANT: OrderedDict and List are all mutable
   if len(bun.varlist) == 0: return None
   varcopy=copy.deepcopy(bun.varlist); nligation=bun.nligation; 
@@ -1405,10 +1407,10 @@ def run():
                         help="inputfile of meta specification")
   parser.add_argument('-v', '--varfile', dest='varfile', type=argparse.FileType('rU'),  #example.var/op
                         help="inputfile of variant specification")
-  parser.add_argument('-b', '--burnin', dest='burnin', type=int, default=1000000,
+  parser.add_argument('-b', '--burnin', dest='burnin', type=int, default=1100000,
                         help="burnin is the chromosome tip skip size for genome planning to avoid tip padding Ns, default: %(default)s bp")
-  parser.add_argument('-e', '--edgein', dest='edgein', type=int, default=100000,
-                        help="edgein is the gap neighbour region skip size for genome planning, default: %(default)s bp")
+  parser.add_argument('-e', '--trunksize', dest='trunksize', type=int, default=10000000,
+                        help="trunksize is the parallelized compartment size of non-var region in simulation %(default)s bp")
   parser.add_argument('-i', '--bamfile', dest='inbamfilenames', #in1.bam,in2.bam,in3.bam
                         help="inputfile of library-wise bam file(s)")
   parser.add_argument('-o', '--oprefix', dest='oprefix', default=None, #output1,output2,output3,...
@@ -1417,17 +1419,18 @@ def run():
                         help="genome ploidity default= %(default)s ploid")
   parser.add_argument('-f', '--plansize', dest='plansize', default=100000, type=int,
                         help="plansize + ligation*2 is the grain size for genome planning, default: %(default)s bp)")
-  parser.add_argument('-g', '--nligation', dest='nligation', default=2000, type=int,
-                        help="genome trunk ligation (default: %(default)s bp)")
+  parser.add_argument('-g', '--nligation', dest='nligation', default=500, type=int,
+                        help="genome trunk ligation, recommended lib_is_max+2*lib_is_sd_max (default: %(default)s bp)")
   parser.add_argument('-n', '--nprocs', dest='nprocs', default=1, type=int,
                         help="split into multiple processes (default: %(default)s )")
   parser.add_argument('-r', '--mergemax', dest='mergemax', default=4000, type=int,
                         help="max number of bamfiles in one iteration of samtool merging (default: %(default)s )")
   parser.add_argument('-d', '--tmpdir', dest='tmpdir', default=os.path.join(os.environ['HOME'],'svetmp_'+''.join([random.choice(string.ascii_letters) for i in range(4)])),
                         help="root dir for keeping temporary files, default (last 4 digits random): %(default)s")
-  parser.add_argument('-s', '--skipfile', dest='gapfile', type=argparse.FileType('rU'), default=None,
-                        help="inputfile of gap or other banned regions to skip")
-  parser.add_argument('-t','--targetfile',dest='targetfile',type=argparse.FileType('rU'),default=None, help='inputfile of target region, for example Exome region, in bed format')                      
+  parser.add_argument('-s', '--skipfile', dest='skipfile', type=argparse.FileType('rU'), default=None,
+                        help="inputfile of regions to skip, e.g. gap regions in bed format")
+  parser.add_argument('-t', '--targetfile',dest='targetfile',type=argparse.FileType('rU'), default=None, 
+                        help='inputfile of regions to target, for example Exome region in bed format')                      
   parser.add_argument('--layout', action='store_true', dest='layout', default=False, help="dry run to layout")
   parser.add_argument('--outbam', action='store_true', dest='outbam', default=False, help="wet run to bam")
   parser.add_argument('--debug', action='store_true', dest='debug', default=False, help="debug run")

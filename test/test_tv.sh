@@ -40,7 +40,8 @@
   # example.fna #nploid sequence fasta input, use comma to separate if multiple
 
 	## simulate clonal evolution using tree-based VAR file by mutforge
-  PYTHONPATH=$SVENGINEPATH python -m mf.mutforge --outbam -n 16 -b 10000 -f 10000 -e 10000 -v egTree.tree.var -s example.gap.bed example.fna simple.par example.fna
+  PYTHONPATH=$SVENGINEPATH python -m mf.mutforge --outbam -n 16 -b 100000 -f 10000 -e 1000000 -v egTree.tree.var -s example.gap.bed example.fna egTree.par example.fna
+  samtools index egTree.tree.lib1.bam
 
   ## output files:
   # egTree.tree.lib1.bam #bam output, test_mf.lib2.bam, ... if have multiple libs sepcified in PAR (.par) file

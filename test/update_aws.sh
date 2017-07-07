@@ -12,7 +12,7 @@ aws s3 cp svengine.test.full.tgz s3://lixiabucket/svengine.test.full.tgz --grant
 
 #now redeposit a new ova
 #aws ec2 create-instance-export-task --instance-id i-0bcc981a6b1ab6744 --target-environment vmware --export-to-s3-task DiskImageFormat=vmdk,ContainerFormat=ova,S3Bucket=lixiabucket,S3Prefix=svengineDemo.2017Apr26.
-taskid=$(aws ec2 create-instance-export-task --instance-id i-0bcc981a6b1ab6744 --target-environment vmware --export-to-s3-task DiskImageFormat=vmdk,ContainerFormat=ova,S3Bucket=lixiabucket,S3Prefix=svengineDemo. 2>&1 | grep -m1 -o export-i-[0-9a-z]*)
+taskid=$(aws ec2 create-instance-export-task --instance-id i-04923cf01efe71033 --target-environment vmware --export-to-s3-task DiskImageFormat=vmdk,ContainerFormat=ova,S3Bucket=lixiabucket,S3Prefix=svengineDemo. 2>&1 | grep -m1 -o export-i-[0-9a-z]*)
 echo $taskid
 aws ec2 describe-export-tasks --export-task-ids $taskid #show status
 aws s3 cp s3://lixiabucket/svengineDemo.$taskid.ova s3://lixiabucket/svengineDemo.ova --grants read=uri=http://acs.amazonaws.com/groups/global/AllUsers
