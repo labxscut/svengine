@@ -1296,7 +1296,7 @@ if __name__ == '__main__':
   run()
   print >>sys.stderr, "total runtime: ", time.time()-starttime, " seconds"
 
-
+### END OF FUNCTIONAL CODE ###
 ### BELOW ARE OBSOLETE ###
 
 #def var2vcf(bun):
