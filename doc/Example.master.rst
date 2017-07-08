@@ -20,17 +20,6 @@ To run following examples:
   - required input and output files were explained inline withe scripts and in this wiki
   - run clean.sh to clear outputs from previous runs
 
-An example SVEngine fasforge run 
---------------------------------------------------
-To run this example, run the 'test_fa.sh' script in the 'test' subdir. Use 'clean.sh' to clean up the previous outputs first. A small test data set is required and provided within the test subdir, or it can be downloaded at: 
-`svengine.test.full.tgz: <REPLACE_WITH_DOWNLOADLINK>`__
-
-$SVENGINEPATH/test/test_fa.sh
-
-  .. code:: bash
-
-REPLACE_WITH_SVENGINETESTFA
-
 An example SVEngine mutforge run 
 --------------------------------------------------
 

@@ -156,8 +156,6 @@ EXECUTABLES
 
     mutforge      --  spiking in structure variants without fasta output 
 
-    fasforge      --  spiking in structure variants with fasta output  
-
     tree2var      --  updating variant with a phylogenetic tree structured frequency
 
 USAGE

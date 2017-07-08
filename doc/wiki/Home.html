@@ -1,0 +1,166 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>SVEngine: Allele Specific and Haplotype Aware Structural Variants Simulator &mdash; SVEngine 0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="SVEngine 0 documentation" href="../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../index.html">SVEngine 0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="logo-svengine-allele-specific-and-haplotype-aware-structural-variants-simulator">
+<h1><a class="toc-backref" href="#id1"><a class="reference internal" href="https://bytebucket.org/charade/svengine/wiki/images/logo.png"><img alt="Logo" src="https://bytebucket.org/charade/svengine/wiki/images/logo.png" style="width: 50px; height: 40px;" /></a> SVEngine: Allele Specific and Haplotype Aware Structural Variants Simulator</a><a class="headerlink" href="#logo-svengine-allele-specific-and-haplotype-aware-structural-variants-simulator" title="Permalink to this headline">¶</a></h1>
+<div class="contents topic" id="navigator">
+<p class="topic-title first">Navigator</p>
+<ul class="simple">
+<li><a class="reference internal" href="#logo-svengine-allele-specific-and-haplotype-aware-structural-variants-simulator" id="id1">Logo SVEngine: Allele Specific and Haplotype Aware Structural Variants Simulator</a><ul>
+<li><a class="reference internal" href="#quick-links" id="id2">QUICK LINKS</a></li>
+<li><a class="reference internal" href="#introduction" id="id3">INTRODUCTION</a></li>
+<li><a class="reference internal" href="#implementation" id="id4">IMPLEMENTATION</a></li>
+<li><a class="reference internal" href="#availability" id="id5">AVAILABILITY</a></li>
+<li><a class="reference internal" href="#wiki" id="id6">WIKI</a></li>
+<li><a class="reference internal" href="#contacts" id="id7">CONTACTS</a></li>
+<li><a class="reference internal" href="#citations" id="id8">CITATIONS</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="quick-links">
+<h2><a class="toc-backref" href="#id2">QUICK LINKS</a><a class="headerlink" href="#quick-links" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="README">Install</a></p>
+<p><a class="reference external" href="Example">Examples</a></p>
+<p><a class="reference external" href="Manual">Manuals</a></p>
+<p><a class="reference external" href="FAQ">FAQ</a></p>
+</div>
+<div class="section" id="introduction">
+<h2><a class="toc-backref" href="#id3">INTRODUCTION</a><a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>The rapid maturing of next generation sequencing (NGS) technology and sharply declining sequencing cost have made genomic sequencing and the detection of structural variants, including deletions, insertions, inversions, tandem duplications and translocations routine analysis (Alkan et al., 2011). While many methods have been developed and applied for structural variant calling in NGS data, the problem remains significantly challenging,given the complicacy of underlying mechanisms and varied experimental designs as well as qualities, in particular when the alternative allele is pre-sented only in a low fraction of bulk sequenced molecules (Xia et al., 2015). Prospective sensitivity analyses of the sequencing design and benchmark of structural variant callers are of times crucial to success. However, generating real sequencing data for competing experiment de-signs with various settings is cost-prohibitive and tedious. Thus simulation-based evaluation can be an inexpensive alternative to achieve comprehensive and realistic understanding of analysis programs. Simulated datasets can incorporate multiple levels of variations such as coverage, number of libraries and insert size at the sequencing design level; base error rate, tool chain and parameters at data analysis level; number, type, size of SVs at the genomic landscape level and exact break breakpoint, variant fraction and haplotype at the allele-specific level. The overall performance based on varied settings can be judge with known truth set to traded-off with antici-pated cost. We designed SVEngine to be a multi-purpose and self-contained simulator for whole genome scale spike-in of thousands of SV events of various types in both single-sample and matched sample scenarios. SVEn-gine offers especially detailed haploid and allelic control as well as stream-lined operations:  for its simplest mode, users only need to specify the FASTA sequences and desired composition of SVs in variant files.</p>
+<blockquote>
+<div><a class="reference internal image-reference" href="https://bytebucket.org/charade/svengine/wiki/images/pipeline.png"><img alt="svengine_figure1.png" src="https://bytebucket.org/charade/svengine/wiki/images/pipeline.png" style="width: 400px; height: 320px;" /></a>
+<p>Figure 1. The workflow and schematics of SVEngine.</p>
+</div></blockquote>
+<p>The overall workflow and schematics of SVEngine are illustrated in Fig-ure.1. Here an insertion of m1 fraction is spiked into haploid 2 and a dele-tion of m2 fraction is spiked into haploid 1 in two neighboring regions. By utilizing the divide-and-conquer and parallelization we greatly increased the simulating throughput for complex events such as translocations, which can be treated as one local deletion plus a local insertion. We also ad-dressed the technical difficulty of merging trunked BAM files in the later ligating stage by amending the popular wgsim (Li et al., 2009) program to properly create read pairs overlapping the ligation point with correct coverage, insert size and other sequencing features.</p>
+</div>
+<div class="section" id="implementation">
+<h2><a class="toc-backref" href="#id4">IMPLEMENTATION</a><a class="headerlink" href="#implementation" title="Permalink to this headline">¶</a></h2>
+<p>Currently, SVEngine is implemented as a standard Python Package.</p>
+</div>
+<div class="section" id="availability">
+<h2><a class="toc-backref" href="#id5">AVAILABILITY</a><a class="headerlink" href="#availability" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Download released master branch source code package at: <a class="reference external" href="https://bitbucket.org/charade/svengine/get/master.zip">https://bitbucket.org/charade/svengine/get/master.zip</a> and install. Look for the README.rst file within the package for detailed installation instructions and others.</li>
+<li>Git-based developmental source code access at: <a class="reference external" href="https://bitbucket.org/charade/svengine">https://bitbucket.org/charade/svengine</a>. The SVEngine is made open source for advanced users to pipeline the analysis or implement their own variants.</li>
+</ul>
+</div>
+<div class="section" id="wiki">
+<h2><a class="toc-backref" href="#id6">WIKI</a><a class="headerlink" href="#wiki" title="Permalink to this headline">¶</a></h2>
+<p>SVEngine&#8217;s <a class="reference external" href="https://bitbucket.org/charade/svengine/wiki">https://bitbucket.org/charade/svengine/wiki</a> page is a growing resource for manuals, FAQs and other information. This is a MUST read place before you actually using the SWAN tool. These documentations are also openly editable. You are more than welcome to contribute to this ongoing documentation.</p>
+</div>
+<div class="section" id="contacts">
+<h2><a class="toc-backref" href="#id7">CONTACTS</a><a class="headerlink" href="#contacts" title="Permalink to this headline">¶</a></h2>
+<p>Questions and comments shall be addressed to lixia at stanford dot edu.</p>
+</div>
+<div class="section" id="citations">
+<h2><a class="toc-backref" href="#id8">CITATIONS</a><a class="headerlink" href="#citations" title="Permalink to this headline">¶</a></h2>
+<p>The SVEngine manuscript is under preparation.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#"> SVEngine: Allele Specific and Haplotype Aware Structural Variants Simulator</a><ul>
+<li><a class="reference internal" href="#quick-links">QUICK LINKS</a></li>
+<li><a class="reference internal" href="#introduction">INTRODUCTION</a></li>
+<li><a class="reference internal" href="#implementation">IMPLEMENTATION</a></li>
+<li><a class="reference internal" href="#availability">AVAILABILITY</a></li>
+<li><a class="reference internal" href="#wiki">WIKI</a></li>
+<li><a class="reference internal" href="#contacts">CONTACTS</a></li>
+<li><a class="reference internal" href="#citations">CITATIONS</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/wiki/Home.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2015, Li Charlie XIa.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.3</a>
+      
+      |
+      <a href="../_sources/wiki/Home.txt"
+          rel="nofollow">Page source</a></li>
+    </div>
+
+    
+
+    
+  </body>
+</html>
