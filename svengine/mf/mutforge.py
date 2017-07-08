@@ -25,18 +25,15 @@ varbed_names = ['#CHROM','START','END','VID','MID','VARFREQ','VARHAP','VARCHR','
 #HAPVAR = { hapidx: [ [hapvar1], [hapvar2], ... ] } 
 #HAPVAR_ENTRY = [(CHR, ST, ED), VID, MID, VARDELSIZE, VARINSSEQ]
 
-#def pybed2file(pybed):
-#  fn=tempfile.NamedTemporaryFile('w',delete=False).name
-#  pybed.saveas(fn)
-#  return fn
+#TRICKS:
 #
-#def df2bedfile(df):
-#  fn=tempfile.NamedTemporaryFile('w',delete=False).name
-#  df.to_csv(path_or_buf=fn, header=False, sep="\t", index=False)
-#  return fn
-#
-#def fn2pybed(fn):
-#  return pybedtools.BedTool(fn)
+#paradigm to make dictionary from local variables
+#for i in ('apple', 'banana', 'carrot'):
+#    fruitdict[i] = locals()[i]
+#paradigm to generate random sequence
+#''.join([random.choice('AGTC') for x in range(1200)])
+#paradigm to get fasta file size
+#pysam.Fastafile('example.fna').lengths
 
 def myTemporaryFile(prefix): #this provides a unique temporary file name only
   return os.path.join(tempfile.tempdir,prefix+next(tempfile._get_candidate_names())+"tmp") 
@@ -58,14 +55,6 @@ class Bunch(object):
   def __init__(self, adict):
     self.__dict__.update(adict)
 
-#paradigm to make dictionary from local variables
-#for i in ('apple', 'banana', 'carrot'):
-#    fruitdict[i] = locals()[i]
-#paradigm to generate random sequence
-#''.join([random.choice('AGTC') for x in range(1200)])
-#paradigm to get fasta file size
-#pysam.Fastafile('example.fna').lengths
-#fas2bed(fasfile)
 
 def merge_file(inlist,output):
   with open(output, 'w') as outfile:
@@ -75,18 +64,14 @@ def merge_file(inlist,output):
 def deovlpvar(dic,maxdeovlp=2):
   nowdeovlp=0; 
   varlist=copy.deepcopy(dic['varlist'])
-  #print varlist
   vartab=var2bed(Bunch(dic)) #vartab is a BedTool
-  #print vartab
   while chkvar(vartab) != True and nowdeovlp<maxdeovlp: 
     varlist=copy.deepcopy(dic['varlist'])
     ovlptab=vartab.intersect(vartab,c=True,f=0).to_dataframe(names=varbed_names+["ovlap"]) 
     #NOTE: f=0 is important so that simple touching is considerred an overlap, which make chkvar work
-    #print ovlptab
-    #print varlist.keys()
     print >>sys.stderr, "total vars before deovlapping", len(ovlptab); assert len(ovlptab)==len(varlist)
     ovlpkey=[ ovlptab.iloc[j,3] for j in range(0,len(ovlptab)) if int(ovlptab.iloc[j,len(varbed_names)]) > 1 ]
-    print >>sys.stderr, "Warn:", " overlapped events removed: ", ovlpkey 
+    print >>sys.stderr, "Warn:", "these overlapped events removed: ", ovlpkey 
     print >>sys.stderr, "Warn:", "complex events such as translocaitons maybe broken due to deovlapping"  
     for key in ovlpkey:
       del varlist[key] #exclude overlapping entries
@@ -138,74 +123,46 @@ def locatemin(a):
 def demultiplex(m):
   return [i for i, x in enumerate([int(x) for x in bin(m)[2:][::-1]]) if x == 1]
 
-#def CountUnique(mylist):
-#  h = {}
-#  for x in mylist: h[x] = h.get(x, 0) + 1
-#  return h
-
-#def isint(s):
-#  try: int(s); return True;
-#  except ValueError: return False;
-
-#def locatemin(a):
-#  smallest = min(a)
-#  return smallest, [index for index, element in enumerate(a) if smallest == element]
-
-#def demultiplex(m):
-#  return [i for i, x in enumerate([int(x) for x in bin(m)[2:][::-1]]) if x == 1]
-
 def test_map(a,b):
   print a,b
 
 def main(args):
 
+  """
   #NOTE: varlist var location is varlist[var][1]+nligation, not converted
   #NOTE: varbed var location is varbed[var][1], converted
   #NOTE: sequence position is always converted
 
-  nprocs = args.nprocs
-  layout = args.layout
-  outbam = args.outbam
+  debug = args.debug                    #run in debug mode
+  nprocs = args.nprocs                  #number of processes
+  layout = args.layout                  #only layout the variants and return
+  outbam = args.outbam                  #output bam file
   nligation = args.nligation            #this input has default
   burnin = max(args.burnin, nligation)  #lower bound is nligation
-  trunksize = args.trunksize
-  debug = args.debug
-  mergemax = args.mergemax
-  hapfiles = args.hapfiles.split(':')     #this is required input
-  skipfile = args.skipfile                 #this is required input
-  parfile = args.parfile                #parfile controls WGS
-  reffile = args.reffile                 #this is required input
-  nploid = args.nploid                   #this input has default
+  trunksize = args.trunksize            #genome trunk size for parallel processing
+  mergemax = args.mergemax              #max number of simultaneous merging supported by samtools
+  hapfiles = args.hapfiles.split(':')   #haploid genomic sequence
+  skipfile = args.skipfile              #skipped genomic region
+  parfile = args.parfile                #parameter file controls xwgsim
+  reffile = args.reffile                #reference file for genomic mapping
+  nploid = args.nploid                  #number of genome ploidy
   plansize = args.plansize              #this input has default
-  parlist = ConfigParser.ConfigParser()
-  parlist.readfp(parfile)
-  metafile = args.metafile
-  varfile = args.varfile
-  targetfile = args.targetfile
+  metafile = args.metafile              #meta distribution of genomic variants
+  varfile = args.varfile                #excat distribution of genomic variants
+  targetfile = args.targetfile          #targeted genomic region
+  tempfile.tempdir = args.tmpdir        #tempfile directory
 
-  tempfile.tempdir = args.tmpdir
-  try:
-    os.mkdir(tempfile.tempdir)
-  except:
-    print >>sys.stderr, tempfile.tempdir, "error!, either it exists or cann't be created! please change path"
-    quit()
-  print >>sys.stderr, "tmpdir=", tempfile.tempdir
-  pybedtools.set_tempdir(tempfile.tempdir)
+  """
 
-  if(debug): 
-    shelve_file = '/'.join([tempfile.tempdir,'shelve'])
-    print "shelving to", shelve_file
-    save = shelve.open(shelve_file) #shelve file 
-    #NOTE: for debuggingusing shelve: 
-    #      save['var'] = var
-    #      save.close()
-    #      load = shelve.open(shelve_file)
-    #      load['var']
+  """ 
+  check input mode and consistency
+  """
 
   if args.metafile != None and args.varfile != None:
     print >>sys.stderr, "either a .meta or a .var file can be specified but not both"
     quit()
 
+  inbamfilenames = None #input is bamfiles, not implemented yet
   runmode=0 #1 fasta+meta, 2 bam+meta, 3 fasta+var, 4 bam+var
   if args.inbamfilenames!=None and args.metafile!=None:
     runmode=2;
@@ -221,10 +178,59 @@ def main(args):
   if runmode==0:
     sys.stderr.write("inccorrect input specification, please use on of following: \n \
                           (1) fasta+meta, (2) bam+meta, (3) fasta+var, (4) bam+var")
+    quit()
 
-  #if varfile != None: print varfile.name.rstrip("var").rstrip(".") #weird behavior of rstrip(".meta") -> exampl
-  #if metafile != None: print metafile.name.rstrip("meta").rstrip(".")
-  oname = metafile.name.rstrip("meta").rstrip(".") if metafile != None else varfile.name.rstrip(".var").rstrip(".")
+  """ 
+  assign input arguments 
+  """
+  debug = args.debug                    #run in debug mode
+  nprocs = args.nprocs                  #number of processes
+  layout = args.layout                  #only layout the variants and return
+  outbam = args.outbam                  #output bam file
+  nligation = args.nligation            #this input has default
+  burnin = max(args.burnin, nligation)  #lower bound is nligation
+  trunksize = args.trunksize            #genome trunk size for parallel processing
+  mergemax = args.mergemax              #max number of simultaneous merging supported by samtools
+  hapfiles = args.hapfiles.split(':')   #haploid genomic sequence
+  skipfile = args.skipfile              #skipped genomic region
+  parfile = args.parfile                #parameter file controls xwgsim
+  reffile = args.reffile                #reference file for genomic mapping
+  nploid = args.nploid                  #number of genome ploidy
+  plansize = args.plansize              #this input has default
+  metafile = args.metafile              #meta distribution of genomic variants
+  varfile = args.varfile                #excat distribution of genomic variants
+  targetfile = args.targetfile          #targeted genomic region
+  tempfile.tempdir = args.tmpdir        #tempfile directory
+
+  """ 
+  initialize paramenters 
+  """
+  parlist = ConfigParser.ConfigParser()
+  parlist.readfp(parfile)
+  try:
+    os.mkdir(tempfile.tempdir)
+  except:
+    print >>sys.stderr, tempfile.tempdir, \
+          "error!, either it exists or cann't be created! please change path"
+    quit()
+
+  print >>sys.stderr, "tmpdir=", tempfile.tempdir
+  pybedtools.set_tempdir(tempfile.tempdir)
+  if(debug): 
+    shelve_file = '/'.join([tempfile.tempdir,'shelve'])
+    print >>sys.stderr, "shelving to", shelve_file
+    save = shelve.open(shelve_file) #shelve file 
+
+  """
+    #NOTE: for debuggingusing shelve: 
+    #      save['var'] = var
+    #      save.close()
+    #      load = shelve.open(shelve_file)
+    #      load['var']
+  """
+
+  oname = metafile.name.rstrip("meta").rstrip(".") \
+    if metafile != None else varfile.name.rstrip(".var").rstrip(".")
   oprefix = oname if not args.oprefix else args.oprefix
 
   if len(hapfiles) == 1: #reuse hapfiles for haplotype
@@ -232,23 +238,27 @@ def main(args):
   elif len(hapfiles)==nploid:
     hapseq=[pysam.Fastafile(hapfiles[i]) for i in range(0,nploid)]
     for ref in freseq:
-      assert ref.lengths == hapseq[0].lengths, "hapfile seqs must be of the same length cross haplos"
+      assert ref.lengths == hapseq[0].lengths, \
+        "hapfile seqs must be of the same length cross haplos"
   else:
     raise Exception("incorrect number of hapfiles provided")
 
+  """ 
+  preparing simulation regions
+
+  #NOTE: require hap file to be the same size and gap applies to all
+  """
+
   print >>sys.stderr, "preparing simulation regions...",
-  sizefile, burninbed = fas2size(hapseq[0].filename, burnin)  #require hap file to be the same size and gap applies to all
+  sizefile, burninbed = fas2size(hapseq[0].filename, burnin)  
   try:
-    #FIXME: this sizefile has also to be hapseq dependent 
-    #skipfile replace gaptab (temporary BedTool will be only created where it is used)
-    #only create BedTool from a permanent bedfile
     if skipfile != None:
       skiptab=pybedtools.BedTool(skipfile.name) #Permanent, OK
     else:
       skipfile=tempfile.NamedTemporaryFile('w',delete=False); skipfile.close()
       skiptab=pybedtools.BedTool("",from_string=True).saveas(skipfile.name) 
     skiptab=skiptab.cat(burninbed).sort().merge() #skipping edges of input chromosome
-    print "skiptab\n", skiptab
+    if(debug): print >>sys.stderr, "skiptab\n", skiptab
 
     nontargfile=tempfile.NamedTemporaryFile('w',delete=False); nontargfile.close()
     if targetfile != None:
@@ -256,34 +266,48 @@ def main(args):
       nontargtab=targbed.complement(g=sizefile).saveas(nontargfile.name)
     else:
       nontargtab=pybedtools.BedTool("",from_string=True).saveas(nontargfile.name)
-    print "nontargtab\n", nontargtab
+    if(debug): print >>sys.stderr, "nontargtab\n", nontargtab
 
     allskipfile=tempfile.NamedTemporaryFile('w',delete=False); allskipfile.close()
-    allskiptab=nontargtab.cat(skiptab).sort().merge().saveas(allskipfile.name) #merging all skipped region to allskiptab
+    allskiptab=nontargtab.cat(skiptab).sort().merge().saveas(allskipfile.name) 
+    #merging all skipped region to allskiptab
   except pybedtools.cbedtools.BedToolsFileError:
     raise Exception("incorrect skipfile provided, must in BED format")
 
-  print "allskiptab\n", allskiptab
+  if(debug): print >>sys.stderr, "allskiptab\n", allskiptab
   print >>sys.stderr, "done",
 
+  """
+  prepare dic to include a bunch of arguments
+  """
   dic={} #common dictionary interface for passing parameters
-  gaptab = allskiptab #although not ideal, use the old name gaptab to refer to all regions should be omitted from simulation
+  gaptab = allskiptab 
+  #although not ideal, use the old name gaptab to refer to all regions omitted from simulation
   for i in ('hapseq','gaptab','reffile','plansize','nligation','nploid','oprefix','nprocs','burnin','mergemax','sizefile','parlist','trunksize'):
     dic[i] = locals()[i]
-
   print >>sys.stderr, "entering runmode", runmode
-  #print dic
+
+  """
+  generate the variant list
+    #NOTE: we cannot allow deovlpvar here bc. 
+    #      varlist may well contain overlaps due to heterozygosity
+    #      thus deovlapping is skipped for mutforge for now
+    #      varlist=deovlpvar(dic); 
+    #      dic['varcnt']=len(varlist); dic['varlist']=varlist; vartab=var2bed(Bunch(dic))
+    #      assert chkvar(vartab) == True, \
+    #        "==Warn: varfile still contains self overlaps, which is not allowed, bail out"
+    #      therefore it is user's responsibility to remove selfoverlapping variants
+    #      except for heterozygosity
+  """
 
   if runmode==1 or runmode==2: #have meta input, no need of deovlapping
     metatab = CommentedFile(metafile)
-    dic['varlist']=collections.OrderedDict()
-    dic['varcnt']=0
+    dic['varlist'] = collections.OrderedDict()
+    dic['varcnt'] = 0
     varlist,varcnt = makevar(Bunch(dic),metatab)
     dic['varlist'] = varlist
     dic['varcnt'] = varcnt
-    print >>sys.stderr, "in var2file...",
     var2file(Bunch(dic))
-    print >>sys.stderr, "done var2file"
 
   if runmode==3 or runmode==4: #have var input, assume deovlapping is done externally
     dic['varfile'] = varfile
@@ -291,37 +315,37 @@ def main(args):
     dic['varlist'] = varlist
     dic['varcnt'] = len(varlist)
 
-  #NOTE: we cannot allow deovlpvar here bc. varlist may well contain overlaps due to hetero zygosity
-  #       this deovlapping is skiiped for mutforge for now
-  #varlist=deovlpvar(dic); dic['varcnt']=len(varlist); dic['varlist']=varlist; vartab=var2bed(Bunch(dic))
-  #assert chkvar(vartab) == True, "==Warn: varfile still contains self overlaps, which is not allowed, bail out"
-  print "in var2bed ...",
   vartab=var2bed(Bunch(dic))
-  #if(debug): print vartab,
-  print >>sys.stderr, "done var2bed"
 
   if layout:
-    print >>sys.stderr, "done layout only, now quit"
+    print >>sys.stderr, "done layout only,", time.time()-starttime, " seconds"
     quit()
   
   if runmode==1 or runmode==3:
     ffq = var2fq(Bunch(dic))
-    print >>sys.stderr, "done var2fq", time.time()-starttime, " seconds"
 
     if outbam:
       fbam = fq2bam(ffq,Bunch(dic))
-      print >>sys.stderr, "done fq2bam", time.time()-starttime, " seconds"
 
-  if runmode==2 or runmode==4:
-    inbamfilenames = args.inbamfilenames.split(':')
-    var2bs(Bunch(dic)) # use bam surgeon, not implemented yet
+  #TODO: 
+  #if runmode==2 or runmode==4:
+  #  inbamfilenames = args.inbamfilenames.split(':')
+  #  var2bs(Bunch(dic)) # use bam surgeon, not implemented yet
+
+  """
+  clean up temporary files
+  """
 
   shutil.rmtree(tempfile.tempdir) #clean temp files
-  print >>sys.stderr, "done mutforge"
+  print >>sys.stderr, "done mutforge", time.time()-starttime, " seconds"
 
   return None #all done
 
 def fq2bam(ffq,bun):
+  """
+  mapping fastq file to reference and creates bam files
+  """
+  print >>sys.stderr, "in fq2bam ..."
   reffile=bun.reffile.name
   nlibrary=bun.parlist.getint('xwgsim', 'nlibrary')
   libnames=json.loads(bun.parlist.get('xwgsim', 'libnames'))
@@ -331,19 +355,10 @@ def fq2bam(ffq,bun):
   libbams = [None] * nlibrary
   for lib in range(0,nlibrary):
     fq1 = ffq[lib][0]; fq2 =  ffq[lib][1]
-    #sbam = '.'.join([oprefix,libnames[lib],"bam"])
     tbam = tempfile.NamedTemporaryFile('w',delete=False).name
-    #ssam = tempfile.NamedTemporaryFile('w',delete=False).name
-    #bwasw_cmd1="bwa mem -t %s %s %s %s >%s" % (nprocs,reffile,fq1,fq2,ssam) 
-    #bwasw_cmd2="samtools view -bS -o %s %s" % (sbam,ssam) #it auto gives bam if not provided
     bwasw_cmd1="bwa mem -t %s %s %s %s" % (nprocs,reffile,fq1,fq2) 
     bwasw_cmd2="samtools view -bS -o %s -" % (tbam) #it auto gives bam if not provided
-    #bwasw_cmd3="rm -f %s" % ssam
-    #print >>sys.stderr, bwasw_cmd1, "\n", bwasw_cmd2
     pipecmd(bwasw_cmd1,bwasw_cmd2)
-    #bwasw_cmd="bwa mem -t %s %s %s %s | samtools view -bS -o %s - " % (nprocs,reffile,fq1,fq2,sbam) 
-    #print >>sys.stderr, bwasw_cmd #
-    #runcmd(bwasw_cmd)
     libbams[lib] = tbam #post processing: librarywise merging bams
 
   fbam = [None] * nlibrary
@@ -352,13 +367,16 @@ def fq2bam(ffq,bun):
     tbam = tempfile.NamedTemporaryFile('w',delete=False).name
     mbam = mergebam([libbams[lib]],tbam,mergemax)
     sort_cmd = "samtools sort -@ %s %s %s" % (nprocs, mbam, sbam)
-    #print >>sys.stderr, sort_cmd #
     syscmd(sort_cmd)
     fbam[lib] = sbam+".bam" #post processing: librarywise merging bams
 
+  print >>sys.stderr, "fq2bam,", time.time()-starttime, " seconds"
   return fbam
 
 def var2bs(bun):
+  """
+  Dummpy function not implemented now
+  """
   #print >>sys.stderr, "this part will use bamsurgeon, it has not been implemented yet"; quit()
   numinbamfiles = len(inbamfilenames)
   oprefix = args.oprefix.split(':') if args.oprefix!=None else args.oprefix.split(':')
@@ -374,125 +392,29 @@ def fas2size(fasfile, burnin):
   sizefile = tempfile.NamedTemporaryFile('w',delete=False,prefix="fasize_")
   burninbedfile = tempfile.NamedTemporaryFile('w',delete=False,prefix="burninbed_")
   fasseq = pysam.Fastafile(fasfile)
-  size = [ fasseq.references[i]+'\t'+str(fasseq.lengths[i]) for i in range(0,min(fasseq.nreferences,maxrefnum)) ]
+  size = [ fasseq.references[i]+'\t'+str(fasseq.lengths[i]) \
+           for i in range(0,min(fasseq.nreferences,maxrefnum)) ]
   sizefilestring = '\n'.join(size)
   sizefile.write(sizefilestring)
   sizefile.close()
   burninbed = [ fasseq.references[i]+'\t0\t'+str(burnin)+'\n'+ 
-              fasseq.references[i]+'\t'+str(max(0,fasseq.lengths[i]-burnin))+'\t'+str(fasseq.lengths[i]) \
+              fasseq.references[i]+'\t'+str(max(0,fasseq.lengths[i]-burnin))+
+              '\t'+str(fasseq.lengths[i]) \
               for i in range(0,min(fasseq.nreferences,maxrefnum)) ]
   burninbed = pybedtools.BedTool('\n'.join(burninbed),from_string=True).saveas(burninbedfile.name)
   return sizefile.name, burninbed
 
 def chkvar(varbed):
-  #print varbed.sort().merge()
-  #print varbed.sort()
   if varbed.sort().merge().count() == varbed.sort().count(): return True;
   else: return False
 
 def ppbam(bun,bamfiles):
   return None
 
-def var2wgs(bun):
-  hapseq=bun.hapseq
-  nprocs=bun.nprocs
-  mergemax=bun.mergemax
-  oprefix=bun.oprefix
-  parlist=bun.parlist
-  nploid=bun.nploid
-  nligation=bun.nligation
-  nlibrary=bun.parlist.getint('xwgsim', 'nlibrary')
-  libnames=json.loads(parlist.get('xwgsim', 'libnames'))
-  varlist=bun.varlist
-  reffile = bun.reffile.name
-  parlist = bun.parlist
-  sizefile = bun.sizefile
-  #parfile in python ConfigParser format
-  #LibraryNumber = 3
-  #Have to use very complex merging
-
-  #0, if no variant to be inserted, bail out. If some control is needed, try use fasforge for now
-  if len(varlist)==0: #control case, this has to be implemented
-    print >>sys.stderr, "no variant specified, use fasforge/wgsim directly, bail out..."
-    quit()
-  
-  #1, construct continuous contig sets with ligations (nploid)*(variant/non-variant)
-  hapvar = collections.OrderedDict(); hapbed = collections.OrderedDict();
-
-  for var in varlist.values():
-    hapvar[var[3]] = hapvar.get(var[3],[]) + [[var[4],var[5],var[5]+var[7]+2*nligation+1,var[0],var[1],var[2],var[7],formatins(var[9])]] #hap var is in BED+VAR format
-
-  for hap in hapvar.keys():
-    hapf = tempfile.NamedTemporaryFile('w',delete=False); hapf.close()
-    hapvar[hap] = pybedtools.BedTool('\n'.join([ '\t'.join([str(c) for c in x]) for x in hapvar[hap] ]), from_string=True).saveas(hapf.name)
-    #assert chkvar(hapvar[hap]) == True, "varfile contains self overlaps, which is not allowed"
-
-  for hap in hapvar.keys():
-    hapbed[hap] = tempfile.NamedTemporaryFile('w',delete=False); hapbed[hap].close()
-    hapbed[hap] = hapvar[hap].complement(g=sizefile).saveas(hapbed[hap].name) #create complementary blocks
-    hapbed[hap] = hapbed[hap].slop(g=sizefile,b=nligation).saveas(hapbed[hap].name)
-    hapbed[hap] = pybedtools.BedTool('\n'.join([ f[0]+'\t'+str(f[1])+'\t'+str(f[2])+'\tNone\tNone\t0\t0\tNone' for f in hapbed[hap]]),from_string=True).saveas(hapbed[hap].name)
-    hapvar[hap] = hapvar[hap].cat(hapbed[hap],postmerge=False).saveas(hapvar[hap].name)
-
-  hapiter=[]
-
-  idx = 1; total = 0; 
-  for hap in hapvar.keys():
-    total += len(hapvar[hap])
-  for hap in hapvar.keys():
-    hapfas=bun.hapseq[hap].filename
-    for feat in hapvar[hap]:
-      hapiter.append([hap,hapfas,nligation,parlist,reffile,nploid,idx,total,feat,mergemax])
-      idx += 1
-
-  #NOTE: debug code for series execution
-  bedbams = []
-  if nprocs<2:
-    for hapit in hapiter:
-      bedbams.append(fakebam(hapit))
-  else:
-    pool = Pool(processes=int(nprocs))
-    bedbams = pool.map(fakebam,hapiter,1)
-  #print bedbams
-  print >>sys.stderr, "done fakebam",   time.time()-starttime, " seconds"  
-
-  libbams = {} #bamfiles to be merged: [ [hap1lib1, hap1lib2, ...], [hap2lib1, hap2lib2, ...] ]
-  #libcnt0 = 0; libcnt1 = 0
-  for i in xrange(0,len(bedbams)):
-    for lib in xrange(0,nlibrary):
-      #print bedbams[i][1][lib];
-      #if lib == 0: 
-      #  libcnt0 += 1
-      #else: 
-      #  libcnt1 += 1;
-      if libbams.get(lib,None) == None:
-        libbams[lib]=[bedbams[i][1][lib]]
-      else:
-        libbams[lib].append(bedbams[i][1][lib]) 
-
-  #print "len bedbams:", len(bedbams)
-  #for lib in range(0,nlibrary):
-  #  print "len libbams:", len(libbams[lib])
-  #print  libcnt0,libcnt1
-  #print bedbams
-  #print libbams
-  #quit()
-
-  fbam = [None] * nlibrary
-  for lib in range(0,nlibrary):
-    sbam = '.'.join([oprefix,libnames[lib]])
-    tbam = tempfile.NamedTemporaryFile('w',delete=False).name
-    mbam = mergebam([libbams[lib]],tbam,mergemax)
-    sort_cmd = "samtools sort -@ %s %s %s" % (nprocs, mbam, sbam)
-    #print >>sys.stderr, sort_cmd #
-    syscmd(sort_cmd)
-    fbam[lib] = sbam+".bam" #post processing: librarywise merging bams
-
-  print >>sys.stderr, "done merge to final bam"
-
-  return fbam
-
 def var2fq(bun):
+  """
+  creating wgs fastq reads based on variants input
+  """
   print >>sys.stderr, "in var2fq..."
   hapseq = bun.hapseq
   nprocs = bun.nprocs
@@ -524,19 +446,21 @@ def var2fq(bun):
   hapbed = collections.OrderedDict()
   #1.1 hapvar is the exact var span in each haplotype
   for var in varlist.values():
-    hapvar[var[3]] = hapvar.get(var[3],[]) + [[var[4],var[5]+nligation,var[5]+var[7]+nligation+1, var[0], var[1], var[2], var[7], formatins(var[9])]] #hap var is in BED+VAR format; BED encodes true variant start and end
-  print "hapvar", (hapvar) 
+    hapvar[var[3]] = hapvar.get(var[3],[]) + \
+      [[var[4],var[5]+nligation,var[5]+var[7]+nligation+1, var[0], var[1], var[2], var[7], formatins(var[9])]] 
+      #hap var is in BED+VAR format; BED encodes true variant start and end
+  #print >>sys.sterr, "hapvar", (hapvar) 
 
   #1.2 convert each hapvar to a BedTool
   for hap in hapvar.keys(): 
     hapvar[hap] = pybedtools.BedTool('\n'.join([ '\t'.join([str(c) for c in x]) for x in hapvar[hap] ]), from_string=True)
-    print "hapvar[hap]", (hapvar[hap])
+    #print >>sys.stderr, "hapvar[hap]", (hapvar[hap])
   
   #1.3 create all targeted region BedTool
   simtab = gaptab.complement(g=sizefile)
   simsize = sum([ len(x) for x in simtab ])
-  print "simtab:", simtab
-  print "simsize:", simsize
+  #print >>sys.stderr, "simtab:", simtab
+  #print >>sys.stderr, "simsize:", simsize
 
   #1.4 the input has to make sure all hapvar fits into target region
   for hap in hapvar.keys():
@@ -552,9 +476,11 @@ def var2fq(bun):
     novarbed = simtab.subtract(hapvar[hap].slop(g=sizefile,b=nligation)).sort().slop(g=sizefile,b=nligation)  
     novarbed = novarbed.window_maker(b=novarbed, w=trunksize, s=trunksize)
     #novarbed: representing non-var targeted region and splitted to trunks for simulation
-    novarbed = pybedtools.BedTool('\n'.join([ f[0]+'\t'+str(f[1])+'\t'+str(f[2])+'\tNone\tNone\t0\t0\tNone' for f in novarbed]),from_string=True) #add dummy data, the complementary may have multiple segs
+    novarbed = pybedtools.BedTool('\n'.join([ f[0]+'\t'+str(f[1])+'\t'+str(f[2])+'\tNone\tNone\t0\t0\tNone' \
+                 for f in novarbed]),from_string=True) 
+    #add dummy data, the complementary may have multiple segs
     hapvar[hap] = hapvar[hap].slop(g=sizefile,b=nligation).cat(novarbed,postmerge=False).sort()  #add all blocks together
-    print "hapvar[hap]:\n", hapvar[hap] #1.1 hapvar is exact var span
+    #print >>sys.stderr, "hapvar[hap]:\n", hapvar[hap]
 
   hapiter=[] #all blocks to be simulated and ligated
   placeHolder=None #this option is not needed yet
@@ -575,7 +501,6 @@ def var2fq(bun):
   else:
     pool = Pool(processes=int(nprocs))
     bedfqs = pool.map(fakefq,hapiter,1)
-  print >>sys.stderr, "done fakefq",   time.time()-starttime, " seconds"  
 
   libfqs = {} #fqfiles to be merged: [ [hap1lib1, hap1lib2, ...], [hap2lib1, hap2lib2, ...] ]
   #hap1lib1=[hap1lib1fq1,hap1lib1fq2]
@@ -592,32 +517,35 @@ def var2fq(bun):
     sfq = '.'.join([oprefix,libnames[lib]])
     ffq[lib] = mergefq(libfqs[lib],sfq,mergemax)
 
-  print >>sys.stderr, "done merge to final fq"
+  print >>sys.stderr, "done var2fq", time.time()-starttime, " seconds"
 
   return ffq
 
 # a successful region would be almost no N (max 1 in 20) in variant + not all N in ligation; 
 #goodseq holds if Ns are consecutive
 def goodseq(seq, nl, rl):
+  """
+ 	determine if a sequence is good for read sampling or not
+  """ 	
   gd = (nl - seq[:nl].count('N')) > rl and (nl - seq[(len(seq)-nl):len(seq)].count('N')) > rl and seq[nl:(len(seq)-nl)].count('Nn') <= (rl/20)
   return gd
 
 def fakefq(hapit): # makebam from a pair of seqs of representing the original and sved haplotype
+  """
+  paprallelized subroutine to generate fastq for each hap variant
+  """
   hap=hapit[0]; hapfas=hapit[1]; nligation=hapit[2]; parlist=hapit[3]; reffile=hapit[4]; nploid=hapit[5]; 
-  bed=hapit[8]; mergemax=hapit[9];placeHolder=hapit[10]; idx=hapit[6]; total=hapit[7]
-  print >>sys.stderr, "processing %d out of %d regions" % (idx+1,total)
+  bed=hapit[8]; mergemax=hapit[9]; placeHolder=hapit[10]; idx=hapit[6]; total=hapit[7]
+  print >>sys.stderr, "fakefq: processing %d out of %d regions" % (idx+1,total)
   tmpfas=pysam.Fastafile(hapfas)
   seq0=SeqRecord(Seq(tmpfas.fetch(str(bed[0]),int(bed[1])+1,int(bed[2])), generic_dna),id=bed[0], name="", description="")
   tmpfas.close()
-  seq1=copy.deepcopy(seq0)  #this make sure the seq0 is actually copied to seq1
-  #BED: CHR ST  ED  VID  MID  FREQ  DEL  INS
-  if int(bed[6]) != 0: #spike-in deletion
-    placeHolder={ idx: bed }
-    seq1.seq = seq1.seq[:nligation]+seq1.seq[nligation+int(bed[6]):]
-  if bed[7] != "None": #spike-in insertion
-    placeHolder={ idx: bed }
-    info = readins(bed[7])
-    tmpfas=pysam.Fastafile(info[0])
+  seq1=copy.deepcopy(seq0)
+  #CHR ST  ED  VID  MID  FREQ  DEL  INS
+  if int(bed[6])!=0: #work on deletion
+    seq1.seq=seq1.seq[:nligation]+seq1.seq[nligation+int(bed[6]):];
+  if bed[7]!="None": #work on insertion
+    tmpfas = pysam.Fastafile(info[0])
     seqi = SeqRecord(Seq(pysam.Fastafile(info[0]).fetch(str(info[1]),info[2],info[2]+info[3]), generic_dna),id=info[0], name="", description="")
     tmpfas.close() #reduce open handles
     # FILE             CHR   START     LEN   DUP REV-COM
@@ -660,22 +588,27 @@ def fakefq(hapit): # makebam from a pair of seqs of representing the original an
 
     fqopre = myTemporaryFile(prefix="fakefq_")
     #only need the temporary filename here
-    if placeHolder != None: print >>sys.stderr,"idx:", idx, "lib", lib, \
-       "empty0", empty0, "empty1", empty1, "wgs0", wgs0, "wgs1", wgs1, "fqs", fqs
+    #if placeHolder != None: print >>sys.stderr,"idx:", idx, "lib", lib, \
+    #   "empty0", empty0, "empty1", empty1, "wgs0", wgs0, "wgs1", wgs1, "fqs", fqs
        #"seq0", seq0.seq, "seq1", seq1.seq, \
     #print "wgs=",wgs0,wgs1
     fqs[lib] = mergefq([wgs0,wgs1],fqopre,mergemax)
-    if placeHolder != None: print >>sys.stderr,"idx:", idx, "lib", lib, \
-       "fqs", fqs[lib]
+    #if placeHolder != None: print >>sys.stderr,"idx:", idx, "lib", lib, \
+    #   "fqs", fqs[lib]
     #print "fqs[lib]=",fqs[lib]
     #assert all([ os.path.isfile(x) for x in fqs[lib] if x != None ])
     #assert all([ os.path.isfile(x[0]) for x in fqs[lib] if x[0] != None ])
     #assert all([ os.path.isfile(x[1]) for x in fqs[lib] if x[1] != None ])
     
-  print >>sys.stderr, "processed %d out of %d regions" % (idx+1,total)
+  print >>sys.stderr, "fakefq: processed %d out of %d regions" % (idx+1,total)
   return [hap,fqs]
 
-def fqwgs(parlist,nligation,reffile,nploid,seq,lib,freq,mergemax,placeHolder): #create bam file for 1 library given seq and freq
+def fqwgs(parlist,nligation,reffile,nploid,seq,lib,freq,mergemax,placeHolder): 
+  """
+  generate wgs fastq for each hap variant's mutated or template sequence
+  """
+  #print >>sys.stderr, "in fqwgs...",
+  #create bam file for 1 library given seq and freq
   #passing both filename and contents to save space
   tmpfa=False #fa is temporary created or constant
   #coverage adjustment only need to be applied for fasforge
@@ -702,8 +635,9 @@ def fqwgs(parlist,nligation,reffile,nploid,seq,lib,freq,mergemax,placeHolder): #
   nmode = len(isize[libn])
   mode = [ None ] * nmode
 
-  if placeHolder != None:
-    print >>sys.stderr, placeHolder, "freq=", freq, "nrdp=", nrdp
+  #if placeHolder != None:
+  #  print >>sys.stderr, placeHolder, "freq=", freq, "nrdp=", nrdp
+
   if freq == 0 or nrdp == 0:
     return [ None, None ] #nothing to simulate
   else:
@@ -714,7 +648,8 @@ def fqwgs(parlist,nligation,reffile,nploid,seq,lib,freq,mergemax,placeHolder): #
         misize=isize[libn][m][1]; misizesd=isize[libn][m][2]
         fq1=myTemporaryFile(prefix="fq1wgs_")
         fq2=myTemporaryFile(prefix="fq2wgs_")
-        wgs_cmd="xwgsim -h -d %d -s %d -N %d -1 %d -2 %d -l %d %s %s %s %s " % (misize,misizesd,mnread,rl1[libn],rl2[libn],nligation,par,fa,fq1,fq2)
+        wgs_cmd="xwgsim -h -d %d -s %d -N %d -1 %d -2 %d -l %d %s %s %s %s " \
+                 % (misize,misizesd,mnread,rl1[libn],rl2[libn],nligation,par,fa,fq1,fq2)
         #print >>sys.stderr, wgs_cmd
         runcmd(wgs_cmd) #fastq file
         #we opt for speed instead of space
@@ -741,13 +676,15 @@ def fqwgs(parlist,nligation,reffile,nploid,seq,lib,freq,mergemax,placeHolder): #
   libfq = mergefq(mode,myTemporaryFile(prefix="libfq_"),mergemax)
   #print "libfq=", libfq
   #assert all([ os.path.isfile(x) for x in libfq if x != None ])
-  #quit()
   #assert all([ os.path.isfile(x[0]) for x in libfq if x[0] != None ])
   #assert all([ os.path.isfile(x[1]) for x in libfq if x[1] != None ])
   #TODO: for tmpfile in mode + [fa]: os.remove(tmpfile)
   return libfq
 
 def mergefq(fqs,oprefix,mergemax):
+  """
+  merge multiple fastq files into one
+  """
   fq1s = [x[0] for x in fqs if x[0] is not None] #remove empty components
   fq2s = [x[1] for x in fqs if x[1] is not None] #remove empty components
   assert len(fq1s)==len(fq2s)   #all reads have to be properly paired
@@ -770,102 +707,10 @@ def mergefq(fqs,oprefix,mergemax):
     for f in fq2s: os.remove(f)
   return [ffq1,ffq2]
 
-def fakebam(hapit): # makebam from a pair of seqs of representing the original and sved haplotype
-  hap=hapit[0]; hapfas=hapit[1]; nligation=hapit[2]; parlist=hapit[3]; reffile=hapit[4]; nploid=hapit[5]; bed=hapit[8]; mergemax=hapit[9]; #print mergemax
-  print >>sys.stderr, "processing %d out of %d regions" % (hapit[6],hapit[7])
-  seq0=SeqRecord(Seq(pysam.Fastafile(hapfas).fetch(str(bed[0]),int(bed[1])+1,int(bed[2])), generic_dna),id=bed[0], name="", description="")
-  seq1=seq0
-  #CHR ST  ED  VID  MID  FREQ  DEL  INS
-  if int(bed[6])!=0: #work on deletion
-    seq1.seq=seq1.seq[:nligation]+seq1.seq[nligation+int(bed[6]):];
-  if bed[7]!="None": #work on insertion
-    #print bed[7]
-    info = readins(bed[7])
-    #print info
-    seqi = SeqRecord(Seq(pysam.Fastafile(info[0]).fetch(str(info[1]),info[2],info[2]+info[3]), generic_dna),id=info[0], name="", description="")
-    #['example.fasta', '22', 25202000, 1000, 2, False]
-    if info[5]:
-      seqi.seq = seqi.seq.reverse_complement();
-    seqt=seqi
-    for i in range(1,info[4]):
-      seqi.seq += seqt.seq
-    seq1.seq=seq1.seq[:nligation]+seqi.seq+seq1.seq[nligation:]
-  nlibrary=parlist.getint('xwgsim', 'nlibrary')
-  libnames=json.loads(parlist.get('xwgsim', 'libnames'))
-  freq=float(bed[5])
-
-  bams = [None] * nlibrary
-  for lib in range(0,nlibrary):
-    freq0 = 1-freq
-    bam0 = runwgs(parlist,nligation,reffile,nploid,[seq0],lib,freq0)
-    bam1 = runwgs(parlist,nligation,reffile,nploid,[seq1],lib,freq)
-    bams[lib] = mergebam([bam0,bam1],tempfile.NamedTemporaryFile('w',delete=False).name,mergemax)
-  print >>sys.stderr, "processed %d out of %d regions" % (hapit[6],hapit[7])
-  return [hap,bams]
-
-def runwgs(parlist,nligation,reffile,nploid,seq,lib,freq): #create bam file for 1 library given seq and freq
-  fa=tempfile.NamedTemporaryFile('w',delete=False).name
-  SeqIO.write(seq,fa,'fasta')
-  seql = sum( [ len(s) for s in seq ] ) #len of all seqs
-  libnames=json.loads(parlist.get('xwgsim', 'libnames'))
-  coverage=json.loads(parlist.get('xwgsim', 'coverage'))
-  isize=json.loads(parlist.get('xwgsim', 'isize'))
-  rl1=json.loads(parlist.get('xwgsim', 'read1'))
-  rl2=json.loads(parlist.get('xwgsim', 'read2'))
-  par=' '.join(['%s %s' % (key, value) for (key, value) in json.loads(parlist.get('xwgsim', 'par')).items()])
-  libn=libnames[lib]
-  nrdp = seql*coverage[libn]/nploid*freq/(rl1[libn]+rl2[libn])
-  nmode = len(isize[libn])
-  mode = [ None ] * nmode
-  #print "run wgs for:", libn, fa, coverage[libn], freq, nrdp
-  if freq == 0 or nrdp == 0:
-    return None
-  else:
-    for m in range(0,nmode):
-      mden=isize[libn][m][0]; mnread = int(nrdp * mden)
-      if mnread>0:
-        misize=isize[libn][m][1]; misizesd=isize[libn][m][2]
-        fq1=tempfile.NamedTemporaryFile('w',delete=False).name
-        fq2=tempfile.NamedTemporaryFile('w',delete=False).name
-        mbam=tempfile.NamedTemporaryFile('w',delete=False).name
-        #print (misize,misizesd,mnread,rl1[libn],rl2[libn],fa,fq1,fq2)
-        wgs_cmd="xwgsim -h -d %d -s %d -N %d -1 %d -2 %d -l %d %s %s %s %s " % (misize,misizesd,mnread,rl1[libn],rl2[libn],nligation,par,fa,fq1,fq2)
-        #print >>sys.stderr, wgs_cmd
-        runcmd(wgs_cmd) #fastq file
-        #fq3,fq4=filterfq(fq1,fq2,nligation,len(seq)-nligation) #half ligation region reads
-        #print (fq1,fq2,fq3,fq4,nligation,len(seq)-nligation)
-        bwasw_cmd1="bwa mem -t 4 %s %s %s" % (reffile,fq1,fq2) 
-        bwasw_cmd2="samtools view -bS -o %s -" % mbam+".bam" #it auto gives bam if not provided
-        #print >>sys.stderr, bwasw_cmd1, " | ", bwasw_cmd2
-        pipecmd(bwasw_cmd1,bwasw_cmd2)
-        #TODO: for tmpfile in (fq1,fq2,fq3,fq4): os.remove(tmpfile)
-        mode[m]=mbam+".bam"
-      else:
-        mode[m]=None
-  libbam = mergebam(mode,tempfile.NamedTemporaryFile('w',delete=False).name,mergemax)
-  #TODO: for tmpfile in mode + [fa]: os.remove(tmpfile)
-  return libbam
-
-def filterfq(fq1,fq2,leftcut,rightcut): #half ligation region reads, this is no longer needed for xwgsim
-  fq3seq = []; fq4seq=[]; thincnt=0
-  for rfq1,rfq2 in zip(SeqIO.parse(open(fq1,'rU'),'fastq'),SeqIO.parse(open(fq2,'rU'),'fastq')):
-    assert rfq1.id[:-1] == rfq2.id[:-1], "unmatching fastq1 and fastq2, error in read simulation, quit"
-    #@fins.seq1_461_964_1:0:0_1:0:0_0/1
-    rdpl = int(rfq1.id.split('_')[1]); rdpr = int(rfq1.id.split('_')[2])
-    if (rdpl < leftcut and rdpr < leftcut) or (rdpl > rightcut and rdpr > rightcut):
-      #TODO: currently thin when both in ligation region, future may need check not thin if at chrom start/end
-      thincnt+=1
-      if thincnt % 2 == 1: #odd counts not thinned, thin exactly 1/2
-        fq3seq.append(rfq1); fq4seq.append(rfq2)
-    else:
-      fq3seq.append(rfq1); fq4seq.append(rfq2)
-  fq3=tempfile.NamedTemporaryFile('w',delete=False).name
-  fq4=tempfile.NamedTemporaryFile('w',delete=False).name
-  SeqIO.write(fq3seq,fq3,'fastq')
-  SeqIO.write(fq4seq,fq4,'fastq')
-  return fq3,fq4 #NOTE: these are freeed in upper level
-
 def mergebam(bams,oprefix,mergemax):
+  """
+  merge multipe bam file into one
+  """
   bams = [x for x in bams if x is not None] #remove empty components
   nbams = len(bams); fbam=oprefix+".bam";
   #print nbams
@@ -965,6 +810,7 @@ def lumpy2var(bp,ref,nligation):
   return varlist
 
 def file2var(bun):
+  print >>sys.stderr, "in file2var ...",
   ifile=CommentedFile(bun.varfile); hapseq=bun.hapseq; nligation=bun.nligation
   #NOTE: CommentedFile can only be iterated once. Need seek to reiterate
   varlist=collections.OrderedDict()
@@ -978,6 +824,7 @@ def file2var(bun):
     varlist[var][7] = int(varlist[var][7])
     varlist[var][8] = varlist[var][8] in ['True']
     varlist[var][9] = readins(varlist[var][9])
+  print >>sys.stderr, "file2var done"
   return varlist
 
 def readins(cell):
@@ -995,6 +842,7 @@ def formatins(cell):
   return ','.join([cell[0],coord,str(cell[4]),revcomp])
 
 def var2file(bun):
+  print >>sys.stderr, "in var2file...",
   #IMPORTANT: OrderedDict and List are all mutable
   varcopy=copy.deepcopy(bun.varlist); nligation=bun.nligation; ofile=csv.writer(open(bun.oprefix+'.out.var','w'),delimiter='\t')
   ofile.writerow(varfile_names)
@@ -1003,9 +851,11 @@ def var2file(bun):
   for var in varcopy.keys():
     varcopy[var][5]=varcopy[var][5]+nligation #actual site
   ofile.writerows(varcopy.values())
+  print >>sys.stderr, "done var2file"
   return None
 
 def var2bed(bun):
+  print >>sys.stderr, "in var2bed ...",
   #converts a varlist to bed file and save it as output
   #IMPORTANT: OrderedDict and List are all mutable
   if len(bun.varlist) == 0: return None
@@ -1023,9 +873,13 @@ def var2bed(bun):
   #ofile.writerow(['#CHROM','START','END','VID','MID','VARFREQ','VARHAP','VARCHR','VARPOS','VARDEL','VARDELSIZE','VARINS','VARINSSEQ(HAP/SEQFILE,CHR:START-END,COPY,REVCOMP)'])
   #for var in varcopy.keys():
   #  ofile.writerow([varcopy[var][4],varcopy[var][5],varcopy[var][5]+varcopy[var][7]+1]+varcopy[var])
+  print >>sys.stderr, "done var2bed"
   return varbed
 
 def makevar(bun,metatab,fas=False):
+  """
+  make haploid variants 
+  """
   #metatab = bun.metatab
   #FIXME: this has to be modified to disallow streteching Ns and random selection in similar size
   gaptab = bun.gaptab
@@ -1442,6 +1296,9 @@ if __name__ == '__main__':
   run()
   print >>sys.stderr, "total runtime: ", time.time()-starttime, " seconds"
 
+
+### BELOW ARE OBSOLETE ###
+
 #def var2vcf(bun):
 #  varlist=bun.varlist; ofile=[ csv.writer(open(bun.oprefix+'.'+str('.vcf','w'),delimiter='\t')
 #  vcf_meta = call_meta + sample_meta + contig_meta
@@ -1555,3 +1412,206 @@ if __name__ == '__main__':
 #  keys.append(["fileformat","fileDate","source"])
 #  values.append(["VCFv4.1",time.ctime(),program)])
 #  return "\n".join([ '##'+key+'='+value for key,value in izip(keys,values) ])
+
+
+#def var2wgs(bun):
+#  hapseq=bun.hapseq
+#  nprocs=bun.nprocs
+#  mergemax=bun.mergemax
+#  oprefix=bun.oprefix
+#  parlist=bun.parlist
+#  nploid=bun.nploid
+#  nligation=bun.nligation
+#  nlibrary=bun.parlist.getint('xwgsim', 'nlibrary')
+#  libnames=json.loads(parlist.get('xwgsim', 'libnames'))
+#  varlist=bun.varlist
+#  reffile = bun.reffile.name
+#  parlist = bun.parlist
+#  sizefile = bun.sizefile
+#  #parfile in python ConfigParser format
+#  #LibraryNumber = 3
+#  #Have to use very complex merging
+#
+#  #0, if no variant to be inserted, bail out. If some control is needed, try use fasforge for now
+#  if len(varlist)==0: #control case, this has to be implemented
+#    print >>sys.stderr, "no variant specified, use fasforge/wgsim directly, bail out..."
+#    quit()
+#  
+#  #1, construct continuous contig sets with ligations (nploid)*(variant/non-variant)
+#  hapvar = collections.OrderedDict(); hapbed = collections.OrderedDict();
+#
+#  for var in varlist.values():
+#    hapvar[var[3]] = hapvar.get(var[3],[]) + [[var[4],var[5],var[5]+var[7]+2*nligation+1,var[0],var[1],var[2],var[7],formatins(var[9])]] #hap var is in BED+VAR format
+#
+#  for hap in hapvar.keys():
+#    hapf = tempfile.NamedTemporaryFile('w',delete=False); hapf.close()
+#    hapvar[hap] = pybedtools.BedTool('\n'.join([ '\t'.join([str(c) for c in x]) for x in hapvar[hap] ]), from_string=True).saveas(hapf.name)
+#    #assert chkvar(hapvar[hap]) == True, "varfile contains self overlaps, which is not allowed"
+#
+#  for hap in hapvar.keys():
+#    hapbed[hap] = tempfile.NamedTemporaryFile('w',delete=False); hapbed[hap].close()
+#    hapbed[hap] = hapvar[hap].complement(g=sizefile).saveas(hapbed[hap].name) #create complementary blocks
+#    hapbed[hap] = hapbed[hap].slop(g=sizefile,b=nligation).saveas(hapbed[hap].name)
+#    hapbed[hap] = pybedtools.BedTool('\n'.join([ f[0]+'\t'+str(f[1])+'\t'+str(f[2])+'\tNone\tNone\t0\t0\tNone' for f in hapbed[hap]]),from_string=True).saveas(hapbed[hap].name)
+#    hapvar[hap] = hapvar[hap].cat(hapbed[hap],postmerge=False).saveas(hapvar[hap].name)
+#
+#  hapiter=[]
+#
+#  idx = 1; total = 0; 
+#  for hap in hapvar.keys():
+#    total += len(hapvar[hap])
+#  for hap in hapvar.keys():
+#    hapfas=bun.hapseq[hap].filename
+#    for feat in hapvar[hap]:
+#      hapiter.append([hap,hapfas,nligation,parlist,reffile,nploid,idx,total,feat,mergemax])
+#      idx += 1
+#
+#  #NOTE: debug code for series execution
+#  bedbams = []
+#  if nprocs<2:
+#    for hapit in hapiter:
+#      bedbams.append(fakebam(hapit))
+#  else:
+#    pool = Pool(processes=int(nprocs))
+#    bedbams = pool.map(fakebam,hapiter,1)
+#  #print bedbams
+#  print >>sys.stderr, "done fakebam",   time.time()-starttime, " seconds"  
+#
+#  libbams = {} #bamfiles to be merged: [ [hap1lib1, hap1lib2, ...], [hap2lib1, hap2lib2, ...] ]
+#  #libcnt0 = 0; libcnt1 = 0
+#  for i in xrange(0,len(bedbams)):
+#    for lib in xrange(0,nlibrary):
+#      #print bedbams[i][1][lib];
+#      #if lib == 0: 
+#      #  libcnt0 += 1
+#      #else: 
+#      #  libcnt1 += 1;
+#      if libbams.get(lib,None) == None:
+#        libbams[lib]=[bedbams[i][1][lib]]
+#      else:
+#        libbams[lib].append(bedbams[i][1][lib]) 
+#
+#  #print "len bedbams:", len(bedbams)
+#  #for lib in range(0,nlibrary):
+#  #  print "len libbams:", len(libbams[lib])
+#  #print  libcnt0,libcnt1
+#  #print bedbams
+#  #print libbams
+#  #quit()
+#
+#  fbam = [None] * nlibrary
+#  for lib in range(0,nlibrary):
+#    sbam = '.'.join([oprefix,libnames[lib]])
+#    tbam = tempfile.NamedTemporaryFile('w',delete=False).name
+#    mbam = mergebam([libbams[lib]],tbam,mergemax)
+#    sort_cmd = "samtools sort -@ %s %s %s" % (nprocs, mbam, sbam)
+#    #print >>sys.stderr, sort_cmd #
+#    syscmd(sort_cmd)
+#    fbam[lib] = sbam+".bam" #post processing: librarywise merging bams
+#
+#  print >>sys.stderr, "done merge to final bam"
+#
+#  return fbam
+
+
+#def fakebam(hapit):
+#  """
+#  makebam from a pair of seqs of representing the original and sved haplotype
+#  """
+#  hap=hapit[0]; hapfas=hapit[1]; nligation=hapit[2]; parlist=hapit[3]; reffile=hapit[4]; nploid=hapit[5]; bed=hapit[8]; mergemax=hapit[9]; #print mergemax
+#  print >>sys.stderr, "processing %d out of %d regions" % (hapit[6],hapit[7])
+#  seq0=SeqRecord(Seq(pysam.Fastafile(hapfas).fetch(str(bed[0]),int(bed[1])+1,int(bed[2])), generic_dna),id=bed[0], name="", description="")
+#  seq1=seq0
+#  #CHR ST  ED  VID  MID  FREQ  DEL  INS
+#  if int(bed[6])!=0: #work on deletion
+#    seq1.seq=seq1.seq[:nligation]+seq1.seq[nligation+int(bed[6]):];
+#  if bed[7]!="None": #work on insertion
+#    #print bed[7]
+#    info = readins(bed[7])
+#    #print info
+#    seqi = SeqRecord(Seq(pysam.Fastafile(info[0]).fetch(str(info[1]),info[2],info[2]+info[3]), generic_dna),id=info[0], name="", description="")
+#    #['example.fasta', '22', 25202000, 1000, 2, False]
+#    if info[5]:
+#      seqi.seq = seqi.seq.reverse_complement();
+#    seqt=seqi
+#    for i in range(1,info[4]):
+#      seqi.seq += seqt.seq
+#    seq1.seq=seq1.seq[:nligation]+seqi.seq+seq1.seq[nligation:]
+#  nlibrary=parlist.getint('xwgsim', 'nlibrary')
+#  libnames=json.loads(parlist.get('xwgsim', 'libnames'))
+#  freq=float(bed[5])
+#
+#  bams = [None] * nlibrary
+#  for lib in range(0,nlibrary):
+#    freq0 = 1-freq
+#    bam0 = runwgs(parlist,nligation,reffile,nploid,[seq0],lib,freq0)
+#    bam1 = runwgs(parlist,nligation,reffile,nploid,[seq1],lib,freq)
+#    bams[lib] = mergebam([bam0,bam1],tempfile.NamedTemporaryFile('w',delete=False).name,mergemax)
+#  print >>sys.stderr, "processed %d out of %d regions" % (hapit[6],hapit[7])
+#  return [hap,bams]
+
+#def filterfq(fq1,fq2,leftcut,rightcut): #half ligation region reads, this is no longer needed for xwgsim
+#  fq3seq = []; fq4seq=[]; thincnt=0
+#  for rfq1,rfq2 in zip(SeqIO.parse(open(fq1,'rU'),'fastq'),SeqIO.parse(open(fq2,'rU'),'fastq')):
+#    assert rfq1.id[:-1] == rfq2.id[:-1], "unmatching fastq1 and fastq2, error in read simulation, quit"
+#    #@fins.seq1_461_964_1:0:0_1:0:0_0/1
+#    rdpl = int(rfq1.id.split('_')[1]); rdpr = int(rfq1.id.split('_')[2])
+#    if (rdpl < leftcut and rdpr < leftcut) or (rdpl > rightcut and rdpr > rightcut):
+#      #TODO: currently thin when both in ligation region, future may need check not thin if at chrom start/end
+#      thincnt+=1
+#      if thincnt % 2 == 1: #odd counts not thinned, thin exactly 1/2
+#        fq3seq.append(rfq1); fq4seq.append(rfq2)
+#    else:
+#      fq3seq.append(rfq1); fq4seq.append(rfq2)
+#  fq3=tempfile.NamedTemporaryFile('w',delete=False).name
+#  fq4=tempfile.NamedTemporaryFile('w',delete=False).name
+#  SeqIO.write(fq3seq,fq3,'fastq')
+#  SeqIO.write(fq4seq,fq4,'fastq')
+#  return fq3,fq4 #NOTE: these are freeed in upper level
+
+
+#def runwgs(parlist,nligation,reffile,nploid,seq,lib,freq): 
+#  """
+#  create bam file for 1 library given seq and freq
+#  """
+#  fa=tempfile.NamedTemporaryFile('w',delete=False).name
+#  SeqIO.write(seq,fa,'fasta')
+#  seql = sum( [ len(s) for s in seq ] ) #len of all seqs
+#  libnames=json.loads(parlist.get('xwgsim', 'libnames'))
+#  coverage=json.loads(parlist.get('xwgsim', 'coverage'))
+#  isize=json.loads(parlist.get('xwgsim', 'isize'))
+#  rl1=json.loads(parlist.get('xwgsim', 'read1'))
+#  rl2=json.loads(parlist.get('xwgsim', 'read2'))
+#  par=' '.join(['%s %s' % (key, value) for (key, value) in json.loads(parlist.get('xwgsim', 'par')).items()])
+#  libn=libnames[lib]
+#  nrdp = seql*coverage[libn]/nploid*freq/(rl1[libn]+rl2[libn])
+#  nmode = len(isize[libn])
+#  mode = [ None ] * nmode
+#  #print "run wgs for:", libn, fa, coverage[libn], freq, nrdp
+#  if freq == 0 or nrdp == 0:
+#    return None
+#  else:
+#    for m in range(0,nmode):
+#      mden=isize[libn][m][0]; mnread = int(nrdp * mden)
+#      if mnread>0:
+#        misize=isize[libn][m][1]; misizesd=isize[libn][m][2]
+#        fq1=tempfile.NamedTemporaryFile('w',delete=False).name
+#        fq2=tempfile.NamedTemporaryFile('w',delete=False).name
+#        mbam=tempfile.NamedTemporaryFile('w',delete=False).name
+#        #print (misize,misizesd,mnread,rl1[libn],rl2[libn],fa,fq1,fq2)
+#        wgs_cmd="xwgsim -h -d %d -s %d -N %d -1 %d -2 %d -l %d %s %s %s %s " % (misize,misizesd,mnread,rl1[libn],rl2[libn],nligation,par,fa,fq1,fq2)
+#        #print >>sys.stderr, wgs_cmd
+#        runcmd(wgs_cmd) #fastq file
+#        #fq3,fq4=filterfq(fq1,fq2,nligation,len(seq)-nligation) #half ligation region reads
+#        #print (fq1,fq2,fq3,fq4,nligation,len(seq)-nligation)
+#        bwasw_cmd1="bwa mem -t 4 %s %s %s" % (reffile,fq1,fq2) 
+#        bwasw_cmd2="samtools view -bS -o %s -" % mbam+".bam" #it auto gives bam if not provided
+#        #print >>sys.stderr, bwasw_cmd1, " | ", bwasw_cmd2
+#        pipecmd(bwasw_cmd1,bwasw_cmd2)
+#        #TODO: for tmpfile in (fq1,fq2,fq3,fq4): os.remove(tmpfile)
+#        mode[m]=mbam+".bam"
+#      else:
+#        mode[m]=None
+#  libbam = mergebam(mode,tempfile.NamedTemporaryFile('w',delete=False).name,mergemax)
+#  #TODO: for tmpfile in mode + [fa]: os.remove(tmpfile)
+#  return libbam
