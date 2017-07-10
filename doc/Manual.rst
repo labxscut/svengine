@@ -63,7 +63,7 @@ $SVENGINEPKG/svengine/mf/mutforge.py
                             merging (default: 4000 )
       -d TMPDIR, --tmpdir TMPDIR
                             root dir for keeping temporary files, default (last 4
-                            digits random): /home/lixia/svetmp_HKTi
+                            digits random): /home/lixia/svetmp_yjRU
       -s SKIPFILE, --skipfile SKIPFILE
                             inputfile of regions to skip, e.g. gap regions in bed
                             format

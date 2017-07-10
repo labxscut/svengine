@@ -21,14 +21,17 @@
   # -e 100000: trunksize 100000
   # NOTE: choose your trunksize wisely to save running time such that trunksize*nprocs~=genomesize
 
-	## simulating using a META file (.meta) input or a VAR file (.var) input
+	### testing using a META file (.meta) input or a VAR file (.var) input
+	echo "### testing using a META file (.meta) input or a VAR file (.var) input"
   PYTHONPATH=$SVENGINEPATH python -m mf.mutforge -n 1 -b 100000 -f 10000 -e 100000 -m test_mf.meta example.fna simple.par example.fna
   PYTHONPATH=$SVENGINEPATH python -m mf.mutforge -n 1 -b 100000 -f 10000 -e 100000 -v test_mf.var example.fna simple.par example.fna
 
-  ## simulating with multiple (16) process
+  ### testing with multiple (16) process
+  echo "### testing with multiple (16) process"
   PYTHONPATH=$SVENGINEPATH python -m mf.mutforge -n 16 -b 100000 -f 10000 -e 100000 -m test_mf.meta example.fna simple.par example.fna
 
-  ## simulating output fasta, fastq or bam
+  ### testing output fasta, fastq or bam
+  echo "### testing output fasta, fastq or bam"
   PYTHONPATH=$SVENGINEPATH python -m mf.mutforge -x fasta -n 1 -b 100000 -f 10000 -e 100000 -m test_mf.meta example.fna simple.par example.fna
   PYTHONPATH=$SVENGINEPATH python -m mf.mutforge -x fastq -n 1 -b 100000 -f 10000 -e 100000 -m test_mf.meta example.fna simple.par example.fna
   PYTHONPATH=$SVENGINEPATH python -m mf.mutforge -x bam -n 1 -b 100000 -f 10000 -e 100000 -m test_mf.meta example.fna simple.par example.fna
