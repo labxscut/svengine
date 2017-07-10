@@ -15,13 +15,13 @@
   # test_hm.var #VAR file to specify exact events
 
 	## simulating upto FASTA output
-  nohup PYTHONPATH=$SVENGINEPATH python -m mf.mutforge -x fasta -o "homo.nproc=16.output=fasta" -n 16 -v test_hm.var human_g1k_v37.fasta test_hm.par human_g1k_v37.fasta >"homo.nproc=16.output=fasta.log" 2>&1 &
-  nohup PYTHONPATH=$SVENGINEPATH python -m mf.mutforge -x fasta -o "homo.nproc=1.output=fasta" -n 1 -v test_hm.var human_g1k_v37.fasta test_hm.par human_g1k_v37.fasta >"homo.nproc=1.output=fasta.log" 2>&1 &
+  nohup sh -c 'export PYTHONPATH=$SVENGINEPATH; python -m mf.mutforge -x fasta -o "test_hm.nproc=1.output=fasta" -n 1 -v test_hm.var human_g1k_v37.fasta test_hm.par human_g1k_v37.fasta >"test_hm.nproc=1.output=fasta.log" 2>&1' &
+  nohup sh -c 'export PYTHONPATH=$SVENGINEPATH; python -m mf.mutforge -x fasta -o "test_hm.nproc=16.output=fasta" -n 16 -v test_hm.var human_g1k_v37.fasta test_hm.par human_g1k_v37.fasta >"test_hm.nproc=16.output=fasta.log" 2>&1' &
 
 	## simulating upto FASTQ output
-  nohup PYTHONPATH=$SVENGINEPATH python -m mf.mutforge -x fastq -o "homo.nproc=16.output=fastq" -n 16 -v test_hm.var human_g1k_v37.fasta test_hm.par human_g1k_v37.fasta >"homo.nproc=16.output=fastq.log" 2>&1 &
-  nohup PYTHONPATH=$SVENGINEPATH python -m mf.mutforge -x fastq -o "homo.nproc=1.output=fastq" -n 1 -v test_hm.var human_g1k_v37.fasta test_hm.par human_g1k_v37.fasta >"homo.nproc=1.output=fastq.log" 2>&1 &
+  nohup sh -c 'export PYTHONPATH=$SVENGINEPATH; python -m mf.mutforge -x fastq -o "test_hm.nproc=1.output=fastq" -n 1 -v test_hm.var human_g1k_v37.fasta test_hm.par human_g1k_v37.fasta >"test_hm.nproc=1.output=fastq.log" 2>&1' &
+  nohup sh -c 'export PYTHONPATH=$SVENGINEPATH; python -m mf.mutforge -x fastq -o "test_hm.nproc=16.output=fastq" -n 16 -v test_hm.var human_g1k_v37.fasta test_hm.par human_g1k_v37.fasta >"test_hm.nproc=16.output=fastq.log" 2>&1' &
 
   ## simultating upto BAM output
-  nohup PYTHONPATH=$SVENGINEPATH python -m mf.mutforge -x bam -o "homo.nproc=16.output=bam" -n 16 -v test_hm.var human_g1k_v37.fasta test_hm.par human_g1k_v37.fasta >"homo.nproc=16.output=bam.log" 2>&1 &
-  nohup PYTHONPATH=$SVENGINEPATH python -m mf.mutforge -x bam -o "homo.nproc=1.output=bam" -n 1 -v test_hm.var human_g1k_v37.fasta test_hm.par human_g1k_v37.fasta >"homo.nproc=1.output=bam.log" 2>&1 &
+  nohup sh -c 'export PYTHONPATH=$SVENGINEPATH; python -m mf.mutforge -x bam -o "test_hm.nproc=1.output=bam" -n 1 -v test_hm.var human_g1k_v37.fasta test_hm.par human_g1k_v37.fasta >"test_hm.nproc=1.output=bam.log" 2>&1' &
+  nohup sh -c 'export PYTHONPATH=$SVENGINEPATH; python -m mf.mutforge -x bam -o "test_hm.nproc=16.output=bam" -n 16 -v test_hm.var human_g1k_v37.fasta test_hm.par human_g1k_v37.fasta >"test_hm.nproc=16.output=bam.log" 2>&1' &
