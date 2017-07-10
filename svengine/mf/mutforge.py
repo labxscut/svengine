@@ -1313,16 +1313,17 @@ def run():
                         help="split into multiple processes (default: %(default)s )")
   parser.add_argument('-r', '--mergemax', dest='mergemax', default=4000, type=int,
                         help="max number of bamfiles in one iteration of samtool merging (default: %(default)s )")
-  parser.add_argument('-d', '--tmpdir', dest='tmpdir', default=os.path.join(os.environ['HOME'],'svetmp_'+''.join([random.choice(string.ascii_letters) for i in range(4)])),
+  parser.add_argument('-d', '--tmpdir', dest='tmpdir', 
+     default=os.path.join(os.environ['HOME'],'svetmp_'+''.join([random.choice(string.ascii_letters) for i in range(4)])),
                         help="root dir for keeping temporary files, default (last 4 digits random): %(default)s")
   parser.add_argument('-s', '--skipfile', dest='skipfile', type=argparse.FileType('rU'), default=None,
                         help="inputfile of regions to skip, e.g. gap regions in bed format")
   parser.add_argument('-t', '--targetfile',dest='targetfile',type=argparse.FileType('rU'), default=None, 
                         help='inputfile of regions to target, for example Exome region in bed format')                      
   parser.add_argument('-x', '--chooseOutput',dest='chooseOutput', default="fastq", choices=['fasta','fastq','bam'], 
-                        help='choose the type of output of mutforge (default: %default)')                      
+                        help='choose the type of output of mutforge, (default: %(default)s)')
   parser.add_argument('-c', '--chooseSeed', dest='chooseSeed', default=None,
-                        help="choose the seed for python random function, default: %(default)s bp)")
+                        help="choose the seed for python random function, (default: %(default)s bp)")
   parser.add_argument('--layout', action='store_true', dest='layout', default=False, help="dry run to layout")
   parser.add_argument('--debug', action='store_true', dest='debug', default=False, help="debug run")
 
