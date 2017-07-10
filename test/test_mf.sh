@@ -14,18 +14,30 @@
   # test_mf.meta #META file to specify event distribution
   # test_mf.var #VAR file to specify exact events
 
-	## simulating using a META file (.meta) input
-  PYTHONPATH=$SVENGINEPATH python -m mf.mutforge -n 16 -b 10000 -f 10000 -e 10000 -m test_mf.meta -s example.gap.bed example.fna simple.par example.fna
-  PYTHONPATH=$SVENGINEPATH python -m mf.mutforge --outbam -n 16 -b 10000 -f 10000 -e 10000 -m test_mf.meta -s example.gap.bed example.fna simple.par example.fna
+  # -f 10000: plansize 10000
+  # NOTE: choose your plansize wisely to provide best randomization, plansize * number_of_variants * [10 ~ 100] = genomesize 
+  # -b 100000: burnin 100000
+  # NOTE: choose your burnin wisely to avoid telomere N regions, N ~= 1000000 for human genome
+  # -e 100000: trunksize 100000
+  # NOTE: choose your trunksize wisely to save running time such that trunksize*nprocs~=genomesize
 
-	## simulating using a VAR file (.var) input
-  PYTHONPATH=$SVENGINEPATH python -m mf.mutforge -n 1 -b 10000 -f 10000 -e 10000 -v test_mf.var -s example.gap.bed example.fna simple.par example.fna
-  PYTHONPATH=$SVENGINEPATH python -m mf.mutforge --outbam -n 1 -b 10000 -f 10000 -e 10000 -v test_mf.var -s example.gap.bed example.fna simple.par example.fna
+	## simulating using a META file (.meta) input or a VAR file (.var) input
+  PYTHONPATH=$SVENGINEPATH python -m mf.mutforge -n 1 -b 100000 -f 10000 -e 100000 -m test_mf.meta example.fna simple.par example.fna
+  PYTHONPATH=$SVENGINEPATH python -m mf.mutforge -n 1 -b 100000 -f 10000 -e 100000 -v test_mf.var example.fna simple.par example.fna
 
-	## simulating using both a VAR file (.var) and a META file (.meta) input (experimental)
-  #PYTHONPATH=$SVENGINEPATH python -m mf.mutforge -n 16 -b 100 -f 100 -m test_mf.meta -v test_mf.var example.fna example.gap.bed simple.par example.fna
+  ## simulating with multiple (16) process
+  PYTHONPATH=$SVENGINEPATH python -m mf.mutforge -n 16 -b 100000 -f 10000 -e 100000 -m test_mf.meta example.fna simple.par example.fna
+
+  ## simulating output fasta, fastq or bam
+  PYTHONPATH=$SVENGINEPATH python -m mf.mutforge -x fasta -n 1 -b 100000 -f 10000 -e 100000 -m test_mf.meta example.fna simple.par example.fna
+  PYTHONPATH=$SVENGINEPATH python -m mf.mutforge -x fastq -n 1 -b 100000 -f 10000 -e 100000 -m test_mf.meta example.fna simple.par example.fna
+  PYTHONPATH=$SVENGINEPATH python -m mf.mutforge -x bam -n 1 -b 100000 -f 10000 -e 100000 -m test_mf.meta example.fna simple.par example.fna
+  samtools index test_mf.lib1.bam
 
 	## output files:
-  # test_mf.lib1.bam #bam output, test_mf.lib2.bam, ... if have multiple libs sepcified in PAR (.par) file
-  # test_mf.out.bed #bed output for ground truth 
-  # test_mf.out.var #var output for ground truth 
+  # test_mf.hap1.fa  #fasta output, ...hap2.fa, ... if multiple haploids, contigs with spiked-in events of haploid 1
+  # test_mf.lib1.fq1 #fastq output of read1, ...lib2.fq1, ... if have multiple libs sepcified in PAR (.par) file
+  # test_mf.lib1.fq2 #fastq output of read2, ...lib2.fq2, ... if have multiple libs sepcified in PAR (.par) file
+  # test_mf.lib1.bam #bam output, ...lib2.bam, ... if have multiple libs sepcified in PAR (.par) file
+  # test_mf.out.bed  #bed output for ground truth 
+  # test_mf.out.var  #var output for ground truth 

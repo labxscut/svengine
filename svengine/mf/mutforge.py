@@ -136,7 +136,8 @@ def main(args):
   debug = args.debug                    #run in debug mode
   nprocs = args.nprocs                  #number of processes
   layout = args.layout                  #only layout the variants and return
-  outbam = args.outbam                  #output bam file
+  chooseOutput = args.chooseOutput      $fasta, fastq or bam format
+  chooseSeed = args.chooseSeed          chooose a seed for python random
   nligation = args.nligation            #this input has default
   burnin = max(args.burnin, nligation)  #lower bound is nligation
   trunksize = args.trunksize            #genome trunk size for parallel processing
@@ -186,7 +187,8 @@ def main(args):
   debug = args.debug                    #run in debug mode
   nprocs = args.nprocs                  #number of processes
   layout = args.layout                  #only layout the variants and return
-  outbam = args.outbam                  #output bam file
+  chooseOutput = args.chooseOutput      #output format
+  chooseSeed = args.chooseSeed          #random seed
   nligation = args.nligation            #this input has default
   burnin = max(args.burnin, nligation)  #lower bound is nligation
   trunksize = args.trunksize            #genome trunk size for parallel processing
@@ -205,6 +207,14 @@ def main(args):
   """ 
   initialize paramenters 
   """
+  random.seed(chooseSeed)
+  outbam = True; outfastq = True; outfasta = True
+  if chooseOutput == 'fasta':
+    outbam = False
+    outfastq = False
+  elif chooseOutput == 'fastq':
+    outbam = False
+
   parlist = ConfigParser.ConfigParser()
   parlist.readfp(parfile)
   try:
@@ -283,7 +293,7 @@ def main(args):
   dic={} #common dictionary interface for passing parameters
   gaptab = allskiptab 
   #although not ideal, use the old name gaptab to refer to all regions omitted from simulation
-  for i in ('hapseq','gaptab','reffile','plansize','nligation','nploid','oprefix','nprocs','burnin','mergemax','sizefile','parlist','trunksize'):
+  for i in ('hapseq','gaptab','reffile','plansize','nligation','nploid','oprefix','nprocs','burnin','mergemax','sizefile','parlist','trunksize','outfastq'):
     dic[i] = locals()[i]
   print >>sys.stderr, "entering runmode", runmode
 
@@ -431,6 +441,7 @@ def var2fq(bun):
   gaptab = bun.gaptab
   sizefile = bun.sizefile
   trunksize = bun.trunksize
+  outfastq = bun.outfastq
   #parfile in python ConfigParser format
   #LibraryNumber = 3
   #Have to use very complex merging
@@ -483,17 +494,16 @@ def var2fq(bun):
     #print >>sys.stderr, "hapvar[hap]:\n", hapvar[hap]
 
   hapiter=[] #all blocks to be simulated and ligated
-  placeHolder=None #this option is not needed yet
 
   idx = 1;
   total = sum( [ len(hapvar[hap]) for hap in hapvar.keys() ])
   for hap in hapvar.keys(): #create complementary blocks of hapvars
     hapfas = bun.hapseq[hap].filename
     for feat in hapvar[hap]:
-      hapiter.append([hap,hapfas,nligation,parlist,reffile,nploid,idx,total, feat, mergemax,placeHolder])
+      hapiter.append([hap,hapfas,nligation,parlist,reffile,nploid,idx,total, feat, mergemax, outfastq])
       idx = idx + 1
 
-  bedfqs = []
+  bedfqs = []; #[ [hap, fq, fa ], ... ] 
   if nprocs<2:
     #NOTE: debug code for simple serialized execution
     for hapit in hapiter:
@@ -502,20 +512,29 @@ def var2fq(bun):
     pool = Pool(processes=int(nprocs))
     bedfqs = pool.map(fakefq,hapiter,1)
 
-  libfqs = {} #fqfiles to be merged: [ [hap1lib1, hap1lib2, ...], [hap2lib1, hap2lib2, ...] ]
-  #hap1lib1=[hap1lib1fq1,hap1lib1fq2]
-  #libcnt0 = 0; libcnt1 = 0
-  for i in xrange(0,len(bedfqs)):
-    for lib in xrange(0,nlibrary):
-      if libfqs.get(lib,None) == None:
-        libfqs[lib]=[bedfqs[i][1][lib]]
-      else:
-        libfqs[lib].append(bedfqs[i][1][lib]) 
+  hapfqs = {}
+  for hap in hapvar.keys():
+    sfa = '.'.join([oprefix,"hap"+str(hap),"fa"])
+    hapfqs[sfa] = [ b[2] for b in bedfqs if b[0] == hap ]
+    hapfqs[sfa] = [ item for sublist in hapfqs[sfa] for item in sublist ]
+  for f in hapfqs.keys():
+    SeqIO.write(hapfqs[f], f, "fasta")
 
-  ffq = [None,None] * nlibrary
-  for lib in range(0,nlibrary): #each libfqs[lib] has everything to be merged to ffq[lib]
-    sfq = '.'.join([oprefix,libnames[lib]])
-    ffq[lib] = mergefq(libfqs[lib],sfq,mergemax)
+  ffq = [None, None] * nlibrary
+  if outfastq:
+    libfqs = {} #fqfiles to be merged: [ [hap1lib1, hap1lib2, ...], [hap2lib1, hap2lib2, ...] ]
+    #hap1lib1=[hap1lib1fq1,hap1lib1fq2]
+    #libcnt0 = 0; libcnt1 = 0
+    for i in xrange(0,len(bedfqs)): #iterate through haps, bedfqs[i][1][lib] is the fqs for lib of i-th var
+      for lib in xrange(0,nlibrary):
+        if libfqs.get(lib,None) == None:
+          libfqs[lib]=[bedfqs[i][1][lib]]
+        else:
+          libfqs[lib].append(bedfqs[i][1][lib]) 
+
+    for lib in range(0,nlibrary): #each libfqs[lib] has everything to be merged to ffq[lib]
+      sfq = '.'.join([oprefix,libnames[lib]])
+      ffq[lib] = mergefq(libfqs[lib],sfq,mergemax)
 
   print >>sys.stderr, "done var2fq", time.time()-starttime, " seconds"
 
@@ -533,18 +552,31 @@ def goodseq(seq, nl, rl):
 def fakefq(hapit): # makebam from a pair of seqs of representing the original and sved haplotype
   """
   paprallelized subroutine to generate fastq for each hap variant
+  NOTE: fasta format should be named as
+        hap_seq0_mid_vid_freq_chr_st_end.fasta
+        hap_seq1_mid_vid_freq_chr_st_end.fasta
   """
   hap=hapit[0]; hapfas=hapit[1]; nligation=hapit[2]; parlist=hapit[3]; reffile=hapit[4]; nploid=hapit[5]; 
-  bed=hapit[8]; mergemax=hapit[9]; placeHolder=hapit[10]; idx=hapit[6]; total=hapit[7]
+  bed=hapit[8]; mergemax=hapit[9]; outfastq=hapit[10]; idx=hapit[6]; total=hapit[7]
   print >>sys.stderr, "fakefq: processing %d out of %d regions" % (idx+1,total)
+
   tmpfas=pysam.Fastafile(hapfas)
-  seq0=SeqRecord(Seq(tmpfas.fetch(str(bed[0]),int(bed[1])+1,int(bed[2])), generic_dna),id=bed[0], name="", description="")
+  freq1=float(bed[5]) # seq1 frequency
+  freq0 = 1-freq1     # seq0 frequency
+  seq0Name = ":".join(["haploid="+str(hap),"seq="+"original","mid="+bed[4],"vid="+bed[3],"freq="+str(freq0),\
+                       "chr="+str(bed[0]),"start="+str(int(bed[1])+1),"end="+str(int(bed[2]))])
+  seq0=SeqRecord(Seq(tmpfas.fetch(str(bed[0]),int(bed[1])+1,int(bed[2])), generic_dna), id=seq0Name, \
+                 name=seq0Name, description="")
   tmpfas.close()
-  seq1=copy.deepcopy(seq0)
+  seq1=copy.deepcopy(seq0) #must be deep copied to avoide only assigning a reference and cause all homozygous error
+  seq1Name = ":".join(["haploid="+str(hap),"seq="+"mutated","mid="+bed[4],"vid="+bed[3],"freq="+str(freq1),\
+                       "chr="+str(bed[0]),"start="+str(int(bed[1])+1),"end="+str(int(bed[2]))])
+  seq1.name = seq1Name; seq1.id = seq1Name
   #CHR ST  ED  VID  MID  FREQ  DEL  INS
   if int(bed[6])!=0: #work on deletion
     seq1.seq=seq1.seq[:nligation]+seq1.seq[nligation+int(bed[6]):];
   if bed[7]!="None": #work on insertion
+    info = readins(bed[7])
     tmpfas = pysam.Fastafile(info[0])
     seqi = SeqRecord(Seq(pysam.Fastafile(info[0]).fetch(str(info[1]),info[2],info[2]+info[3]), generic_dna),id=info[0], name="", description="")
     tmpfas.close() #reduce open handles
@@ -561,49 +593,50 @@ def fakefq(hapit): # makebam from a pair of seqs of representing the original an
   libnames=json.loads(parlist.get('xwgsim', 'libnames'))
   rl1=json.loads(parlist.get('xwgsim', 'read1'))
   rl2=json.loads(parlist.get('xwgsim', 'read2'))
-  freq1=float(bed[5]) # seq1 frequency
 
+  fas = [seq0, seq1]
   fqs = [None] * nlibrary
-  for lib in range(0,nlibrary):
-    libn=libnames[lib]; rl=min(rl1[libn],rl2[libn])
-    freq0 = 1-freq1; empty0=False; empty1=False;
 
-    #if seq0 is not good, nothing to simulate 
-    #print seq0.seq
-    empty0 = not goodseq(seq0.seq, nligation, rl)
-    #print goodseq(seq0.seq, nligation, rl)
-    if empty0: 
-      wgs0 = [None, None]
-    else:
-      wgs0 = fqwgs(parlist,nligation,reffile,nploid,[seq0],lib,freq0,mergemax,placeHolder)
+  if outfastq: #generating fastq files
+    for lib in range(0,nlibrary):
+      libn=libnames[lib]; rl=min(rl1[libn],rl2[libn])
+      empty0=False; empty1=False;
+      #if seq0 is not good, nothing to simulate 
+      #print seq0.seq
+      empty0 = not goodseq(seq0.seq, nligation, rl)
+      #print goodseq(seq0.seq, nligation, rl)
+      if empty0: 
+        wgs0 = [None, None]
+      else:
+        wgs0 = fqwgs(parlist,nligation,reffile,nploid,[seq0],lib,freq0,mergemax,outfastq)
 
-    #if seq0 is not good, nothing to simulate 
-    #print seq1.seq
-    empty1 = not goodseq(seq1.seq, nligation, rl)
-    #print goodseq(seq1.seq, nligation, rl)
-    if empty1:
-      wgs1 = [None, None]
-    else:
-      wgs1 = fqwgs(parlist,nligation,reffile,nploid,[seq1],lib,freq1,mergemax,placeHolder)
+      #if seq0 is not good, nothing to simulate 
+      #print seq1.seq
+      empty1 = not goodseq(seq1.seq, nligation, rl)
+      #print goodseq(seq1.seq, nligation, rl)
+      if empty1:
+        wgs1 = [None, None]
+      else:
+        wgs1 = fqwgs(parlist,nligation,reffile,nploid,[seq1],lib,freq1,mergemax,outfastq)
 
-    fqopre = myTemporaryFile(prefix="fakefq_")
-    #only need the temporary filename here
-    #if placeHolder != None: print >>sys.stderr,"idx:", idx, "lib", lib, \
-    #   "empty0", empty0, "empty1", empty1, "wgs0", wgs0, "wgs1", wgs1, "fqs", fqs
-       #"seq0", seq0.seq, "seq1", seq1.seq, \
-    #print "wgs=",wgs0,wgs1
-    fqs[lib] = mergefq([wgs0,wgs1],fqopre,mergemax)
-    #if placeHolder != None: print >>sys.stderr,"idx:", idx, "lib", lib, \
-    #   "fqs", fqs[lib]
-    #print "fqs[lib]=",fqs[lib]
-    #assert all([ os.path.isfile(x) for x in fqs[lib] if x != None ])
-    #assert all([ os.path.isfile(x[0]) for x in fqs[lib] if x[0] != None ])
-    #assert all([ os.path.isfile(x[1]) for x in fqs[lib] if x[1] != None ])
+      fqopre = myTemporaryFile(prefix="fakefq_")
+      #only need the temporary filename here
+      #if outfastq != None: print >>sys.stderr,"idx:", idx, "lib", lib, \
+      #   "empty0", empty0, "empty1", empty1, "wgs0", wgs0, "wgs1", wgs1, "fqs", fqs
+         #"seq0", seq0.seq, "seq1", seq1.seq, \
+      #print "wgs=",wgs0,wgs1
+      fqs[lib] = mergefq([wgs0,wgs1],fqopre,mergemax)
+      #if outfastq != None: print >>sys.stderr,"idx:", idx, "lib", lib, \
+      #   "fqs", fqs[lib]
+      #print "fqs[lib]=",fqs[lib]
+      #assert all([ os.path.isfile(x) for x in fqs[lib] if x != None ])
+      #assert all([ os.path.isfile(x[0]) for x in fqs[lib] if x[0] != None ])
+      #assert all([ os.path.isfile(x[1]) for x in fqs[lib] if x[1] != None ])
     
   print >>sys.stderr, "fakefq: processed %d out of %d regions" % (idx+1,total)
-  return [hap,fqs]
+  return [hap,fqs,fas]
 
-def fqwgs(parlist,nligation,reffile,nploid,seq,lib,freq,mergemax,placeHolder): 
+def fqwgs(parlist,nligation,reffile,nploid,seq,lib,freq,mergemax,outfastq): 
   """
   generate wgs fastq for each hap variant's mutated or template sequence
   """
@@ -631,12 +664,12 @@ def fqwgs(parlist,nligation,reffile,nploid,seq,lib,freq,mergemax,placeHolder):
   rl2 = json.loads(parlist.get('xwgsim', 'read2'))
   par = ' '.join(['%s %s' % (key, value) for (key, value) in json.loads(parlist.get('xwgsim', 'par')).items()])
   libn = libnames[lib]
-  nrdp = seql*coverage[libn]/nploid*freq/(rl1[libn]+rl2[libn])
+  nrdp = ((seql-2*nligation)+0.5*(2*nligation))*coverage[libn]/nploid*freq/(rl1[libn]+rl2[libn])
   nmode = len(isize[libn])
   mode = [ None ] * nmode
 
-  #if placeHolder != None:
-  #  print >>sys.stderr, placeHolder, "freq=", freq, "nrdp=", nrdp
+  #if outfastq != None:
+  #  print >>sys.stderr, outfastq, "freq=", freq, "nrdp=", nrdp
 
   if freq == 0 or nrdp == 0:
     return [ None, None ] #nothing to simulate
@@ -893,7 +926,7 @@ def makevar(bun,metatab,fas=False):
   #print >>sys.stderr, "input varcnt:", varcnt                        #total number of input vars
   trunks = maketrunks(bun)                             #trunks is in bed format
   trunks,stretches = blocktrunks(trunks,gaptab)        #block trunks that not usable
-  trunks=trunks.to_dataframe()
+  trunks = trunks.to_dataframe()
   # seqfile,sizestring #random seq from seqfile using sizestring
   # seqfile #use seqfile exactly
   metacnt={}; delvec=set(); finsvec=set(); dinsvec=set(); dupvec=set(); travec=set(); idupvec=set(); invvec=set(); itravec=set(); idinsvec=set();
@@ -929,7 +962,7 @@ def makevar(bun,metatab,fas=False):
   
   rows=[]
   for row in metatab:
-    if fas: row[4:8]=['fix_1']*4  #override by 'fix_1' for fasforge
+    if fas: row[4:8]=['fix_1']*4
     rows.append(row)
     
   rowix=range(0,len(rows))
@@ -986,7 +1019,7 @@ def makevar(bun,metatab,fas=False):
     assert(len(donorfreq)==cnt)
     assert(len(recptfreq)==cnt)
       
-    for i in xrange(0,cnt): #this could be parallelized? yes if we preallocate trunks
+    for i in xrange(0,cnt): 
       metacnt[metatype] = metacnt.get(metatype,0) + 1
       mid = metatype + "_" + str(metacnt[metatype])
       donor = demultiplex(donorvec[i]) #this is a list of donor haplos, 0-indexed, empty if none
@@ -1116,22 +1149,22 @@ def maketrunks(bun):
   return trunks
 
 def maketid(stretches,varstretch):
+  """
+  get trunkid that with satisfying stretch >varstretch
+  """
   #print stretches
   #print varstretch
   #print len(stretches)
   tids = [t for t, x in enumerate(stretches) if x >= varstretch] #always random pick among min qualifying tids
   if tids == []: raise Exception("cannot allocate genome region for metafile, please reduce plansize!");
-  if varstretch >= 1: #could from any place that has a stretch >= varstretch
+  if varstretch >= 1:                               #could from any place that has a stretch >= varstretch
     mtids = [varstretch,tids]
   else:
     mtids = locatemin([stretches[i] for i in tids]) #this is not currently used
-  #print tids
-  #print mtids
-  tid = random.sample(mtids[1],1)[0]   #locate the tid
-  vtid = stretches[tid]
-  #print tid
-  for i in xrange(tid,tid+varstretch): stretches[i]=0;            #mark head of stretch used
-  if vtid-varstretch>0: stretches[tid+varstretch]=vtid-varstretch; #mark remaining stretch by its head
+  tid = random.sample(mtids[1],1)[0]                #locate the starting tid
+  vtid = stretches[tid]                             #available plan block within the assigned starting tid
+  for i in xrange(tid,tid+varstretch): stretches[i]=0;                #mark head of stretch as not available
+  if vtid-varstretch>0: stretches[tid+varstretch]=vtid-varstretch;    #mark remaining available stretch by its head
   return tid, stretches
 
 #maketid tests
@@ -1272,7 +1305,8 @@ def run():
   parser.add_argument('-y', '--nploid', dest='nploid', default=2, type=int,
                         help="genome ploidity default= %(default)s ploid")
   parser.add_argument('-f', '--plansize', dest='plansize', default=100000, type=int,
-                        help="plansize + ligation*2 is the grain size for genome planning, default: %(default)s bp)")
+                        help="plansize + ligation*2 is the grain size for variant planning, recommend \
+                              plansize < (genomesize/numer_of_variant/100), default: %(default)s bp)")
   parser.add_argument('-g', '--nligation', dest='nligation', default=500, type=int,
                         help="genome trunk ligation, recommended lib_is_max+2*lib_is_sd_max (default: %(default)s bp)")
   parser.add_argument('-n', '--nprocs', dest='nprocs', default=1, type=int,
@@ -1285,8 +1319,11 @@ def run():
                         help="inputfile of regions to skip, e.g. gap regions in bed format")
   parser.add_argument('-t', '--targetfile',dest='targetfile',type=argparse.FileType('rU'), default=None, 
                         help='inputfile of regions to target, for example Exome region in bed format')                      
+  parser.add_argument('-x', '--chooseOutput',dest='chooseOutput', default="fastq", choices=['fasta','fastq','bam'], 
+                        help='choose the type of output of mutforge (default: %default)')                      
+  parser.add_argument('-c', '--chooseSeed', dest='chooseSeed', default=None,
+                        help="choose the seed for python random function, default: %(default)s bp)")
   parser.add_argument('--layout', action='store_true', dest='layout', default=False, help="dry run to layout")
-  parser.add_argument('--outbam', action='store_true', dest='outbam', default=False, help="wet run to bam")
   parser.add_argument('--debug', action='store_true', dest='debug', default=False, help="debug run")
 
   args = parser.parse_args()
