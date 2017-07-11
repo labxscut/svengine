@@ -31,6 +31,7 @@
 	## output files:
   # egTree.tree.var #VAR output to be used as input for simultation by mutforge
   # egTree.tree.plot #a text plot of the assigned phylogenetic tree
+  # egTree.tree.json #a json output of variant frquency calculation of the assigned phylogenetic tree
 
   ## Step 2 - simulate tree-based VAR file
 
