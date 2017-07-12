@@ -46,7 +46,7 @@ testvercomp () {
     fi
 }
 
-rm -f testDependency.log
+rm -f test_dep.log
 c_deps=(samtools bedtools bwa)
 failed_c_deps="Failed C Dependencies: "
 echo "testing C dependencies ..."

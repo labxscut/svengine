@@ -1,12 +1,23 @@
+#example PAR file in python config format
+#currently xwgsim is the only configurable section
+#see https://wiki.python.org/moin/ConfigParserExamples for python configure format examples
 [xwgsim]
-#number of libraries
-#haplotype option should be always set on wgsim
+#number of sequencing libraries
 nlibrary=2
-#library-wise option=optbam"lib1":optbam2
+#library-wise names, json format 
 libnames=["lib1","lib2"]
+#library-wise coverage, json format
 coverage: {"lib1":40,"lib2":40}
-# for the tuple in isize, [mode_weight, mode_mean, mode_sd]
+#library-wise insert-size (isize), allowing mixtures
+#  e.g. Here we have two libraries: 
+#  lib1 has two components: [ [mode11_weight=70%, mode11_mean=250, mode11_sd=20], 
+#                             [mode12_weight=30%, mode12_mean=400, mode12_sd=40] ]
+#  lib2 has one component:  [ [mode21_weight=100%, mode21_mean=300, mode1_sd=30] ]
 isize: {"lib1":[[0.7,250,20],[0.3,400,40]],"lib2":[[1,300,30]]}
+#libarary-wise read1 length 
 read1: {"lib1":100,"lib2":100}
+#libarary-wise read2 length 
 read2: {"lib1":100,"lib2":100}
+#additional parameter to xwgsim, will be joined into a string spaced by blank
+#  use xwgsim -h to view available options
 par: {"-e":0.01,"-r":0,"-R":0,"-X":0}
