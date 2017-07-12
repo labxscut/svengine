@@ -47,6 +47,7 @@ INTRODUCTION
 
   Figure 2. The bioinformatics pipeline of SVEngine.
 
+  |Pipeline|
 
   Currently the package works for Linux (tested with Ubuntu) and Mac (tested with Homebrew).
   It might also work for Windows with Cygwin (not tested).
