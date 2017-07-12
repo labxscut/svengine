@@ -1,4 +1,4 @@
-#The PAR format is explained in simple.par file
+#The PAR format is explained in example.par file
 [xwgsim]
 nlibrary=1
 libnames=["lib1"]

@@ -1,14 +1,42 @@
-#testing meta table
-#DONORDIST 0, 1, 2, 3, ..., 2^nploid-1; this is basically deletion or nothing
-#RECPTDIST 0, 1, 2, 3, ..., 2^nploid-1; this is basically insertion or nothing
-#IF DONOR is multiple and is providing sequence, a random one among them is chosen 
-#IF RECPT is multiple and every in the multiple is receiving the chosen donor seq
-#FOR HOMOZYGOUS EVENTS TO HAPPEN at nploid=2: 
-#DONOR must be fix_3, RECPT must be fix_3
-#And Sequence Content Should be the same for any donor sequence
-#FOR HEMIZYGOUS EVENTS TO HAPPEN at nploid=2: 
-#DONOR must be fix_1/fix_2, RECPT must be fix_1/fix_2
-#And Sequence Content Should be the same for any donor sequence
+#METATYPE:  acronym used to specify a structural variant class:
+#           Acronyms: Deletion(DEL), Insertion(INS), Inversion(INV), Tandem Duplication(DUP), Translocation(TRA)
+#           Acronyms: Domestic INS(DINS), Foreign INS(FINS), Inverted TRA(ITRA), Inverted DUP(IDUP)
+#           the same variant class name can appear in multiple rows with different configuration
+#COUNT:     total number of the variant to be spiked-in of the varaint class defined in this row
+#SIZEDIST/SEQ: length of the sequence to be deleted/inserted if domestic insertion.
+#              Or a filename containing contigs to be randomly sampled for foreign insertion.
+#              The length could be equal prob multinormial multi(size1, size2, ...) : fix_size1_size2_...
+#              one can specify any size multiple times to increase its proportion.
+#              Or other supported distribution with parameters: dist_par1_par2_...
+#              e.g. nori_mean_sd: normal distribution rounded to integer
+#                   norf_mean_sd: normal distribution
+#                   unii_low_up: uniform distribution of integer from low to up
+#                   unif_low_up: uniform distribution
+#                   expi_rate: exponential distribution rounded to integer
+#                   expf_rate: exponential distribution
+#COPYDIST:  numpy of times that the insertion sequence to be duplicated
+#           supports applicable distribution as string encoding as SIZEDIST field
+#DONORDIST: a donor is the segment of haploid content marked and removed to be changed by the variant
+#           e.g. a deletion donates a segment without a reception
+#           e.g. a inversion donates a segment and receives a reverse complemented segment
+#           e.g. a tandem duplication donates a segment and receives a duplicted segment
+#           e.g. a insertion only receives either a domestic or a foreign segment without donation 
+#           potential values: 0, 1, 2, 3, ..., 2^nploid-1; 
+#           index to specify the group of haploids impacted by donation action; 0 is none; 2^nploid-1 is all
+#           if a sequqnce DONOR is multiple haploid then a random one among them is chosen 
+#           supports applicable distribution as string encoding as SIZEDIST field
+#RECPTDIST: a recepient is the segment of haploid receiving pontentially altered donor content
+#           potential values: 0, 1, 2, 3, ..., 2^nploid-1; 
+#           index to specify the group of haploids impacted by reception action; 0 is none; 2^nploid-1 is all
+#           if a sequence RECPT is multiple then every in the multiple is receiving the chosen donor seq
+#           e.g. FOR HOMOZYGOUS EVENTS at nploid=2: 
+#                DONOR must be fix_3, RECPT must be fix_3
+#                FOR HEMIZYGOUS EVENTS at nploid=2: 
+#                DONOR can be either fix_1 or fix_2, RECPT can be either fix_1 or fix_2
+#           supports applicable distribution as string encoding as SIZEDIST field
+#DONORFREQ: allelic frequence for donor actions (the content removing part of a structural variation) 
+#RECPTREQ:  allelic frequence for recepient actions (the content insertion part of a structural variation) 
+#NOTE:      any human readable notes go here, which will be ignored by machine
 #METATYPE	COUNT	SIZEDIST/SEQ	COPYDIST	DONORDIST	RECPTDIST	DONORFREQ	RECPTFREQ	NOTE
 FINS	2	example.fas	fix_1	fix_3	fix_3	fix_0.5	fix_0.5	#FINS=COPY*INS, foreign insertion
 ITRA	2	fix_1000	fix_1	fix_3	fix_3	fix_0.5	fix_0.5	#ITRA=1*DEL + COPY * INS, inverted transposition
