@@ -2,7 +2,7 @@
 #DEBUG: import svengine.mf.mutforge as mf
 #NOTE: currently mergemax for mergefq is disabled
 
-import copy, time, re, os, shutil, sys, random, csv, subprocess, traceback, argparse, tempfile, itertools, operator, collections, ConfigParser, json, imp, string
+import copy, time, re, os, shutil, sys, random, csv, subprocess, traceback, argparse, tempfile, itertools, operator, collections, ConfigParser, json, imp, string, numpy
 from itertools import izip
 from collections import Counter
 from multiprocessing import Pool
@@ -88,8 +88,8 @@ def runcmd(cmd):
   run_info=run.communicate() 
   return run_info
 
-def pipecmd(cmd1,cmd2):
-  #print >>sys.stderr, cmd1, "|", cmd2
+def pipecmd(cmd1,cmd2): #sometimes this quit before pipe completes
+  print >>sys.stderr, cmd1, "|", cmd2
   #run=subprocess.Popen(cmd.split(),env=os.environ,cwd=os.getcwd(),stderr=subprocess.PIPE,stdout=subprocess.PIPE)
   #run_info=run.communicate() 
   run_info=os.system(" ".join([cmd1,"|",cmd2]))
@@ -278,20 +278,20 @@ def main(args):
       nontargtab=pybedtools.BedTool("",from_string=True).saveas(nontargfile.name)
     if(debug): print >>sys.stderr, "nontargtab\n", nontargtab
 
-    allskipfile=tempfile.NamedTemporaryFile('w',delete=False); allskipfile.close()
-    allskiptab=nontargtab.cat(skiptab).sort().merge().saveas(allskipfile.name) 
-    #merging all skipped region to allskiptab
+    allskipfile=tempfile.NamedTemporaryFile('w',delete=False,prefix="gaptab_"); allskipfile.close()
+    gaptab=nontargtab.cat(skiptab).sort().merge().sort().saveas(allskipfile.name) 
+    #merging all skipped region to gaptab
   except pybedtools.cbedtools.BedToolsFileError:
     raise Exception("incorrect skipfile provided, must in BED format")
 
-  if(debug): print >>sys.stderr, "allskiptab\n", allskiptab
+  if(debug): print >>sys.stderr, "gaptab\n", gaptab
   print >>sys.stderr, "done",
 
   """
   prepare dic to include a bunch of arguments
   """
   dic={} #common dictionary interface for passing parameters
-  gaptab = allskiptab 
+  #gaptab = copy.deepcopy(gaptab) 
   #although not ideal, use the old name gaptab to refer to all regions omitted from simulation
   for i in ('hapseq','gaptab','reffile','plansize','nligation','nploid','oprefix','nprocs','burnin','mergemax','sizefile','parlist','trunksize','outfastq'):
     dic[i] = locals()[i]
@@ -366,8 +366,13 @@ def fq2bam(ffq,bun):
   for lib in range(0,nlibrary):
     fq1 = ffq[lib][0]; fq2 =  ffq[lib][1]
     tbam = tempfile.NamedTemporaryFile('w',delete=False).name
-    bwasw_cmd1="bwa mem -t %s %s %s %s" % (nprocs,reffile,fq1,fq2) 
-    bwasw_cmd2="samtools view -bS -o %s -" % (tbam) #it auto gives bam if not provided
+    bwaIndexFiles = [ os.path.exists(os.path.splitext(reffile)[0]+x) for x in ['.amb','.ann','.bwt','.pac','.sa','.fai'] ] 
+    if not numpy.all(bwaIndexFiles):
+      print >>sys.stderr, "generating missing index ..."
+      bwaid_cmd = "bwa index %s" % (reffile)
+      syscmd(bwaid_cmd)
+    bwasw_cmd1 = "bwa mem -t %s %s %s %s" % (nprocs,reffile,fq1,fq2) 
+    bwasw_cmd2 = "samtools view -@ %s -bS -o %s -" % (nprocs, tbam) #it auto gives bam if not provided
     pipecmd(bwasw_cmd1,bwasw_cmd2)
     libbams[lib] = tbam #post processing: librarywise merging bams
 
@@ -376,8 +381,9 @@ def fq2bam(ffq,bun):
     sbam = '.'.join([oprefix,libnames[lib]])
     tbam = tempfile.NamedTemporaryFile('w',delete=False).name
     mbam = mergebam([libbams[lib]],tbam,mergemax)
-    sort_cmd = "samtools sort -@ %s %s %s" % (nprocs, mbam, sbam)
-    syscmd(sort_cmd)
+    tmp = tempfile.NamedTemporaryFile('w',delete=False,prefix="samtools_").name
+    sort_cmd = "samtools sort -O BAM -o %s -T %s -@ %s %s" % (mbam, tmp, nprocs, sbam)
+    if runcmd(sort_cmd)[1] != "": raise Exception("CmdError executing: \t"+sort_cmd)
     fbam[lib] = sbam+".bam" #post processing: librarywise merging bams
 
   print >>sys.stderr, "fq2bam,", time.time()-starttime, " seconds"
@@ -402,8 +408,9 @@ def fas2size(fasfile, burnin):
   sizefile = tempfile.NamedTemporaryFile('w',delete=False,prefix="fasize_")
   burninbedfile = tempfile.NamedTemporaryFile('w',delete=False,prefix="burninbed_")
   fasseq = pysam.Fastafile(fasfile)
-  size = [ fasseq.references[i]+'\t'+str(fasseq.lengths[i]) \
-           for i in range(0,min(fasseq.nreferences,maxrefnum)) ]
+  seqnames =  [ fasseq.references[i] for i in range(0,min(fasseq.nreferences,maxrefnum)) ]
+  seqsort = numpy.argsort( seqnames )
+  size = [ fasseq.references[i]+'\t'+str(fasseq.lengths[i]) for i in numpy.argsort( seqnames ) ]
   sizefilestring = '\n'.join(size)
   sizefile.write(sizefilestring)
   sizefile.close()
