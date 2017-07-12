@@ -1,3 +1,18 @@
+#This example VAR file specified some prototype structural variants shown in the example feature track plots
+#Acronyms: Deletion(DEL), Insertion(INS), Inversion(INV), Tandem Duplication(DUP), Translocation(TRA)
+#Acronyms: Domestic INS(DINS), Foreign INS(FINS), Inverted TRA(ITRA), Inverted DUP(IDUP), 
+#VID: Variant ID for haploid-wise element variants, one unique id for each row 
+#MID: Mega ID for mega variants, e.g. a translocation with have one MID and two VIDs for del and ins parts.
+#VARFREQ: haploid-wise variant allele frequency
+#VARHAP: variant affect which haploid, 0-based, 0=first haploid 
+#VARCHR: variant affect which chromosome
+#VARDEL: if the variant carrying a deletion from its starting position, True/False only
+#VARDELSIZE: the size of the carried deletion. if no deletion, always 0 
+#VARINS: if the variant carrying a insertion from its starting position, True/False only
+#VARINSSEQ: the content of the carried insertion. if no insertion, always None.
+#           (HAP/SEQFILE,CHR:START-END,COPY,REVCOMP) - format to specify insertion content, e.g.
+#           example.fas,fins1:1-1200,1,f: says the sequence is from '1-1200bp' of 'fins1' contig in 'example.fas'.
+#                                         it is duplicated 1 times while it is not reverse complemented.
 #VID    MID     VARFREQ VARHAP  VARCHR  VARPOS  VARDEL  VARDELSIZE      VARINS  VARINSSEQ(HAP/SEQFILE,CHR:START-END,COPY,REVCOMP)
 VAR_1   FINS_1  0.5     0       1       1038000 False   0       True    example.fas,fins1:1-1200,1,f
 VAR_2   FINS_1  0.5     1       1       1038000 False   0       True    example.fas,fins1:1-1200,1,f

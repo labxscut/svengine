@@ -146,7 +146,7 @@ def main(args):
   skipfile = args.skipfile              #skipped genomic region
   parfile = args.parfile                #parameter file controls xwgsim
   reffile = args.reffile                #reference file for genomic mapping
-  nploid = args.nploid                  #number of genome ploidy
+  nploidy = args.nploidy                #number of genome ploidy
   plansize = args.plansize              #this input has default
   metafile = args.metafile              #meta distribution of genomic variants
   varfile = args.varfile                #excat distribution of genomic variants
@@ -154,32 +154,6 @@ def main(args):
   tempfile.tempdir = args.tmpdir        #tempfile directory
 
   """
-
-  """ 
-  check input mode and consistency
-  """
-
-  if args.metafile != None and args.varfile != None:
-    print >>sys.stderr, "either a .meta or a .var file can be specified but not both"
-    quit()
-
-  inbamfilenames = None #input is bamfiles, not implemented yet
-  runmode=0 #1 fasta+meta, 2 bam+meta, 3 fasta+var, 4 bam+var
-  if args.inbamfilenames!=None and args.metafile!=None:
-    runmode=2;
-  elif args.inbamfilenames!=None and args.varfile!=None:
-    runmode=4;
-  elif args.hapfiles!=None and args.metafile!=None:
-    runmode=1;
-  elif args.hapfiles!=None and args.varfile!=None:
-    runmode=3;
-  else:
-    raise Exception("must provide meta/var file and bam/hap files!")
-
-  if runmode==0:
-    sys.stderr.write("inccorrect input specification, please use on of following: \n \
-                          (1) fasta+meta, (2) bam+meta, (3) fasta+var, (4) bam+var")
-    quit()
 
   """ 
   assign input arguments 
@@ -197,12 +171,38 @@ def main(args):
   skipfile = args.skipfile              #skipped genomic region
   parfile = args.parfile                #parameter file controls xwgsim
   reffile = args.reffile                #reference file for genomic mapping
-  nploid = args.nploid                  #number of genome ploidy
+  nploidy = args.nploidy                  #number of genome ploidy
   plansize = args.plansize              #this input has default
   metafile = args.metafile              #meta distribution of genomic variants
   varfile = args.varfile                #excat distribution of genomic variants
   targetfile = args.targetfile          #targeted genomic region
   tempfile.tempdir = args.tmpdir        #tempfile directory
+
+  """ 
+  check input mode and consistency
+  """
+
+  if metafile != None and varfile != None:
+    print >>sys.stderr, "either a .meta or a .var file can be specified but not both"
+    quit()
+
+  inbamfilenames = None #input is bamfiles, not implemented yet
+  runmode=0 #1 fasta+meta, 2 bam+meta, 3 fasta+var, 4 bam+var
+  if inbamfilenames!=None and metafile!=None:
+    runmode=2;
+  elif inbamfilenames!=None and varfile!=None:
+    runmode=4;
+  elif hapfiles!=None and metafile!=None:
+    runmode=1;
+  elif hapfiles!=None and varfile!=None:
+    runmode=3;
+  else:
+    raise Exception("must provide meta/var file and bam/hap files!")
+
+  if runmode==0:
+    sys.stderr.write("inccorrect input specification, please use one of following combinations: \n \
+                          (1) fasta+meta, (2) fasta+var")
+    quit()
 
   """ 
   initialize paramenters 
@@ -244,9 +244,9 @@ def main(args):
   oprefix = oname if not args.oprefix else args.oprefix
 
   if len(hapfiles) == 1: #reuse hapfiles for haplotype
-    hapseq=[pysam.Fastafile(hapfiles[0])]*nploid
-  elif len(hapfiles)==nploid:
-    hapseq=[pysam.Fastafile(hapfiles[i]) for i in range(0,nploid)]
+    hapseq=[pysam.Fastafile(hapfiles[0])]*nploidy
+  elif len(hapfiles)==nploidy:
+    hapseq=[pysam.Fastafile(hapfiles[i]) for i in range(0,nploidy)]
     for ref in freseq:
       assert ref.lengths == hapseq[0].lengths, \
         "hapfile seqs must be of the same length cross haplos"
@@ -293,7 +293,7 @@ def main(args):
   dic={} #common dictionary interface for passing parameters
   #gaptab = copy.deepcopy(gaptab) 
   #although not ideal, use the old name gaptab to refer to all regions omitted from simulation
-  for i in ('hapseq','gaptab','reffile','plansize','nligation','nploid','oprefix','nprocs','burnin','mergemax','sizefile','parlist','trunksize','outfastq'):
+  for i in ('hapseq','gaptab','reffile','plansize','nligation','nploidy','oprefix','nprocs','burnin','mergemax','sizefile','parlist','trunksize','outfastq'):
     dic[i] = locals()[i]
   print >>sys.stderr, "entering runmode", runmode
 
@@ -370,6 +370,7 @@ def fq2bam(ffq,bun):
     if not numpy.all(bwaIndexFiles):
       print >>sys.stderr, "generating missing index ..."
       bwaid_cmd = "bwa index %s" % (reffile)
+      print >>sys.stderr, bwaid_cmd
       syscmd(bwaid_cmd)
     bwasw_cmd1 = "bwa mem -t %s %s %s %s" % (nprocs,reffile,fq1,fq2) 
     bwasw_cmd2 = "samtools view -@ %s -bS -o %s -" % (nprocs, tbam) #it auto gives bam if not provided
@@ -378,13 +379,15 @@ def fq2bam(ffq,bun):
 
   fbam = [None] * nlibrary
   for lib in range(0,nlibrary):
-    sbam = '.'.join([oprefix,libnames[lib]])
+    sbam = '.'.join([oprefix,libnames[lib],'bam'])
     tbam = tempfile.NamedTemporaryFile('w',delete=False).name
     mbam = mergebam([libbams[lib]],tbam,mergemax)
     tmp = tempfile.NamedTemporaryFile('w',delete=False,prefix="samtools_").name
-    sort_cmd = "samtools sort -O BAM -o %s -T %s -@ %s %s" % (mbam, tmp, nprocs, sbam)
-    if runcmd(sort_cmd)[1] != "": raise Exception("CmdError executing: \t"+sort_cmd)
-    fbam[lib] = sbam+".bam" #post processing: librarywise merging bams
+    sort_cmd = "samtools sort -O bam -o %s -T %s -@ %s %s" % (sbam, tmp, nprocs, tbam)
+    #if syscmd(sort_cmd)[1] != "": raise Exception("CmdError executing: \t"+sort_cmd)
+    print >>sys.stderr, "sorting and output bam..."
+    syscmd(sort_cmd)
+    fbam[lib] = sbam #post processing: librarywise merging bams
 
   print >>sys.stderr, "fq2bam,", time.time()-starttime, " seconds"
   return fbam
@@ -437,7 +440,7 @@ def var2fq(bun):
   nprocs = bun.nprocs
   oprefix = bun.oprefix
   parlist = bun.parlist
-  nploid = bun.nploid
+  nploidy = bun.nploidy
   nligation = bun.nligation
   nlibrary = bun.parlist.getint('xwgsim', 'nlibrary')
   libnames = json.loads(parlist.get('xwgsim', 'libnames'))
@@ -458,7 +461,7 @@ def var2fq(bun):
     print >>sys.stderr, "no variant specified, please use wgsim directly, quit..."
     quit()
   
-  #1, construct continuous contig sets with ligations (nploid)*(variant + non-variant)
+  #1, construct continuous contig sets with ligations (nploidy)*(variant + non-variant)
   #hapvar{hap0: list_of_vars, hap1:list_of_vars}
   hapvar = collections.OrderedDict()
   hapbed = collections.OrderedDict()
@@ -507,7 +510,7 @@ def var2fq(bun):
   for hap in hapvar.keys(): #create complementary blocks of hapvars
     hapfas = bun.hapseq[hap].filename
     for feat in hapvar[hap]:
-      hapiter.append([hap,hapfas,nligation,parlist,reffile,nploid,idx,total, feat, mergemax, outfastq])
+      hapiter.append([hap,hapfas,nligation,parlist,reffile,nploidy,idx,total, feat, mergemax, outfastq])
       idx = idx + 1
 
   bedfqs = []; #[ [hap, fq, fa ], ... ] 
@@ -563,7 +566,7 @@ def fakefq(hapit): # makebam from a pair of seqs of representing the original an
         hap_seq0_mid_vid_freq_chr_st_end.fasta
         hap_seq1_mid_vid_freq_chr_st_end.fasta
   """
-  hap=hapit[0]; hapfas=hapit[1]; nligation=hapit[2]; parlist=hapit[3]; reffile=hapit[4]; nploid=hapit[5]; 
+  hap=hapit[0]; hapfas=hapit[1]; nligation=hapit[2]; parlist=hapit[3]; reffile=hapit[4]; nploidy=hapit[5]; 
   bed=hapit[8]; mergemax=hapit[9]; outfastq=hapit[10]; idx=hapit[6]; total=hapit[7]
   print >>sys.stderr, "fakefq: processing %d out of %d regions" % (idx+1,total)
 
@@ -615,7 +618,7 @@ def fakefq(hapit): # makebam from a pair of seqs of representing the original an
       if empty0: 
         wgs0 = [None, None]
       else:
-        wgs0 = fqwgs(parlist,nligation,reffile,nploid,[seq0],lib,freq0,mergemax,outfastq)
+        wgs0 = fqwgs(parlist,nligation,reffile,nploidy,[seq0],lib,freq0,mergemax,outfastq)
 
       #if seq0 is not good, nothing to simulate 
       #print seq1.seq
@@ -624,7 +627,7 @@ def fakefq(hapit): # makebam from a pair of seqs of representing the original an
       if empty1:
         wgs1 = [None, None]
       else:
-        wgs1 = fqwgs(parlist,nligation,reffile,nploid,[seq1],lib,freq1,mergemax,outfastq)
+        wgs1 = fqwgs(parlist,nligation,reffile,nploidy,[seq1],lib,freq1,mergemax,outfastq)
 
       fqopre = myTemporaryFile(prefix="fakefq_")
       #only need the temporary filename here
@@ -643,7 +646,7 @@ def fakefq(hapit): # makebam from a pair of seqs of representing the original an
   print >>sys.stderr, "fakefq: processed %d out of %d regions" % (idx+1,total)
   return [hap,fqs,fas]
 
-def fqwgs(parlist,nligation,reffile,nploid,seq,lib,freq,mergemax,outfastq): 
+def fqwgs(parlist,nligation,reffile,nploidy,seq,lib,freq,mergemax,outfastq): 
   """
   generate wgs fastq for each hap variant's mutated or template sequence
   """
@@ -671,7 +674,7 @@ def fqwgs(parlist,nligation,reffile,nploid,seq,lib,freq,mergemax,outfastq):
   rl2 = json.loads(parlist.get('xwgsim', 'read2'))
   par = ' '.join(['%s %s' % (key, value) for (key, value) in json.loads(parlist.get('xwgsim', 'par')).items()])
   libn = libnames[lib]
-  nrdp = ((seql-2*nligation)+0.5*(2*nligation))*coverage[libn]/nploid*freq/(rl1[libn]+rl2[libn])
+  nrdp = ((seql-2*nligation)+0.5*(2*nligation))*coverage[libn]/nploidy*freq/(rl1[libn]+rl2[libn])
   nmode = len(isize[libn])
   mode = [ None ] * nmode
 
@@ -924,7 +927,7 @@ def makevar(bun,metatab,fas=False):
   #FIXME: this has to be modified to disallow streteching Ns and random selection in similar size
   gaptab = bun.gaptab
   hapseq = bun.hapseq
-  nploid = bun.nploid
+  nploidy = bun.nploidy
   plansize = bun.plansize
   nligation = bun.nligation
   burnin = bun.burnin
