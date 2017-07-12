@@ -26,7 +26,7 @@
 
 	### preparing a new VAR file based on egTree frequencies input
   echo "### preparing a new VAR file based on egTree frequencies input"
-  PYTHONPATH=$SVENGINEPATH python -m mf.tree2var -p egTree.var egTree.newick
+  PYTHONPATH=$SVENGINEPATH python -B -m mf.tree2var -p egTree.var egTree.newick
 
 	## output files:
   # egTree.tree.var #VAR output to be used as input for simultation by mutforge
@@ -43,7 +43,7 @@
 
 	### simulate clonal evolution using tree-based VAR file by mutforge
   echo "### simulate clonal evolution using tree-based VAR file by mutforge"
-  PYTHONPATH=$SVENGINEPATH python -m mf.mutforge -x bam -n 16 -b 100000 -f 10000 -e 1000000 -v egTree.tree.var -s example.gap.bed example.fna egTree.par example.fna
+  PYTHONPATH=$SVENGINEPATH python -B -m mf.mutforge -x bam -n 16 -b 100000 -f 10000 -e 1000000 -v egTree.tree.var -s example.gap.bed example.fna egTree.par example.fna
   samtools index egTree.tree.lib1.bam
 
   ## output files:

@@ -89,7 +89,7 @@ def runcmd(cmd):
   return run_info
 
 def pipecmd(cmd1,cmd2): #sometimes this quit before pipe completes
-  print >>sys.stderr, cmd1, "|", cmd2
+  #print >>sys.stderr, cmd1, "|", cmd2
   #run=subprocess.Popen(cmd.split(),env=os.environ,cwd=os.getcwd(),stderr=subprocess.PIPE,stdout=subprocess.PIPE)
   #run_info=run.communicate() 
   run_info=os.system(" ".join([cmd1,"|",cmd2]))
@@ -366,26 +366,28 @@ def fq2bam(ffq,bun):
   for lib in range(0,nlibrary):
     fq1 = ffq[lib][0]; fq2 =  ffq[lib][1]
     tbam = tempfile.NamedTemporaryFile('w',delete=False).name
-    bwaIndexFiles = [ os.path.exists(os.path.splitext(reffile)[0]+x) for x in ['.amb','.ann','.bwt','.pac','.sa','.fai'] ] 
+    bwaIndexFiles = [ reffile+x for x in ['.amb','.ann','.bwt','.pac','.sa','.fai'] ] 
+    bwaIndexFiles = [ os.path.exists(x) for x in bwaIndexFiles ]
+    #print >>sys.stderr, "bwaIndexFiles:", bwaIndexFiles
     if not numpy.all(bwaIndexFiles):
       print >>sys.stderr, "generating missing index ..."
       bwaid_cmd = "bwa index %s" % (reffile)
-      print >>sys.stderr, bwaid_cmd
+      print >>sys.stderr, "[SystemCall]", bwaid_cmd
       syscmd(bwaid_cmd)
     bwasw_cmd1 = "bwa mem -t %s %s %s %s" % (nprocs,reffile,fq1,fq2) 
     bwasw_cmd2 = "samtools view -@ %s -bS -o %s -" % (nprocs, tbam) #it auto gives bam if not provided
+    print >>sys.stderr, "[SystemCall]", bwasw_cmd1, "|", bwasw_cmd2
     pipecmd(bwasw_cmd1,bwasw_cmd2)
     libbams[lib] = tbam #post processing: librarywise merging bams
 
   fbam = [None] * nlibrary
   for lib in range(0,nlibrary):
     sbam = '.'.join([oprefix,libnames[lib],'bam'])
-    tbam = tempfile.NamedTemporaryFile('w',delete=False).name
     mbam = mergebam([libbams[lib]],tbam,mergemax)
     tmp = tempfile.NamedTemporaryFile('w',delete=False,prefix="samtools_").name
-    sort_cmd = "samtools sort -O bam -o %s -T %s -@ %s %s" % (sbam, tmp, nprocs, tbam)
-    #if syscmd(sort_cmd)[1] != "": raise Exception("CmdError executing: \t"+sort_cmd)
     print >>sys.stderr, "sorting and output bam..."
+    sort_cmd = "samtools sort -O bam -o %s -T %s -@ %s %s" % (sbam, tmp, nprocs, mbam)
+    print >>sys.stderr, "[SystemCall]", sort_cmd
     syscmd(sort_cmd)
     fbam[lib] = sbam #post processing: librarywise merging bams
 
