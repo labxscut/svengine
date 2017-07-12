@@ -13,6 +13,7 @@ import dendropy
 import argparse
 import time
 import os
+import json
 
 def main(args):
   varfile = args.varfile
@@ -78,6 +79,11 @@ def main(args):
   treeVarFile.write("#"+"\t".join(varColNames)+"\n")
   varTable.to_csv(treeVarFile, sep="\t", header=False, index=False, float_format="%.3f")
   treeVarFile.close()
+
+  treeJsonFileName = oprefix+".tree.json"
+  with open(treeJsonFileName, 'w') as outfile:
+    json.dump({ 'FC':FC.to_dict(), 'FV':FV.to_dict(), 'fV':fV.to_dict() }, outfile)
+    outfile.close()
   
   return #end of run
 

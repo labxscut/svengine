@@ -1304,12 +1304,12 @@ def run():
   parser.add_argument('-b', '--burnin', dest='burnin', type=int, default=1100000,
                         help="burnin is the chromosome tip skip size for genome planning to avoid tip padding Ns, default: %(default)s bp")
   parser.add_argument('-e', '--trunksize', dest='trunksize', type=int, default=10000000,
-                        help="trunksize is the parallelized compartment size of non-var region in simulation %(default)s bp")
-  parser.add_argument('-i', '--bamfile', dest='inbamfilenames', #in1.bam,in2.bam,in3.bam
-                        help="inputfile of library-wise bam file(s)")
+                        help="trunksize is the parallelized compartment size of non-var region in simulation, default: %(default)s bp")
+  #parser.add_argument('-i', '--bamfile', dest='inbamfilenames', #in1.bam,in2.bam,in3.bam
+  #                      help="inputfile of library-wise bam file(s)")
   parser.add_argument('-o', '--oprefix', dest='oprefix', default=None, #output1,output2,output3,...
-                        help="prefix for output files")
-  parser.add_argument('-y', '--nploid', dest='nploid', default=2, type=int,
+                        help="prefix for output files, default: $varfile or $metafile")
+  parser.add_argument('-y', '--nploidy', dest='nploidy', default=2, type=int,
                         help="genome ploidity default= %(default)s ploid")
   parser.add_argument('-f', '--plansize', dest='plansize', default=100000, type=int,
                         help="plansize + ligation*2 is the grain size for variant planning, recommend \
