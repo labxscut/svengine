@@ -33,9 +33,8 @@ def main(args):
     egTree.print_plot(show_internal_node_labels=True, plot_metric="depth")
     treePlotFileName = oprefix+".tree.plot"
     if os.path.isfile(treePlotFileName):
-      quit("output treePlotFileName:" + treePlotFileName + "already exists, remove first!\n")
-      print >>open(treePlotFileName, "w"), 
-              egTree.as_ascii_plot(show_internal_node_labels=True, plot_metric="depth")
+      quit("output treePlotFileName: " + treePlotFileName + " already exists, remove first!\n")
+      print >>open(treePlotFileName, "w"), egTree.as_ascii_plot(show_internal_node_labels=True, plot_metric="depth")
 
   #for node in egTree.preorder_node_iter():   #this gives topologically ordered 
     #if node.edge.length == None: print node;
@@ -76,7 +75,7 @@ def main(args):
   #output varTable
   treeVarFileName = oprefix+".tree.var"
   if os.path.isfile(treeVarFileName):
-    quit("output treeVarFile:" + treeVarFileName + "already exists, remove first!\n")
+    quit("output treeVarFile: " + treeVarFileName + " already exists, remove first!\n")
   treeVarFile = open(treeVarFileName, "a")
   treeVarFile.write("#"+"\t".join(varColNames)+"\n")
   varTable.to_csv(treeVarFile, sep="\t", header=False, index=False, float_format="%.3f")
