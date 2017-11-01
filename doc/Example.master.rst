@@ -16,7 +16,7 @@ To run following examples:
   - Download and unzip the full test data set `svengine.test.full.tgz: <REPLACE_WITH_DOWNLOADLINK>`__ and place the data into $SVENGINEPATH/test
   - Export the $SVENGINEPATH to your SHELL: 'export SVENGINEPATH=$SVENGINEPATH'
   - Change directory into $SVENGINEPATH/test and run the test_dep.sh to make sure dependencies OK
-  - run test_fa.sh, test_mf.sh and test_tv.sh scripts for example tasks
+  - run test_mf.sh and test_tv.sh scripts for example tasks
   - required input and output files were explained inline withe scripts and in this wiki
   - run clean.sh to clear outputs from previous runs
 
