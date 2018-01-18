@@ -191,4 +191,5 @@ CONTACT
 CITATIONS
 ---------
 
-  The SVEngine manuscript is under review.
+  The SVEngine manuscript is under review. The preprint is available at BioRxiv:
+  https://www.biorxiv.org/content/early/2018/01/12/247536
