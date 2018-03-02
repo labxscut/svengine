@@ -1,3 +1,7 @@
+#The basic VAR file format is explained in example.var
+#The VARFREQ field in this file is dummy and to be replaced after tree fraction computation
+#It is important to note that the MID of this file must corresponds to the internal node label in the egTree.newick file
+#The MID column is used as an identifier by tree2var for correctly substituting dummy fractions
 #VID	MID	VARFREQ	VARHAP	VARCHR	VARPOS	VARDEL	VARDELSIZE	VARINS	VARINSSEQ(HAP/SEQFILE,CHR:START-END,COPY,REVCOMP)
 VAR_1	V1	1.0	0	2	1200001	True	50000	False	None
 VAR_2	V2	1.0	0	2	1300001	True	50000	False	None

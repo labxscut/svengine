@@ -86,6 +86,8 @@ INSTALL
 
       pybedtools, pysam, pandas, tables, scipy, dendropy, cython
 
+    Samtools>=1.2, Bedtools>=2.0, BWA>=0.7
+
     A script to confirm all dependencies are met is here:
 
       https://bitbucket.org/charade/svengine/raw/master/test/test_dep.sh
@@ -93,7 +95,6 @@ INSTALL
     An example dependency install script for Mac wth Homebrew is here:
 
       https://bitbucket.org/charade/svengine/raw/master/test/install_mac.sh
-
 
   *Installation Free !*:
 
@@ -190,4 +191,5 @@ CONTACT
 CITATIONS
 ---------
 
-  The SVEngine manuscript is under review.
+  The SVEngine manuscript is under review. The preprint is available at BioRxiv:
+  https://www.biorxiv.org/content/early/2018/01/12/247536

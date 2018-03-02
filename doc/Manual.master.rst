@@ -32,19 +32,37 @@ The tree2var command implements a procedure that determines variant fractions fr
 -------------------------------------------------------------------------------------------
 
 $SVENGINEPKG/svengine/test/example.var.
+
 The VAR format is intended for specifying exact information for individual variants, which includes variant id, parent id (if it is part of a complex event, e.g., the deletion part within a translocation), fraction, ploidy, chromosome, starting position, and the sequence length to be deleted and/or the sequence content to be inserted.
 
 .. code:: bash
 
   REPLACE_WITH_SVENGINE_EXAMPLE_VARFILE
 
-
 $SVENGINEPKG/svengine/test/example.meta.
+
 The META format is intended for an easy higher-level control, allowing one to specify a desired meta distribution of variants, including variant type, and total number of events, size, allele fraction, and ploidy distributions per type. It is also possible to specify where and how to sample insertion sequence in the case of foreign insertion. For example, a user can easily request 100 deletions of size ranging from 100bp to 10kbp, of uniform allelic fraction distribution and fair coin Bernoulli distribution of homo- and heterozygosity by one line of test in the META file.  These parameters can be stipulated in a single line.
 
 .. code:: bash
 
   REPLACE_WITH_SVENGINE_EXAMPLE_METAFILE
 
-$SVENGINEPKG/svengine/test/simple.par.
+$SVENGINEPKG/svengine/test/example.par.
 
+.. code:: bash
+
+  REPLACE_WITH_SVENGINE_EXAMPLE_PARFILE
+
+$SVENGINEPKG/svengine/test/egTree.newick.
+
+The tree input to SVEngine is in standard NEWICK format  – a widely accepted format using parenthesis to encode nested tree structures. Each internal node is labelled by the population splitting variant and weighted by the conditional splitting fraction. Each leaf node is labelled by associated terminal genotype and weighted by the subpopulation fraction (optional). See http://evolution.genetics.washington.edu/phylip/newicktree.html. For instance, the NEWICK string for the example binary tree in SVEngine's publication is: 
+
+.. code:: bash
+
+  REPLACE_WITH_SVENGINE_EXAMPLE_TREENEWICK
+
+$SVENGINEPKG/svengine/test/egTree.var.
+
+.. code:: bash
+
+  REPLACE_WITH_SVENGINE_EXAMPLE_TREEVAR
