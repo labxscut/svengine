@@ -27,7 +27,7 @@
 	echo "### simulating NA12878 using a VAR file (.var)"
   PYTHONPATH=$SVENGINEPATH python -B -m mf.mutforge -x fastq -n 16 -b 10000 -f 5000 -e 1000000 -v NA12878_1KG_SV.vcf.NA12878.var human_g1k_v37.fasta common.par human_g1k_v37.fasta
   bwa index human_g1k_v37.fasta
-  bwa sw human_g1k_v37.fasta NA12878_1KG_SV.vcf.NA12878.lib1.fq1 NA12878_1KG_SV.vcf.NA12878.lib1.fq2 | samtools view -bh -o NA12878_1KG_SV.vcf.NA12878.lib1.bam
+  bwa bwasw human_g1k_v37.fasta NA12878_1KG_SV.vcf.NA12878.lib1.fq1 NA12878_1KG_SV.vcf.NA12878.lib1.fq2 | samtools view -@ 16 -bh -o NA12878_1KG_SV.vcf.NA12878.lib1.bam
   samtools index NA12878_1KG_SV.vcf.NA12878.lib1.bam
 
 	## output files:
