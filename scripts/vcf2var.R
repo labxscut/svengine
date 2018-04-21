@@ -11,7 +11,7 @@ option_list2 <- list(
               help="none=first sample [default %default]"),
   make_option(c("-p", "--planSize"), default=5000,
               help="plan size to avoid overlap events, default 5000"),
-  make_option(c("-f", "--seqFiles"), defaul='{"REF":"human_g1k_v37.fasta","ME":"human_g1k_v37.me.fasta"}',
+  make_option(c("-f", "--seqFiles"), defaul='{"REF":"human_g1k_v37.fasta","ME":"repbase.pm.fasta"}',
               help="use hg37 fasta for default [default %default]"),
   make_option(c("-r", "--reference"), default="hg37",
               help="use hg37 for default [default %default]"),
@@ -43,7 +43,7 @@ noQuiet=cmd$options$noQuiet
 
 if(mydebug){ #debugging parameters
   vcfFile = "~/ws/2018_NA12878/NA12878_1KG_SV.vcf"
-  seqFiles = '{"REF":"human_g1k_v37.fasta","ME":"human_g1k_v37.me.fasta"}' #a mobile element file
+  seqFiles = '{"REF":"human_g1k_v37.fasta","ME":"repbase.pm.fasta"}' #a mobile element file
   outPrefix = "none"
   sampleName = "none"
   reference = "hg37"
@@ -62,8 +62,18 @@ vcfGTData = vcfR::vcfR2tidy( vcfEntries )$gt
 vcfFixData = vcfR::vcfR2tidy( vcfEntries )$fix
 vcfFixData = vcfFixData %>% dplyr::filter(FILTER=="PASS") 
 vcfFixData = vcfFixData %>% dplyr::mutate(END=ifelse(is.na(END),POS+1,END)) #external ins has NA END, change to POS+1
-#sel = ! (grepl("INS",vcfFixData$ALT) & (is.na(vcfFixData$MSTART) | is.na(vcfFixData$END)))
-#vcfFixData = vcfFixData %>% dplyr::filter(sel) 
+#table(sapply(stringr::str_split(vcfFixData$MEINFO[!is.na(vcfFixData$MEINFO)], ","), "[", 1)) #check major types
+repbaseMeFile = Rsamtools::FaFile(seqSource[['ME']]) #load repbase fasta file
+Rsamtools::indexFa(seqSource[['ME']])                #index repbase fasta file
+vcfMeSeqs = sapply(stringr::str_split(vcfFixData$MEINFO, ","), "[", 1) #get seq name as in vcf file
+repbaseMeSeqs = names(Rsamtools::seqinfo(repbaseMeFile))
+vcfMeExclEntries = ! (vcfMeSeqs %in% repbaseMeSeqs)    #ME seq not available
+vcfMeAllEntries = grepl("<INS:ME:",vcfFixData$ALT)   #ME is an insertion, i.e., seq required
+sel = ! (vcfMeExclEntries & vcfMeAllEntries) #ME is an insertion and seq is not available => exclude
+vcfFixData = vcfFixData %>% dplyr::filter(sel) 
+sel = ! ((vcfFixData$ALT=="<INS:MT>") & (is.na(vcfFixData$MSTART) | is.na(vcfFixData$MEND)))
+vcfFixData = vcfFixData %>% dplyr::filter(sel)
+
 vcfRanges = GenomicRanges::GRanges(
   seqnames = vcfFixData$CHROM,
   ranges = IRanges::IRanges(start=vcfFixData$POS - planSize,
@@ -80,8 +90,9 @@ solo = total[!total %in% duped]
 # GenomicRanges::findOverlaps(vcfSoloRanges,vcfSoloRanges) #verified
 
 vcfSoloData = vcfFixData[solo, ] #cleaned up for META, total 20861
-#wrote all me seq names
+#wrote me.all seq names
 #write.table(na.omit(unique(sapply(stringr::str_split(vcfSoloData$MEINFO,","),"[",1))), "/Users/charlie/setup/svengine/test/na12878/me.all", row.names=F, quote=F, col.names=F)
+#read.table("/Users/charlie/setup/svengine/test/na12878/p.txt", header=FALSE, sep="\t")
 
 #TEST
 # i=21
@@ -124,7 +135,7 @@ hap_of_entry = function(hap, entry, mode) { #handling one haplotype alternative 
     hap_info = stringr::str_split(e$MEINFO, ",", simplify = T)
     hap_chrom = hap_info[1]
     hap_chrom = ifelse(hap_chrom=="LINE1", "L1", hap_chrom) #Repbase use L1 instead of LINE1
-    hap_chrom = ifelse(hap_chrom=="AluUndef", "AluY", hap_chrom) #Repbase does not have AluUndef, use AluY
+    #hap_chrom = ifelse(hap_chrom=="AluUndef", "AluY", hap_chrom) #Repbase does not have AluUndef, use AluY
     hap_start = as.integer(hap_info[2])
     hap_end = as.integer(hap_info[3])
     hap_strand = ifelse(hap_info[4] == "+", "f", "r")
@@ -184,14 +195,17 @@ vcf_to_meta = function(i, vcf) { # vcf =  tmpSoloData; i = 1
 for(vs in sampleName) { #vs="NA12878"
   tmpGTData = vcfGTData %>% dplyr::filter(Indiv == vs)
   tmpSoloData = vcfSoloData %>% dplyr::left_join(vcfGTData, by=c("ChromKey", "POS"))
+  me_seqs = sapply(stringr::str_split(tmpSoloData$MEINFO[!is.na(tmpSoloData$MEINFO)], ","), "[", 1)
+  #exclude mobile elements without a sequence
   vcfMetaData = lapply(seq.int(nrow(tmpSoloData)), vcf_to_meta, vcf=tmpSoloData)
   vcfMetaTable = as.data.frame(do.call("rbind", vcfMetaData))
   vcfMetaTable$vid = seq.int(nrow(vcfMetaTable))
   colnames(vcfMetaTable) = toupper(colnames(vcfMetaTable))
   vcfMetaTable = vcfMetaTable[, c("VID","MID", "VARFREQ", "VARHAP",	"VARCHR",	"VARPOS",	"VARDEL",	"VARDELSIZE",	"VARINS",	"VARINSSEQ")] #order it correctly
   vcfMetaTable$VID = paste("VAR",vcfMetaTable$VID,sep="_")
+  colnames(vcfMetaTable)[1] = "#VID"
   vcfMetaTable = apply(vcfMetaTable,2,as.character)
-  write.table(vcfMetaTable, file=paste(outPrefix, vs, "meta", sep="."), col.names=T, quote=F, sep="\t", row.names=F)
+  write.table(vcfMetaTable, file=paste(outPrefix, vs, "var", sep="."), col.names=T, quote=F, sep="\t", row.names=F)
 }
 
 message("VCF2VARDONE")
