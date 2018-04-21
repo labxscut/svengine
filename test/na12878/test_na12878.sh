@@ -21,6 +21,7 @@
 	### simulating using a VAR file (.var) input
 	echo "### simulating NA12879 using a VAR file (.var)"
   PYTHONPATH=$SVENGINEPATH python -B -m mf.mutforge -n 16 -b 10000 -f 5000 -e 1000000 -v NA12878_1KG_SV.vcf.NA12878.var human_g1k_v37.fasta common.par human_g1k_v37.fasta
+  PYTHONPATH=$SVENGINEPATH python -B -m mf.mutforge -x bam -n 16 -b 10000 -f 5000 -e 1000000 -v NA12878_1KG_SV.vcf.NA12878.head.var human_g1k_v37.fasta simple.par human_g1k_v37.fasta
   samtools index test_mf.lib1.bam
 
 	## output files:
