@@ -27,7 +27,13 @@
 	echo "### simulating NA12878 using a VAR file (.var)"
   PYTHONPATH=$SVENGINEPATH python -B -m mf.mutforge -x fastq -n 16 -b 10000 -f 5000 -e 1000000 -v NA12878_1KG_SV.vcf.NA12878.var human_g1k_v37.fasta common.par human_g1k_v37.fasta
   bwa index human_g1k_v37.fasta
-  bwa bwasw human_g1k_v37.fasta NA12878_1KG_SV.vcf.NA12878.lib1.fq1 NA12878_1KG_SV.vcf.NA12878.lib1.fq2 | samtools view -@ 16 -bh -o NA12878_1KG_SV.vcf.NA12878.lib1.bam
+  bwa mem -t 16 human_g1k_v37.fasta NA12878_1KG_SV.vcf.NA12878.lib1.fq1 NA12878_1KG_SV.vcf.NA12878.lib1.fq2 | samtools view -@16 -O BAM -bh -o NA12878_1KG_SV.vcf.NA12878.lib1.bam -
+  #nohup sh -c "bwa mem -t 16 human_g1k_v37.fasta NA12878_1KG_SV.vcf.NA12878.lib1.fq1 NA12878_1KG_SV.vcf.NA12878.lib1.fq2 | samtools view -@16 -O BAM -bh -o NA12878_1KG_SV.vcf.NA12878.lib1.bam -" & #run process in background
+  #bwa mem ref.fa in.fq | samtools view -bS - > out.bam
+  #simulate a null bam with 100x coverage; i.e. 1 billion 150*2 read pairs 
+  wgsim -N 1000000000 -d 300 -s 5 -e 0.01 -r 0 -R 0 -X 0 -1 150 -2 150 human_g1k_v37.fasta NA12878_1KG_SV.null.NA12878.lib1.fq1 NA12878_1KG_SV.null.NA12878.lib1.fq2
+  #nohup sh -c "wgsim -N 1000000000 -d 300 -s 5 -e 0.01 -r 0 -R 0 -X 0 -1 150 -2 150 human_g1k_v37.fasta NA12878_1KG_SV.null.NA12878.lib1.fq1 NA12878_1KG_SV.null.NA12878.lib1.fq2"
+
   samtools index NA12878_1KG_SV.vcf.NA12878.lib1.bam
 
 	## output files:
