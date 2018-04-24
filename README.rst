@@ -167,6 +167,11 @@ USAGE
   Use '-h' to read script-wise usage.
   See Wiki pages for more details.
 
+LICENSE
+------------
+
+  BSD3
+
 WIKI
 ------------
 
