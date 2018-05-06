@@ -386,7 +386,7 @@ def fq2bam(ffq,bun):
     mbam = mergebam([libbams[lib]],tbam,mergemax)
     tmp = tempfile.NamedTemporaryFile('w',delete=False,prefix="samtools_").name
     print >>sys.stderr, "sorting and output bam..."
-    sort_cmd = "samtools sort -O bam -o %s -T %s -@ %s %s" % (sbam, tmp, nprocs, mbam)
+    sort_cmd = "samtools sort -m 2G -O bam -o %s -T %s -@ %s %s" % (sbam, tmp, nprocs, mbam)
     print >>sys.stderr, "[SystemCall]", sort_cmd
     syscmd(sort_cmd)
     fbam[lib] = sbam #post processing: librarywise merging bams
@@ -664,10 +664,10 @@ def fqwgs(parlist,nligation,reffile,nploidy,seq,lib,freq,mergemax,outfastq):
     print >>sys.stderr, "fasforge is deprecated!"
     quit() 
   else:
-    fa=myTemporaryFile(prefix="fawgs_") #mutforge, seqs only one sequence to be saved
-    tmpfa=True
-    seqs=seq
-  seql = sum( [ len(s) for s in seqs ] )                        #len of targeted seq, should just be one either seq0 or seq1
+    fa = myTemporaryFile(prefix="fawgs_") #mutforge, seqs has only one sequence to be saved
+    tmpfa = True
+    seqs = seq
+  seql = sum( [ len(s) for s in seqs ] )  #len of targeted seq, should just be either hap0 or hap1
 
   libnames = json.loads(parlist.get('xwgsim', 'libnames'))
   coverage = json.loads(parlist.get('xwgsim', 'coverage'))
