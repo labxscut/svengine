@@ -6,8 +6,7 @@
 	fi
   
 	## input files:
-  # example.gap.bed #masked out regions in BED (.bed) format
-  # NA12878_1KG_SV.vcf.NA12878.var #VAR file to specify exact events
+  # Example.Intervals.var #VAR file to specify exact events
   # human_g1k_v37.fasta #template hg37 sequence fasta input
   # common.par #PAR file to specify common single lib design: insert distribution, coverage, read length, ... 
 
