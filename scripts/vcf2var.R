@@ -1,8 +1,12 @@
 #!/usr/bin/env Rscript
 
 ####Externalities####
+### todo: VARPOS is following bed format, is 0-based or considerred as last unchanged base
+###       VARINSSEQ is 1-based
+###       a DUP from chr1:501-1000 would be present as VARPOS=500, VARINSSEQ:ref,chr1:501-1000,2,f
 ptm=proc.time() #time keeper
 library(vcfR)
+library(optparse)
 
 option_list2 <- list(
   make_option(c("-o", "--outPrefix"), default="none",
@@ -12,9 +16,9 @@ option_list2 <- list(
   make_option(c("-p", "--planSize"), default=5000,
               help="plan size to avoid overlap events, default 5000"),
   make_option(c("-f", "--seqFiles"), defaul='{"REF":"human_g1k_v37.fasta","ME":"repbase.pm.fasta"}',
-              help="use hg37 fasta for default [default %default]"),
-  make_option(c("-r", "--reference"), default="hg37",
-              help="use hg37 for default [default %default]"),
+              help="use ucsc hg19/grch v37 fasta for default [default %default]"),
+  make_option(c("-r", "--reference"), default="hg19",
+              help="use ucsc hg19/grch v37 for default [default %default]"),
   make_option(c("-q", "--noQuiet"), action="store_true", default=FALSE,
               help="show verbose, [default %default]"),
   make_option(c("-u", "--isUCSC"), action="store_true", default=FALSE,
@@ -42,11 +46,13 @@ mydebug=cmd$options$debug
 noQuiet=cmd$options$noQuiet
 
 if(mydebug){ #debugging parameters
+  library(vcfR)
+  library(optparse)
   vcfFile = "~/ws/2018_NA12878/NA12878_1KG_SV.vcf"
   seqFiles = '{"REF":"human_g1k_v37.fasta","ME":"repbase.pm.fasta"}' #a mobile element file
   outPrefix = "none"
   sampleName = "none"
-  reference = "hg37"
+  reference = "hg19"
   planSize = 5000
   isUCSC = FALSE
 }
@@ -54,7 +60,7 @@ if(mydebug){ #debugging parameters
 outPrefix = ifelse(outPrefix=="none", vcfFile, outPrefix)
 seqSource =  rjson::fromJSON(seqFiles)
 vcfEntries = vcfR::read.vcfR(vcfFile)
-vcfSamples = colnames(extract.gt(vcfEntries)) #all samples
+vcfSamples = colnames(vcfR::extract.gt(vcfEntries)) #all samples
 if(sampleName=="none") sampleName=vcfSamples[1] else sampleName=stringr::str_split(sampleName, ",")[[1]]
 if(outPrefix=="none") outPrefix=paste(vcfFile,"meta",sep=".")
 vcfMetaData = vcfR::vcfR2tidy( vcfEntries )$meta
@@ -198,17 +204,23 @@ for(vs in sampleName) { #vs="NA12878"
   me_seqs = sapply(stringr::str_split(tmpSoloData$MEINFO[!is.na(tmpSoloData$MEINFO)], ","), "[", 1)
   #exclude mobile elements without a sequence
   vcfMetaData = lapply(seq.int(nrow(tmpSoloData)), vcf_to_meta, vcf=tmpSoloData)
-  vcfMetaTable = as.data.frame(do.call("rbind", vcfMetaData))
-  vcfMetaTable$vid = seq.int(nrow(vcfMetaTable))
-  colnames(vcfMetaTable) = toupper(colnames(vcfMetaTable))
-  vcfMetaTable = vcfMetaTable[, c("VID","MID", "VARFREQ", "VARHAP",	"VARCHR",	"VARPOS",	"VARDEL",	"VARDELSIZE",	"VARINS",	"VARINSSEQ")] #order it correctly
+  tmpVcfMetaTable = as.data.frame(do.call("rbind", vcfMetaData))
+  tmpVcfMetaTable$vid = seq.int(nrow(tmpVcfMetaTable))
+  colnames(tmpVcfMetaTable) = toupper(colnames(tmpVcfMetaTable))
+  tmpVcfMetaTable = apply(tmpVcfMetaTable,2,as.character) #convert from list to character
+  vcfMetaTable = tibble::as_tibble(tmpVcfMetaTable[, c("VID","MID", "VARFREQ", "VARHAP",	"VARCHR",	"VARPOS",	"VARDEL",	"VARDELSIZE",	"VARINS",	"VARINSSEQ")]) #order it correctly
   vcfMetaTable$VID = paste("VAR",vcfMetaTable$VID,sep="_")
   colnames(vcfMetaTable)[1] = "#VID"
-  vcfMetaTable = apply(vcfMetaTable,2,as.character)
   write.table(vcfMetaTable, file=paste(outPrefix, vs, "var", sep="."), col.names=T, quote=F, sep="\t", row.names=F)
 }
 
 message("VCF2VARDONE")
+
+quit()
+
+# this homo table has DEL, LINE1, ALU, SVA, CNV, INS, DUP events
+# find homo del
+# find homo dup, all cn=2, remove cn=0
 
 # "DUP" "CNV"
 # "DEL"       "DEL_ALU"   "INV"       "INS"       "DEL_LINE1"
