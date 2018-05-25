@@ -93,3 +93,11 @@
   nohup sh -c "$HOME/setup/subread-1.6.1-source/bin/featureCounts -F SAF -a NA12878_1KG_SV.vcf.NA12878.homo.dup.saf -o NA12878_1KG_SV.vcf.NA12878.homo.dup.50%.readcount.fct -T 32 NA12878_1KG_SV.vcf.NA12878.lib1.50%.sorted.bam && echo runtime=$SECONDS" >dup.50%.count.log &
   nohup sh -c "$HOME/setup/subread-1.6.1-source/bin/featureCounts -F SAF -a NA12878_1KG_SV.vcf.NA12878.homo.dup.saf -o NA12878_1KG_SV.vcf.NA12878.homo.dup.25%.readcount.fct -T 32 NA12878_1KG_SV.vcf.NA12878.lib1.25%.sorted.bam && echo runtime=$SECONDS" >dup.25%.count.log &
   nohup sh -c "$HOME/setup/subread-1.6.1-source/bin/featureCounts -F SAF -a NA12878_1KG_SV.vcf.NA12878.homo.dup.saf -o NA12878_1KG_SV.vcf.NA12878.homo.dup.10%.readcount.fct -T 32 NA12878_1KG_SV.vcf.NA12878.lib1.10%.sorted.bam && echo runtime=$SECONDS" >dup.10%.count.log &
+
+  #separate ground truth events by four types: DEL, INS, DUP, INV
+  grep -v "#" NA12878_1KG_SV.vcf.NA12878.groundtruth.bed | grep DEL >NA12878_1KG_SV.vcf.NA12878.groundtruth.del.bed #deletion
+  grep -v "#" NA12878_1KG_SV.vcf.NA12878.groundtruth.bed | grep DUP >NA12878_1KG_SV.vcf.NA12878.groundtruth.dup.bed #duplication
+  grep -v "#" NA12878_1KG_SV.vcf.NA12878.groundtruth.bed | grep INV >NA12878_1KG_SV.vcf.NA12878.groundtruth.inv.bed #inversion
+  grep -v "#" NA12878_1KG_SV.vcf.NA12878.groundtruth.bed | grep "INS\|ALU\|SVA\|LINE" | grep -v "DEL" >NA12878_1KG_SV.vcf.NA12878.groundtruth.ins.bed #domestic and foreign insertion
+  grep -v "#" NA12878_1KG_SV.vcf.NA12878.groundtruth.bed | grep "CNV" | grep human >>NA12878_1KG_SV.vcf.NA12878.groundtruth.dup.bed #CNV copy gain, go to DUP
+  grep -v "#" NA12878_1KG_SV.vcf.NA12878.groundtruth.bed | grep "CNV" | grep -v human >>NA12878_1KG_SV.vcf.NA12878.groundtruth.del.bed #CNV copy loss, go to DEL
