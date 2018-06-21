@@ -54,26 +54,23 @@ INTRODUCTION
   SVEngine documentation is on wiki and it is available:
   http://bitbucket.org/charade/svengine/wiki
 
-TRYOUT
-------------
+DOCKER (Platform Indepedent)
+-------------------------------
 
-  An AWS EC2 instance and a preconfigured virtual machine are available for trying out SVEngine without installation efforts.
+  Due to the multiple R and Python dependencies involved,
+  the easiest way to use SVEngine is by the provided docker image build file.
+  A Dockerfile is provided to build SVEngine-enabled image from a standard Ubuntu docker image.
+  If you are not familiar with Docker, it is a container platform widely used in industry/academia. 
+  Here is the link to the Docker community:
+    `docker community <https://www.docker.com>`_ .
+  If you have a docker server running, 
+  just need to download the Dockerfile from: 
+    `dockerfile <https://bitbucket.org/charade/svengine/raw/master/Dockerfile>`_
+  into $your_swan_container and run:
 
-  *AWS*:
+  ::
 
-    SVEngine is available for tryout in a live Amazon EC2 instance.
-    Simply log on with SSH and find the package located in ~/setup/svengine .
-
-    .. code::
-
-      ssh bkd@ec2-54-202-133-252.us-west-2.compute.amazonaws.com # secret is the same as user
-
-  Testing data and scripts are available in ~/setup/svengine/test. Run ./clean.sh to clean up the directory first. Examples are offered and explained in `Examples <https://bitbucket.org/charade/svengine/wiki/Example>`__ .
-
-  *VirtualMachine*:
-
-    The Amazon Machine Image (ami) of the above EC2 instance is downloadable from Amazon S3 bucket to run locally.
-    https://s3-us-west-2.amazonaws.com/lixiabucket/svengineDemo.ova . The usage is the same as above.
+    docker build --no-cache $your_swan_container
 
 INSTALL
 ------------
