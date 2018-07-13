@@ -47,7 +47,7 @@
 #include "kseq.h"
 KSEQ_INIT(gzFile, gzread)
 
-#define PACKAGE_VERSION "0.3.1-r13"
+#define PACKAGE_VERSION "1.0.0"
 
 const uint8_t nst_nt4_table[256] = {
 	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
@@ -383,11 +383,11 @@ void wgsim_core(FILE *fpout1, FILE *fpout2, const char *fn, int is_hap, uint64_t
 static int simu_usage()
 {
 	fprintf(stderr, "\n");
-	fprintf(stderr, "Program: wgsim (short read simulator)\n");
+	fprintf(stderr, "Program: xwgsim (short read simulator)\n");
 	fprintf(stderr, "Version: %s\n", PACKAGE_VERSION);
-	fprintf(stderr, "Contact: Heng Li <lh3@sanger.ac.uk>\n\n");
-	fprintf(stderr, "Usage:   wgsim [options] <in.ref.fa> <out.read1.fq> <out.read2.fq>\n\n");
-	fprintf(stderr, "Options: -e FLOAT      base error rate [%.3f]\n", ERR_RATE);
+	fprintf(stderr, "Contact: Li Xia <l.c.xia@stanford.edu>\n\n");
+	fprintf(stderr, "Usage:   xwgsim [options] <in.ref.fa> <out.read1.fq> <out.read2.fq>\n\n");
+	fprintf(stderr, "wgsim:   -e FLOAT      base error rate [%.3f]\n", ERR_RATE);
 	fprintf(stderr, "         -d INT        outer distance between the two ends [500]\n");
 	fprintf(stderr, "         -s INT        standard deviation [50]\n");
 	fprintf(stderr, "         -N INT        number of read pairs [1000000]\n");
@@ -399,7 +399,7 @@ static int simu_usage()
 	fprintf(stderr, "         -S INT        seed for random generator [-1]\n");
 	fprintf(stderr, "         -A FLOAT      disgard if the fraction of ambiguous bases higher than FLOAT [%.2f]\n", MAX_N_RATIO);
 	fprintf(stderr, "         -h            haplotype mode\n");
-	fprintf(stderr, "xOptions:-l INT        ligation size\n");
+	fprintf(stderr, "xwgsim:  -l INT        ligation size\n");
 	fprintf(stderr, "\n");
 	return 1;
 }
