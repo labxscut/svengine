@@ -57,8 +57,8 @@ RUN cd $HOME/setup/svengine/test && ./clean.sh && ./test_dep.sh
 RUN cd $HOME/setup/svengine && python setup.py install
 
 ### run test scripts ###
-#RUN export "PATH=$PATH:$HOME/bin" && cd $HOME/setup/svengine/test && ./test_mf.sh
-#RUN export "PATH=$PATH:$HOME/bin" && cd $HOME/setup/svengine/test && ./test_tv.sh
+RUN export "PATH=$PATH:$HOME/bin" && cd $HOME/setup/svengine/test && ./test_mf.sh
+RUN export "PATH=$PATH:$HOME/bin" && cd $HOME/setup/svengine/test && ./test_tv.sh
 
 ### git clone tests ###
 #dockerize OK
