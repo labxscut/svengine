@@ -1,3 +1,4 @@
+#!/bin/bash
 ### A simple sanity checking script for mutforge ###
 	# you can test even before installation
 	# please run test_mf.sh /path/to/your/svengine/svengine

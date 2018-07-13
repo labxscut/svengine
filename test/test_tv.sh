@@ -1,3 +1,4 @@
+#!/bin/bash
 ### A simple sanity checking script for tree2var ###
 	# you can test even before installation
 	# please run test_tv.sh /path/to/your/svengine/svengine

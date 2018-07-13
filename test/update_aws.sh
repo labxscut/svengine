@@ -1,3 +1,4 @@
+#!/bin/bash
 #configure AWS_PATH if needed
 #export AWS_PATH="/home/bkd/.local/bin/"
 #export PATH=$AWS_PATH:$PATH
