@@ -49,9 +49,11 @@
 FROM charade/xlibbox:basic
 RUN apt-get update
 
-### install svengine ###
+### avoid RPC error with https ###
 RUN git config --global http.sslVerify false
 RUN git config --global http.postBuffer 1048576000
+
+### install svengine ###
 RUN cd $HOME/setup && git clone --verbose https://charade@bitbucket.org/charade/svengine.git
 RUN cd $HOME/setup/svengine/test && ./clean.sh && ./test_dep.sh
 RUN cd $HOME/setup/svengine && python setup.py install
