@@ -8,32 +8,29 @@ import os, sys, subprocess, ConfigParser
 
 doclines=__doc__.splitlines()
 
-#install bwa, samtools, bedtools, dwgsim
-#all these are bundled with SVEngine, no separate download
+#install bwa, samtools, bedtools, xwgsim
+#all these are now bundled with SVEngine, no separate download
 
 """samtools"""
 
 print "cd samtools && make"
 os.system("cd samtools && make")
-print "cp samtools/samtools %s" % sys.prefix
+print "cp samtools/samtools %s/bin" % sys.prefix
 os.system("cp samtools/samtools %s/bin" % sys.prefix)
 
 """bwa"""
 
 print "cd bwa && make"
 os.system("cd bwa && make")
-print "cp bwa/bwa %s" % sys.prefix
+print "cp bwa/bwa %s/bin" % sys.prefix
 os.system("cp bwa/bwa %s/bin" % sys.prefix)
 
-"""dwgsim"""
+"""xwgsim"""
 
-if not os.path.exists("dwgsim/samtools"):  
-	print "cp -r samtools dwgsim/"
-	os.system("cp -r samtools dwgsim/")
-print "cd dwgsim && make"
-os.system("cd dwgsim && make")
-print "cp dwgsim/dwgsim %s" % sys.prefix
-os.system("cp dwgsim/dwgsim %s/bin" % sys.prefix)
+print "cd xwgsim && gcc -g -O2 -Wall -o xwgsim xwgsim.c -lz -lm"
+os.system("cd xwgsim && gcc -g -O2 -Wall -o xwgsim xwgsim.c -lz -lm")
+print "cp xwgsim/xwgsim %s/bin" % sys.prefix
+os.system("cp xwgsim/xwgsim %s/bin" % sys.prefix)
 
 """bedtools"""
 
@@ -57,7 +54,7 @@ dist=setup(name="svengine",
     install_requires=["python >= 2.7","cython >= 0.23","pandas >= 0.16","pybedtools >= 0.6.9","pysam >= 0.7","biopython >= 0.1",],
     provides=['svengine'],
     py_modules = ['svengine.mf.mutforge'],
-		scripts = ['xwgsim/xwgsim'],
+    scripts = ['scripts/vcf2var.R'],
     data_files = [('',['README.rst','LICENSE'])],
     entry_points = { 
       'console_scripts': [

@@ -1,0 +1,7 @@
+Introduction
+============
+
+xwgsim is a small tool for simulating sequence reads from a reference genome
+base on wgsim. See README.wgsim for details.
+
+gcc -g -O2 -Wall -o xwgsim xwgsim.c -lz -lm
