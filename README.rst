@@ -187,11 +187,11 @@ BUG
 CONTACT
 ------------
 
-  Questions and comments shall be addressed to lixia at stanford dot edu.
+  Questions and comments shall be addressed to hanleeji at stanford dot edu and/or lixia at stanford dot edu.
 
 
 CITATIONS
 ---------
 
-  The SVEngine manuscript is under review. The preprint is available at BioRxiv:
-  https://www.biorxiv.org/content/early/2018/01/12/247536
+	1. SVEngine: an efficient and versatile simulator of genome structural variations with features of cancer clonal evolution. Li Charlie Xia  Dongmei Ai  Hojoon Lee  Noemi Andor  Chao Li  Nancy R Zhang  Hanlee P Ji. GigaScience, 2018, giy081 (https://doi.org/10.1093/gigascience/giy081)
+
