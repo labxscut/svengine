@@ -13,10 +13,9 @@
    :height: 320px
    :width: 520px
 
-SVEngine: Allele Specific and Haplotype Aware Structural Variants Simulator
+|Logo| SVEngine: Allele Specific and Haplotype Aware Structural Variants Simulator
 ==================================================================================
 
-|Logo| 
 
 QUICK LINKS
 -----------
@@ -49,28 +48,31 @@ INTRODUCTION
 
   |Pipeline|
 
+Software
+-------------------------------------------
+
   Currently the package works for Linux (tested with Ubuntu) and Mac (tested with Homebrew).
   It might also work for Windows with Cygwin (not tested).
   SVEngine documentation is on wiki and it is available:
   http://bitbucket.org/charade/svengine/wiki
 
-DOCKER (Platform Indepedent)
--------------------------------
+DOCKER (Platform Indepedent and Preferred)
+---------------------------------------------
 
   Due to the multiple R and Python dependencies involved,
   the easiest way to use SVEngine is by the provided docker image build file.
   A Dockerfile is provided to build SVEngine-enabled image from a standard Ubuntu docker image.
   If you are not familiar with Docker, it is a container platform widely used in industry/academia. 
   Here is the link to the Docker community:
-    `docker community <https://www.docker.com>`_ .
+    docker community: https://www.docker.com
   If you have a docker server running, 
   just need to download the Dockerfile from: 
-    `dockerfile <https://bitbucket.org/charade/svengine/raw/master/Dockerfile>`_
-  into $your_swan_container and run:
+    dockerfile: https://bitbucket.org/charade/svengine/raw/master/Dockerfile
+  into $your_sve_container and run:
 
   ::
 
-    docker build --no-cache $your_swan_container
+    docker build --no-cache $your_sve_container
 
 INSTALL
 ------------
@@ -92,11 +94,6 @@ INSTALL
     An example dependency install script for Mac wth Homebrew is here:
 
       https://bitbucket.org/charade/svengine/raw/master/test/install_mac.sh
-
-  *Installation Free !*:
-
-    SVEngine can be used without installation as long as required commands are all in $PATH.
-    see `Examples <https://bitbucket.org/charade/svengine/wiki/Example>`__ and `Manuals <https://bitbucket.org/charade/svengine/wiki/Manual>`__ for more informations
 
   *Installation*
 
