@@ -190,5 +190,5 @@ CONTACT
 CITATIONS
 ---------
 
-	1. SVEngine: an efficient and versatile simulator of genome structural variations with features of cancer clonal evolution. Li Charlie Xia  Dongmei Ai  Hojoon Lee  Noemi Andor  Chao Li  Nancy R Zhang  Hanlee P Ji. GigaScience, 2018, giy081 (https://doi.org/10.1093/gigascience/giy081)
+	1. SVEngine: an efficient and versatile simulator of genome structural variations with features of cancer clonal evolution. Li Charlie Xia  Dongmei Ai  Hojoon Lee  Noemi Andor  Chao Li  Nancy R Zhang  Hanlee P Ji. GigaScience, 2018, giy081 (https://academic.oup.com/gigascience/advance-article/doi/10.1093/gigascience/giy081/5049476)
 
