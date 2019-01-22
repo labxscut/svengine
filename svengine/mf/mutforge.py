@@ -108,6 +108,7 @@ def run2cmd(cmd1,cmd2):
   return run1_info,run2_info
 
 def CountUnique(mylist):
+  # counts the unique items of a list and return the count list 
   h = {}
   for x in mylist: h[x] = h.get(x, 0) + 1
   return h
@@ -247,7 +248,7 @@ def main(args):
     hapseq=[pysam.Fastafile(hapfiles[0])]*nploidy
   elif len(hapfiles)==nploidy:
     hapseq=[pysam.Fastafile(hapfiles[i]) for i in range(0,nploidy)]
-    for ref in freseq:
+    for ref in hapseq:
       assert ref.lengths == hapseq[0].lengths, \
         "hapfile seqs must be of the same length cross haplos"
   else:
@@ -1214,18 +1215,25 @@ def maketid(stretches,varstretch):
 #(6, [2, 0, 1, 1, 2, 0, 0, 0, 0, 1])
 
 def expanddist(diststring, cnt):
+  # expand the distribution string into a real number distribution with the same cnt
+  # return the uniques as distribution result
   dist=diststring.split('_')
   uniques = {}
-  new_cnt = 0
+
   if dist[0] == 'fix':
+    #The length could be equal prob multinormial multi(size1, size2, ...) : 
+    #fix_size1_size2_...
+    #here size1 and size2 has equal probability, thus has to reweight
     values = [ int(x) if isint(x) else float(x) for x in dist[1:len(dist)] ]
     uniques = CountUnique(values)
     sorted_uniques = sorted(uniques.items(), key=operator.itemgetter(1)) 
     #increasing order sorting of values
     nvalue = len(values)
     nunique = len(uniques)
+    #this is a reweighting process, reduce each key
     amp = cnt/nvalue
     rem = cnt-amp*nvalue
+    new_cnt = 0 #make sure the reweighting process does not change the total count
     for item in sorted_uniques:
       key = item[0]
       if rem>0:
@@ -1239,13 +1247,14 @@ def expanddist(diststring, cnt):
     assert new_cnt == cnt
 
   elif dist[0] == 'nori':
-    #create cnt normal integer; 
-    mean = int(dist[1]) 
+    #create cnt as approximately normally distributed integers; 
+    #assumes mean >> 0
+    mean = int(dist[1])
     sd = int(dist[2])
     values = [ random.gauss(mean, sd) for i in xrange(0,cnt) ]
-    values = [ mean if v <= 0 else int(v) for v in values ]
+    values = [ mean if v <= 0 else int(v) for v in values ] 
+    #there is a small probability got counts<0, manually assign them to mean
     uniques = CountUnique(values)
-    assert new_cnt == cnt
 
   elif dist[0] == 'norf':
     #create cnt normal floats; 
@@ -1253,7 +1262,6 @@ def expanddist(diststring, cnt):
     values = [ random.gauss(mean, sd) for i in xrange(0,cnt) ]
     values = [ mean if v<=0 else v for v in values ]
     uniques = CountUnique(values)
-    assert new_cnt == cnt
 
   elif dist[0] == 'unii':
     #create cnt uniform integer; 
@@ -1261,14 +1269,12 @@ def expanddist(diststring, cnt):
     values = [ random.uniform(low, up) for i in xrange(0,cnt) ]
     values = [ int(v) for v in values ]
     uniques = CountUnique(values)
-    assert new_cnt == cnt
 
   elif dist[0] == 'unif':
     #create cnt uniform floats; 
     low = float(dist[1]); up = float(dist[2])
     values = [ random.uniform(low, up) for i in xrange(0,cnt) ]
     uniques = CountUnique(values)
-    assert new_cnt == cnt
 
   elif dist[0] == 'expi':
     #create cnt uniform integer; 
@@ -1276,7 +1282,6 @@ def expanddist(diststring, cnt):
     values = [ random.expovariate(lam) for i in xrange(0,cnt) ]
     values = [ int(1/lam) if v<=0 else int(v) for v in values ]
     uniques = CountUnique(values)
-    assert new_cnt == cnt
 
   elif dist[0] == 'expf':
     #create cnt uniform float; 
@@ -1284,7 +1289,6 @@ def expanddist(diststring, cnt):
     values = [ random.expovariate(lam) for i in xrange(0,cnt) ]
     values = [ 1/lam if v<=0 else v for v in values ]
     uniques = CountUnique(values)
-    assert new_cnt == cnt
 
   else:
     raise Exception("can't expand specified distribution!")

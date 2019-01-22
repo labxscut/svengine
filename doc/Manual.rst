@@ -30,9 +30,9 @@ The command implements a parallelized algorithm that divides template genome int
     is viable
     
     positional arguments:
-      hapfiles              inputfile of hap file(s), required
-      parfile               inputfile of library-wise parameters, required
-      reffile               inputfile of ref file(s), required
+      hapfiles              inputfile of hap file(s), separated by ":" [required]
+      parfile               inputfile of library-wise parameters [required]
+      reffile               inputfile of ref file(s) [required]
     
     optional arguments:
       -h, --help            show this help message and exit
