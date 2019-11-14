@@ -1,4 +1,5 @@
-cp Home.rst ../wiki
-cp FAQ.rst ../wiki
-cp Manual.rst ../wiki
-cp Example.rst ../wiki
+#!/bin/bash
+cp -f Home.rst ../wiki
+cp -f FAQ.rst ../wiki
+cp -f Manual.rst ../wiki
+cp -f Example.rst ../wiki
