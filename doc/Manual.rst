@@ -65,7 +65,7 @@ The command implements a parallelized algorithm that divides template genome int
                             merging (default: 4000 )
       -d TMPDIR, --tmpdir TMPDIR
                             root dir for keeping temporary files, default (last 4
-                            digits random): /Users/charlie/svetmp_AMeF
+                            digits random): /Users/charlie/svetmp_gpWT
       -s SKIPFILE, --skipfile SKIPFILE
                             inputfile of regions to skip, e.g. gap regions in bed
                             format
