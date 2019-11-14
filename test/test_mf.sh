@@ -24,21 +24,21 @@
 
 	### testing using a META file (.meta) input or a VAR file (.var) input
 	echo "### testing using a META file (.meta) input"
-  PYTHONPATH=$SVENGINEPATH python -B -m mf.mutforge -n 1 -b 100000 -f 10000 -e 100000 -m test_mf.meta example.fna simple.par example.fna
+  PYTHONPATH=$SVENGINEPATH python2 -B -m mf.mutforge -n 1 -b 100000 -f 10000 -e 100000 -m test_mf.meta example.fna simple.par example.fna
 	echo "### testing using a VAR file (.var) input"
-  PYTHONPATH=$SVENGINEPATH python -B -m mf.mutforge -n 1 -b 100000 -f 10000 -e 100000 -v test_mf.var example.fna simple.par example.fna
+  PYTHONPATH=$SVENGINEPATH python2 -B -m mf.mutforge -n 1 -b 100000 -f 10000 -e 100000 -v test_mf.var example.fna simple.par example.fna
 
   ### testing with multiple (16) process
   echo "### testing with multiple (16) process"
-  PYTHONPATH=$SVENGINEPATH python -B -m mf.mutforge -n 16 -b 100000 -f 10000 -e 100000 -m test_mf.meta example.fna simple.par example.fna
+  PYTHONPATH=$SVENGINEPATH python2 -B -m mf.mutforge -n 16 -b 100000 -f 10000 -e 100000 -m test_mf.meta example.fna simple.par example.fna
 
   ### testing output fasta, fastq or bam
   echo "### testing output fasta"
-  PYTHONPATH=$SVENGINEPATH python -B -m mf.mutforge -x fasta -n 1 -b 100000 -f 10000 -e 100000 -m test_mf.meta example.fna simple.par example.fna
+  PYTHONPATH=$SVENGINEPATH python2 -B -m mf.mutforge -x fasta -n 1 -b 100000 -f 10000 -e 100000 -m test_mf.meta example.fna simple.par example.fna
   echo "### testing output fastq"
-  PYTHONPATH=$SVENGINEPATH python -B -m mf.mutforge -x fastq -n 1 -b 100000 -f 10000 -e 100000 -m test_mf.meta example.fna simple.par example.fna
+  PYTHONPATH=$SVENGINEPATH python2 -B -m mf.mutforge -x fastq -n 1 -b 100000 -f 10000 -e 100000 -m test_mf.meta example.fna simple.par example.fna
   echo "### testing output bam"
-  PYTHONPATH=$SVENGINEPATH python -B -m mf.mutforge -x bam -n 1 -b 100000 -f 10000 -e 100000 -m test_mf.meta example.fna simple.par example.fna
+  PYTHONPATH=$SVENGINEPATH python2 -B -m mf.mutforge -x bam -n 1 -b 100000 -f 10000 -e 100000 -m test_mf.meta example.fna simple.par example.fna
   samtools index test_mf.lib1.bam
 
 	## output files:

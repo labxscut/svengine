@@ -24,7 +24,7 @@ export PVER=15.1
 wget https://pypi.python.org/packages/source/s/setuptools/setuptools-$PVER.tar.gz#md5=10407f6737d8dc37e5310e68c1f1f6ec
 tar -zxvf setuptools-$PVER.tar.gz
 cd setuptools-$PVER
-python setup.py install
+python2 setup.py install
 ~/usr/bin/easy_install cython
 #SVEngine
 git clone https://bitbucket.org:charade/svengine.git

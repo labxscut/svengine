@@ -30,9 +30,9 @@ The command implements a parallelized algorithm that divides template genome int
     is viable
     
     positional arguments:
-      hapfiles              inputfile of hap file(s), separated by ":" [required]
-      parfile               inputfile of library-wise parameters [required]
-      reffile               inputfile of ref file(s) [required]
+      hapfiles              inputfile of hap file(s), required
+      parfile               inputfile of library-wise parameters, required
+      reffile               inputfile of ref file(s), required
     
     optional arguments:
       -h, --help            show this help message and exit
@@ -65,7 +65,7 @@ The command implements a parallelized algorithm that divides template genome int
                             merging (default: 4000 )
       -d TMPDIR, --tmpdir TMPDIR
                             root dir for keeping temporary files, default (last 4
-                            digits random): /Users/charlie/svetmp_Wcfy
+                            digits random): /Users/charlie/svetmp_Puip
       -s SKIPFILE, --skipfile SKIPFILE
                             inputfile of regions to skip, e.g. gap regions in bed
                             format
@@ -107,6 +107,7 @@ The tree2var command implements a procedure that determines variant fractions fr
 -------------------------------------------------------------------------------------------
 
 $SVENGINEPKG/svengine/test/example.var.
+
 The VAR format is intended for specifying exact information for individual variants, which includes variant id, parent id (if it is part of a complex event, e.g., the deletion part within a translocation), fraction, ploidy, chromosome, starting position, and the sequence length to be deleted and/or the sequence content to be inserted.
 
 .. code:: bash
@@ -173,6 +174,7 @@ The VAR format is intended for specifying exact information for individual varia
     VAR_44  DUP_2   0.5     1       2       1974000 True    1000    True    example.fna,2:1974001-1975000,2,f
 
 $SVENGINEPKG/svengine/test/example.meta.
+
 The META format is intended for an easy higher-level control, allowing one to specify a desired meta distribution of variants, including variant type, and total number of events, size, allele fraction, and ploidy distributions per type. It is also possible to specify where and how to sample insertion sequence in the case of foreign insertion. For example, a user can easily request 100 deletions of size ranging from 100bp to 10kbp, of uniform allelic fraction distribution and fair coin Bernoulli distribution of homo- and heterozygosity by one line of test in the META file.  These parameters can be stipulated in a single line.
 
 .. code:: bash
@@ -262,7 +264,7 @@ The tree input to SVEngine is in standard NEWICK format  – a widely accepted f
 
     ((C1,C2) V5:0.8, ((C3,C4)V4:0.8, (C5,C6)V3:0.9) V2:0.6) V1:0.5;
 
-$SVENGINEPKG/svengine/test/egTree.newick.
+$SVENGINEPKG/svengine/test/egTree.var.
 
 .. code:: bash
 

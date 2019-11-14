@@ -1,5 +1,11 @@
 .. contents:: Navigator
 
+Sticky Note
+====================
+
+0. Always check the issues tab first! It has the most updated list of user questions and resolutions.
+----------------------------------------------------------------------------------------------------------
+
 Usage Related
 =============
 
@@ -34,3 +40,10 @@ Installation Related
 5. Why I get error, "Python.h not found", from installing of cython?
 -------------------------------------------------------------------------------------------------------------------------------------
   ANS: need to install python-dev on Linux. e.g. on Ubuntu try: sudo apt-get install python-dev 
+
+6. Why I get error, "ValueError: invalid literal for int() with base 10: '0-137-g83ce948\n'"
+-------------------------------------------------------------------------------------------------------------------------------------
+  ANS: this is because of a bug of pybedtools 0.8.0 reported at: https://github.com/daler/pybedtools/issues/284.
+  use "pip2 install -U pybedtools==0.7.0" downgrade to avoid this bug for now.
+
+

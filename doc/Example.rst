@@ -13,23 +13,22 @@ The scripts represent common analysis tasks with prepared input files.
 To run following examples:
 
   - Download and unzip SVEngine package or clone the source repository to $SVENGINEPATH.
-  - Download and unzip the full test data set `svengine.test.full.tgz: <https://s3-us-west-2.amazonaws.com/lixiabucket/svengine.test.full.tgz>`__ and place the data into $SVENGINEPATH/test
   - Export the $SVENGINEPATH to your SHELL: 'export SVENGINEPATH=$SVENGINEPATH'
   - Change directory into $SVENGINEPATH/test and run the test_dep.sh to make sure dependencies OK
-  - run test_fa.sh, test_mf.sh and test_tv.sh scripts for example tasks
+  - run test_mf.sh and test_tv.sh scripts for example tasks
   - required input and output files were explained inline withe scripts and in this wiki
   - run clean.sh to clear outputs from previous runs
 
 An example SVEngine mutforge run 
 --------------------------------------------------
 
-To run this example, run the 'test_mf.sh' script in the 'test' subdir. Use 'clean.sh' to clean up the previous outputs first. A small test data set is required and provided within the test subdir, or it can be downloaded at: 
-`svengine.test.full.tgz: <https://s3-us-west-2.amazonaws.com/lixiabucket/svengine.test.full.tgz>`__
+To run this example, run the 'test_mf.sh' script in the 'test' subdir. Use 'clean.sh' to clean up the previous outputs first. A small test data set is required and provided within the test subdir: 
 
 $SVENGINEPATH/test/test_mf.sh
 
   .. code:: bash
 
+    #!/bin/bash
     ### A simple sanity checking script for mutforge ###
     	# you can test even before installation
     	# please run test_mf.sh /path/to/your/svengine/svengine
@@ -55,21 +54,21 @@ $SVENGINEPATH/test/test_mf.sh
     
     	### testing using a META file (.meta) input or a VAR file (.var) input
     	echo "### testing using a META file (.meta) input"
-      PYTHONPATH=$SVENGINEPATH python -m mf.mutforge -n 1 -b 100000 -f 10000 -e 100000 -m test_mf.meta example.fna simple.par example.fna
+      PYTHONPATH=$SVENGINEPATH python2 -B -m mf.mutforge -n 1 -b 100000 -f 10000 -e 100000 -m test_mf.meta example.fna simple.par example.fna
     	echo "### testing using a VAR file (.var) input"
-      PYTHONPATH=$SVENGINEPATH python -m mf.mutforge -n 1 -b 100000 -f 10000 -e 100000 -v test_mf.var example.fna simple.par example.fna
+      PYTHONPATH=$SVENGINEPATH python2 -B -m mf.mutforge -n 1 -b 100000 -f 10000 -e 100000 -v test_mf.var example.fna simple.par example.fna
     
       ### testing with multiple (16) process
       echo "### testing with multiple (16) process"
-      PYTHONPATH=$SVENGINEPATH python -m mf.mutforge -n 16 -b 100000 -f 10000 -e 100000 -m test_mf.meta example.fna simple.par example.fna
+      PYTHONPATH=$SVENGINEPATH python2 -B -m mf.mutforge -n 16 -b 100000 -f 10000 -e 100000 -m test_mf.meta example.fna simple.par example.fna
     
       ### testing output fasta, fastq or bam
       echo "### testing output fasta"
-      PYTHONPATH=$SVENGINEPATH python -m mf.mutforge -x fasta -n 1 -b 100000 -f 10000 -e 100000 -m test_mf.meta example.fna simple.par example.fna
+      PYTHONPATH=$SVENGINEPATH python2 -B -m mf.mutforge -x fasta -n 1 -b 100000 -f 10000 -e 100000 -m test_mf.meta example.fna simple.par example.fna
       echo "### testing output fastq"
-      PYTHONPATH=$SVENGINEPATH python -m mf.mutforge -x fastq -n 1 -b 100000 -f 10000 -e 100000 -m test_mf.meta example.fna simple.par example.fna
+      PYTHONPATH=$SVENGINEPATH python2 -B -m mf.mutforge -x fastq -n 1 -b 100000 -f 10000 -e 100000 -m test_mf.meta example.fna simple.par example.fna
       echo "### testing output bam"
-      PYTHONPATH=$SVENGINEPATH python -m mf.mutforge -x bam -n 1 -b 100000 -f 10000 -e 100000 -m test_mf.meta example.fna simple.par example.fna
+      PYTHONPATH=$SVENGINEPATH python2 -B -m mf.mutforge -x bam -n 1 -b 100000 -f 10000 -e 100000 -m test_mf.meta example.fna simple.par example.fna
       samtools index test_mf.lib1.bam
     
     	## output files:
@@ -84,13 +83,13 @@ $SVENGINEPATH/test/test_mf.sh
 An example SVEngine tree2var run 
 --------------------------------------------------
 
-To run this example, run the 'test_tv.sh' script in the 'test' subdir. Use 'clean.sh' to clean up the previous outputs first. A small test data set is required and provided within the test subdir, or it can be downloaded at: 
-`svengine.test.full.tgz: <https://s3-us-west-2.amazonaws.com/lixiabucket/svengine.test.full.tgz>`__
+To run this example, run the 'test_tv.sh' script in the 'test' subdir. Use 'clean.sh' to clean up the previous outputs first. A small test data set is required and provided within the test subdir: 
 
 $SVENGINEPATH/test/test_tv.sh
 
   .. code:: bash
 
+    #!/bin/bash
     ### A simple sanity checking script for tree2var ###
     	# you can test even before installation
     	# please run test_tv.sh /path/to/your/svengine/svengine
@@ -119,7 +118,7 @@ $SVENGINEPATH/test/test_tv.sh
     
     	### preparing a new VAR file based on egTree frequencies input
       echo "### preparing a new VAR file based on egTree frequencies input"
-      PYTHONPATH=$SVENGINEPATH python -m mf.tree2var -p egTree.var egTree.newick
+      PYTHONPATH=$SVENGINEPATH python2 -B -m mf.tree2var -p egTree.var egTree.newick
     
     	## output files:
       # egTree.tree.var #VAR output to be used as input for simultation by mutforge
@@ -136,7 +135,7 @@ $SVENGINEPATH/test/test_tv.sh
     
     	### simulate clonal evolution using tree-based VAR file by mutforge
       echo "### simulate clonal evolution using tree-based VAR file by mutforge"
-      PYTHONPATH=$SVENGINEPATH python -m mf.mutforge -x bam -n 16 -b 100000 -f 10000 -e 1000000 -v egTree.tree.var -s example.gap.bed example.fna egTree.par example.fna
+      PYTHONPATH=$SVENGINEPATH python2 -B -m mf.mutforge -x bam -n 16 -b 100000 -f 10000 -e 1000000 -v egTree.tree.var -s example.gap.bed example.fna egTree.par example.fna
       samtools index egTree.tree.lib1.bam
     
       ## output files:
@@ -161,23 +160,23 @@ $SVENGINEPATH/test/install_mac.sh
     
     ## install python
     ##   outside a virtual python
-    brew install pythona
-    pip install virtualenv #optional
+    brew install python2
+    pip2 install virtualenv #optional
     ## install python dependencies
     ##   optionally, inside a virtual python
-    pip install -U scipy
-    pip install -U pysam
-    pip install -U biopython
-    pip install -U pybedtools
-    pip install -U pandas
-    pip install -U dendropy
-    pip install -U cython
-    pip install -U tables
+    pip2 install -U scipy
+    pip2 install -U pysam
+    pip2 install -U biopython
+    pip2 install -U pybedtools
+    pip2 install -U pandas
+    pip2 install -U dendropy
+    pip2 install -U cython
+    pip2 install -U tables
     ## install svengine
     git clone https://bitbucket.org/charade/svengine.git
     git submodule update --init --recursive
     cd svengine
-    python setup.py install
+    python2 setup.py install
 
 Examples of spiked-in events:
 ----------------------------------------------------------- 

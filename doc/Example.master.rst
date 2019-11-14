@@ -13,7 +13,6 @@ The scripts represent common analysis tasks with prepared input files.
 To run following examples:
 
   - Download and unzip SVEngine package or clone the source repository to $SVENGINEPATH.
-  - Download and unzip the full test data set `svengine.test.full.tgz: <REPLACE_WITH_DOWNLOADLINK>`__ and place the data into $SVENGINEPATH/test
   - Export the $SVENGINEPATH to your SHELL: 'export SVENGINEPATH=$SVENGINEPATH'
   - Change directory into $SVENGINEPATH/test and run the test_dep.sh to make sure dependencies OK
   - run test_mf.sh and test_tv.sh scripts for example tasks
@@ -23,8 +22,7 @@ To run following examples:
 An example SVEngine mutforge run 
 --------------------------------------------------
 
-To run this example, run the 'test_mf.sh' script in the 'test' subdir. Use 'clean.sh' to clean up the previous outputs first. A small test data set is required and provided within the test subdir, or it can be downloaded at: 
-`svengine.test.full.tgz: <REPLACE_WITH_DOWNLOADLINK>`__
+To run this example, run the 'test_mf.sh' script in the 'test' subdir. Use 'clean.sh' to clean up the previous outputs first. A small test data set is required and provided within the test subdir: 
 
 $SVENGINEPATH/test/test_mf.sh
 
@@ -36,8 +34,7 @@ REPLACE_WITH_SVENGINETESTMF
 An example SVEngine tree2var run 
 --------------------------------------------------
 
-To run this example, run the 'test_tv.sh' script in the 'test' subdir. Use 'clean.sh' to clean up the previous outputs first. A small test data set is required and provided within the test subdir, or it can be downloaded at: 
-`svengine.test.full.tgz: <REPLACE_WITH_DOWNLOADLINK>`__
+To run this example, run the 'test_tv.sh' script in the 'test' subdir. Use 'clean.sh' to clean up the previous outputs first. A small test data set is required and provided within the test subdir: 
 
 $SVENGINEPATH/test/test_tv.sh
 

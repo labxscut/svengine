@@ -93,7 +93,7 @@ python_deps=(pysam pybedtools pandas cython dendropy Bio)
 failed_python_deps="Failed Python Dependencies: "
 for d in ${python_deps[*]}; do 
   echo -n $d:
-  cmd="python -c \"import $d\" 1>>testDependency.log 2>&1"
+  cmd="python2 -c \"import $d\" 1>>testDependency.log 2>&1"
   echo $cmd | bash
   if [[ ! $? -eq 0 ]]; then
     echo [FAILED]
