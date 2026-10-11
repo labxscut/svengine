@@ -54,7 +54,7 @@ RUN git config --global http.sslVerify false
 RUN git config --global http.postBuffer 1048576000
 
 ### install svengine ###
-RUN cd $HOME/setup && git lfs clone --verbose https://bitbucket.org/charade/svengine.git
+RUN cd $HOME/setup && git lfs clone --verbose https://github.com/labxscut/svengine.git
 RUN cd $HOME/setup/svengine/test && ./clean.sh && ./test_dep.sh
 RUN cd $HOME/setup/svengine && python setup.py install
 
@@ -64,6 +64,6 @@ RUN export "PATH=$PATH:$HOME/bin" && cd $HOME/setup/svengine/test && ./test_tv.s
 
 ### git clone tests ###
 #dockerize OK
-#RUN cd $HOME/setup && git clone --verbose https://charade@bitbucket.org/charade/dockerize.git
+#RUN cd $HOME/setup && git clone --verbose https://github.com/labxscut/dockerize.git
 #correlations OK
 #RUN cd $HOME/setup && git clone --verbose https://github.com/chaelir/correlations.git

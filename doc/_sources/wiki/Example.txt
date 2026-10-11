@@ -6,7 +6,7 @@ Examples
 A simple example run using *fasforge* :
 --------------------------------------- 
 
-`test/test_fa.sh: <https://bitbucket.org/charade/svengine/src/master/test/test_fa.sh>`_
+`test/test_fa.sh: <../../../test/test_fa.sh>`_
 
 ::
 
@@ -38,7 +38,7 @@ A simple example run using *fasforge* :
 A simple example run using *mutforge* :
 ---------------------------------------
 
-`test/test_mf.sh: <https://bitbucket.org/charade/svengine/src/master/test/test_mf.sh>`_
+`test/test_mf.sh: <../../../test/test_mf.sh>`_
 
 ::
 	
@@ -92,7 +92,7 @@ Example of SVEngine install (no root with vritualenv):
 	pip install -U cython
 	
 	##Download and install SVengine
-	git clone https://bitbucket.org/charade/svengine.git
+	git clone https://github.com/labxscut/svengine.git
 	cd svengine
 	python setup.py install
 
@@ -129,7 +129,7 @@ A fully automated script to setup SVEngine on a CentOS machine which I don't hav
 	python setup.py install
 	~/usr/bin/easy_install cython
 	#SVEngine
-	git clone https://bitbucket.org:charade/svengine.git
+	git clone https://github.com/labxscut/svengine.git
 	cd svengine
 	git checkout devel
 	~/usr/bin/easy_install .
@@ -141,51 +141,51 @@ Examples of spiked-in events:
 
 Example Deletion (DEL):
 
-.. image:: https://bytebucket.org/charade/svengine/wiki/images/DEL.png
+.. image:: ../../images/DEL.png
 	 :width: 400px
 
 Example Duplication (DUP):
 
-.. image:: https://bytebucket.org/charade/svengine/wiki/images/DUP.png
+.. image:: ../../images/DUP.png
 	 :width: 400px
 
 Example Domestic Insertion (DINS):
 
-.. image:: https://bytebucket.org/charade/svengine/wiki/images/DINS.png
+.. image:: ../../images/DINS.png
 	 :width: 400px
 
 
 Example Foreign Insertion (FINS):
 
-.. image:: https://bytebucket.org/charade/svengine/wiki/images/FINS.png
+.. image:: ../../images/FINS.png
 	 :width: 400px
 
 Example Inversion (INV):
 
-.. image:: https://bytebucket.org/charade/svengine/wiki/images/INV.png
+.. image:: ../../images/INV.png
 	 :width: 400px
 
 Example Inverted Domestic Insersion (IDINS):
 
-.. image:: https://bytebucket.org/charade/svengine/wiki/images/IDINS.png
+.. image:: ../../images/IDINS.png
 	 :width: 400px
 
 Example Inverted Duplication (IDUP):
 
-.. image:: https://bytebucket.org/charade/svengine/wiki/images/IDUP.png
+.. image:: ../../images/IDUP.png
 	 :width: 400px
 
 Example Translocation (TRA):
 
-.. image:: https://bytebucket.org/charade/svengine/wiki/images/TRAD.png
+.. image:: ../../images/TRAD.png
 	 :width: 400px
-.. image:: https://bytebucket.org/charade/svengine/wiki/images/TRAI.png
+.. image:: ../../images/TRAI.png
 	 :width: 400px
 
 Example Inverted Translocation (ITRA):
 
-.. image:: https://bytebucket.org/charade/svengine/wiki/images/ITRAD.png
+.. image:: ../../images/ITRAD.png
 	 :width: 400px
-.. image:: https://bytebucket.org/charade/svengine/wiki/images/ITRAI.png
+.. image:: ../../images/ITRAI.png
 	 :width: 400px
 

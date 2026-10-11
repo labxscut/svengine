@@ -11,7 +11,7 @@ Two mode of running;
 1. Example PAR file
 -------------------
 
-The `test/example.par <https://bitbucket.org/charade/svengine/src/master/test/example.par>`_ file shows an example of library parameter file, in which multiple libraries can be defined. It is a standard python config file with only one section 'xwgsim'. The defined values are either simple variable type, list or dictionary objects in python. Under the section: **nlibrary** defines number of libraries (int); For these libraries: **libnames** defines names (list); **coverage** defines coverage (dict); **isize** defines insert size distribution (dict of list of lists); **read1/2** defines read length.
+The `test/example.par <../../../test/example.par>`_ file shows an example of library parameter file, in which multiple libraries can be defined. It is a standard python config file with only one section 'xwgsim'. The defined values are either simple variable type, list or dictionary objects in python. Under the section: **nlibrary** defines number of libraries (int); For these libraries: **libnames** defines names (list); **coverage** defines coverage (dict); **isize** defines insert size distribution (dict of list of lists); **read1/2** defines read length.
 
   ::
 
@@ -30,7 +30,7 @@ The `test/example.par <https://bitbucket.org/charade/svengine/src/master/test/ex
 2. Example VAR file
 -------------------
 
-The `test/example.var <https://bitbucket.org/charade/svengine/src/master/test/example.var>`_ file shows an example of variant file, in which specific structural variants can be defined. It is a tab delimited txt file and each row defines one event. Columns defined for this distribution are: **VID** is index of this variant; **MID** index of this variant's parent event (an insertion and deletion of the same TRA shall have the same MID); **VARFREQ** the allele fraction of this event; **VARHAP** zygosity of this event; **VARCHR** chromosome of this event; **VARPOS** first position of this event; **VARDEL** if a deletion is in this event; **VARDELSIZE** size of deleted sequence; **VARDEL** if a insertion is in this event; **VARINSSEQ** what sequence is inserted (formatted as "filename, chromosomename:startPosition-endPosition,duplicatedNumber,forward/reverseComplemented); 
+The `test/example.var <../../../test/example.var>`_ file shows an example of variant file, in which specific structural variants can be defined. It is a tab delimited txt file and each row defines one event. Columns defined for this distribution are: **VID** is index of this variant; **MID** index of this variant's parent event (an insertion and deletion of the same TRA shall have the same MID); **VARFREQ** the allele fraction of this event; **VARHAP** zygosity of this event; **VARCHR** chromosome of this event; **VARPOS** first position of this event; **VARDEL** if a deletion is in this event; **VARDELSIZE** size of deleted sequence; **VARDEL** if a insertion is in this event; **VARINSSEQ** what sequence is inserted (formatted as "filename, chromosomename:startPosition-endPosition,duplicatedNumber,forward/reverseComplemented); 
   
   ::
 
@@ -83,7 +83,7 @@ The `test/example.var <https://bitbucket.org/charade/svengine/src/master/test/ex
 3. Example META file
 --------------------
 
-The `test/example.meta <https://bitbucket.org/charade/svengine/src/master/test/example.meta>`_ file shows an example of meta-variant file, in which genomic distribution of structural variants can be defined. It is a tab delimited txt file and each row defines one distribution. Columns defined for this distribution are: **METATYPE** is event type:
+The `test/example.meta <../../../test/example.meta>`_ file shows an example of meta-variant file, in which genomic distribution of structural variants can be defined. It is a tab delimited txt file and each row defines one distribution. Columns defined for this distribution are: **METATYPE** is event type:
       i) DEL (deletion)
       ii) DUP (tandem duplication)
       iii) DIN (domestic insertion i.e. distant duplication, which is 1 bp or more bp apart each other)
@@ -121,7 +121,7 @@ The `test/example.meta <https://bitbucket.org/charade/svengine/src/master/test/e
 4. fasforge
 -----------
 
-  The `svengine/mf/fasforge.py <https://bitbucket.org/charade/svengine/src/master/svengine/mf/fasforge.py>`_ script does faster spike-in without locus-specific allele fraction and zygosity control. The input is **reffile** "hg19.fasta", **gapfile** and **parfile**. User can optionally specify **varfile**: spX.var or **metafile**: spX.meta. The output is BED file spX.out.bed and spX.out.var (recording exact events) plus spX.fnv (sequence after spike-in) plus spX.lib*.fq1/2 (fastq files for multiple libraries) plus spX.lib*.bam (bam files for multiple libraries). 
+  The `svengine/mf/fasforge.py <../../../svengine/mf/fasforge.py>`_ script does faster spike-in without locus-specific allele fraction and zygosity control. The input is **reffile** "hg19.fasta", **gapfile** and **parfile**. User can optionally specify **varfile**: spX.var or **metafile**: spX.meta. The output is BED file spX.out.bed and spX.out.var (recording exact events) plus spX.fnv (sequence after spike-in) plus spX.lib*.fq1/2 (fastq files for multiple libraries) plus spX.lib*.bam (bam files for multiple libraries). 
 
   ::
 
@@ -158,7 +158,7 @@ The `test/example.meta <https://bitbucket.org/charade/svengine/src/master/test/e
 5. mutforge
 -----------
 
-  The `svengine/mf/mutforge.py <https://bitbucket.org/charade/svengine/src/master/svengine/mf/mutforge.py>`_ script does sophisticated spike-in with locus-specific allele fraction and zygosity control. The input is **hapfiles** (n sequences for nploidity separated by commas), **reffile** (eg. "hg19.fasta"), **gapfile** and **parfile**. User can optionally specify **varfile**: spX.var or **metafile**: spX.meta. The output is BED file spX.out.bed and spX.out.var (recording exact events) plus spX.fnv (sequence after spike-in) plus spX.lib*.fq1/2 (fastq files for multiple libraries) plus spX.lib*.bam (bam files for multiple libraries).
+  The `svengine/mf/mutforge.py <../../../svengine/mf/mutforge.py>`_ script does sophisticated spike-in with locus-specific allele fraction and zygosity control. The input is **hapfiles** (n sequences for nploidity separated by commas), **reffile** (eg. "hg19.fasta"), **gapfile** and **parfile**. User can optionally specify **varfile**: spX.var or **metafile**: spX.meta. The output is BED file spX.out.bed and spX.out.var (recording exact events) plus spX.fnv (sequence after spike-in) plus spX.lib*.fq1/2 (fastq files for multiple libraries) plus spX.lib*.bam (bam files for multiple libraries).
 
   ::
 

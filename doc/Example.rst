@@ -1,4 +1,4 @@
-.. |TREE| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/TREE.png
+.. |TREE| image:: images/TREE.png
    :alt: TREE.png
    :width: 800px
 
@@ -173,7 +173,7 @@ $SVENGINEPATH/test/install_mac.sh
     pip2 install -U cython
     pip2 install -U tables
     ## install svengine
-    git clone https://bitbucket.org/charade/svengine.git
+    git clone https://github.com/labxscut/svengine.git
     git submodule update --init --recursive
     cd svengine
     python2 setup.py install
@@ -185,7 +185,7 @@ Examples of spiked-in events:
 
 Example Deletion (DEL):
 
-.. |DEL| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/DEL.png
+.. |DEL| image:: images/DEL.png
    :alt: DEL.png
    :width: 200px
 
@@ -193,7 +193,7 @@ Example Deletion (DEL):
 
 Example Duplication (DUP):
 
-.. |DUP| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/DUP.png
+.. |DUP| image:: images/DUP.png
    :alt: DUP.png
    :width: 200px
 
@@ -201,7 +201,7 @@ Example Duplication (DUP):
 
 Example Domestic Insertion (DINS):
 
-.. |DINS| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/DINS.png
+.. |DINS| image:: images/DINS.png
    :alt: DINS.png
    :width: 200px
 
@@ -209,7 +209,7 @@ Example Domestic Insertion (DINS):
 
 Example Foreign Insertion (FINS):
 
-.. |FINS| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/FINS.png
+.. |FINS| image:: images/FINS.png
    :alt: FINS.png
    :width: 200px
 
@@ -217,7 +217,7 @@ Example Foreign Insertion (FINS):
 
 Example Inversion (INV):
 
-.. |INV| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/INV.png
+.. |INV| image:: images/INV.png
    :alt: INV.png
    :width: 200px
 
@@ -225,7 +225,7 @@ Example Inversion (INV):
 
 Example Inverted Domestic Insersion (IDINS):
 
-.. |IDINS| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/IDINS.png
+.. |IDINS| image:: images/IDINS.png
    :alt: IDINS.png
    :width: 200px
 
@@ -233,7 +233,7 @@ Example Inverted Domestic Insersion (IDINS):
 
 Example Inverted Duplication (IDUP):
 
-.. |IDUP| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/IDUP.png
+.. |IDUP| image:: images/IDUP.png
    :alt: IDUP.png
    :width: 200px
 
@@ -241,10 +241,10 @@ Example Inverted Duplication (IDUP):
 
 Example Translocation (TRA):
 
-.. |TRAD| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/TRAD.png
+.. |TRAD| image:: images/TRAD.png
    :alt: TRAD.png
    :width: 200px
-.. |TRAI| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/TRAI.png
+.. |TRAI| image:: images/TRAI.png
    :alt: TRAI.png
    :width: 200px
 
@@ -253,10 +253,10 @@ Example Translocation (TRA):
 
 Example Inverted Translocation (ITRA):
 
-.. |ITRAD| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/ITRAD.png
+.. |ITRAD| image:: images/ITRAD.png
    :alt: ITRAD.png
    :width: 200px
-.. |ITRAI| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/ITRAI.png
+.. |ITRAI| image:: images/ITRAI.png
    :alt: ITRAI.png
    :width: 200px
 

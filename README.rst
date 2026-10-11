@@ -1,14 +1,14 @@
-.. |Logo| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/logo.png
+.. |Logo| image:: doc/images/logo.png
    :alt: logo.png
    :height: 25px
    :width: 25px
 
-.. |Rationale| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/rationale.png
+.. |Rationale| image:: doc/images/rationale.png
    :alt: rationale.png
    :height: 200px
    :width: 200px
 
-.. |Pipeline| image:: https://bitbucket.org/charade/svengine/raw/master/doc/images/pipeline.png
+.. |Pipeline| image:: doc/images/pipeline.png
    :alt: pipeline.png
    :height: 320px
    :width: 520px
@@ -20,11 +20,11 @@
 QUICK LINKS
 -----------
 
-`Examples <https://bitbucket.org/charade/svengine/wiki/Example>`__
+`Examples <doc/Example.rst>`__
 
-`Manuals <https://bitbucket.org/charade/svengine/wiki/Manual>`__
+`Manuals <doc/Manual.rst>`__
 
-`FAQ <https://bitbucket.org/charade/svengine/wiki/FAQ>`__
+`FAQ <doc/FAQ.rst>`__
 
 
 INTRODUCTION
@@ -53,8 +53,8 @@ Software
 
   Currently the package works for Linux (tested with Ubuntu) and Mac (tested with Homebrew).
   It might also work for Windows with Cygwin (not tested).
-  SVEngine documentation is on wiki and it is available:
-  http://bitbucket.org/charade/svengine/wiki
+  SVEngine documentation is available in the ``doc/`` folder of this repository
+  (RST sources: doc/Example.rst, doc/Manual.rst and doc/FAQ.rst; built HTML: doc/index.html).
 
 DOCKER (Platform Indepedent and Preferred)
 ---------------------------------------------
@@ -67,7 +67,7 @@ DOCKER (Platform Indepedent and Preferred)
     docker community: https://www.docker.com
   If you have a docker server running, 
   just need to download the Dockerfile from: 
-    dockerfile: https://bitbucket.org/charade/svengine/raw/master/Dockerfile
+    dockerfile: `Dockerfile <Dockerfile>`__
   into $your_sve_container and run:
 
   ::
@@ -77,7 +77,7 @@ DOCKER (Platform Indepedent and Preferred)
 INSTALL
 ------------
 
-  SVEngine is available on bitbucket: bitbucket.org:charade/svengine.git
+  SVEngine is available on GitHub: https://github.com/labxscut/svengine.git
 
   *Dependencies*:
 
@@ -89,11 +89,11 @@ INSTALL
 
     A script to confirm all dependencies are met is here:
 
-      https://bitbucket.org/charade/svengine/raw/master/test/test_dep.sh
+      `test/test_dep.sh <test/test_dep.sh>`__
 
     An example dependency install script for Mac wth Homebrew is here:
 
-      https://bitbucket.org/charade/svengine/raw/master/test/install_mac.sh
+      `test/install_mac.sh <test/install_mac.sh>`__
 
   *Installation*
 
@@ -135,7 +135,7 @@ INSTALL
     .. code::
 
       # in svengine_vpy>
-      git clone https://charade@bitbucket.org/charade/svengine.git
+      git clone https://github.com/labxscut/svengine.git
       cd svengine
       git submodule update --init --recursive
       test/test_dep.sh
@@ -159,7 +159,7 @@ USAGE
 
   By default all above executables will be available from $SVENGINE_BIN/ .
   Use '-h' to read script-wise usage.
-  See Wiki pages for more details.
+  See the manuals and examples under doc/ for more details.
 
 LICENSE
 ------------
@@ -169,17 +169,17 @@ LICENSE
 WIKI
 ------------
 
-  SVEngine's https://bitbucket.org/charade/svengine/wiki page is a growing resource for manuals, FAQs and other information. This is a MUST read place before you actually using the SVEngine tool. These documentations are also openly editable in reSructuredText format. You are more than welcome to contribute to this ongoing documentation.
+  SVEngine's manuals, FAQs and other documentation are maintained in the ``doc/`` folder of this repository (see `doc/Manual.rst <doc/Manual.rst>`__, `doc/Example.rst <doc/Example.rst>`__ and `doc/FAQ.rst <doc/FAQ.rst>`__). This is a MUST read before you actually use the SVEngine tool. Contributions to this documentation are welcome.
 
 FAQ
 ------------
 
-  http://bitbucket.org/charade/svengine/wiki/FAQ
+  `doc/FAQ.rst <doc/FAQ.rst>`__
 
 BUG
 ------------
 
-  https://bitbucket.org/charade/svengine/issues
+  https://github.com/labxscut/svengine/issues
 
 CONTACT
 ------------

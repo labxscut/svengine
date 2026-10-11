@@ -15,7 +15,7 @@ pip2 install -U dendropy
 pip2 install -U cython
 pip2 install -U tables
 ## install svengine
-git clone https://bitbucket.org/charade/svengine.git
+git clone https://github.com/labxscut/svengine.git
 git submodule update --init --recursive
 cd svengine
 python2 setup.py install

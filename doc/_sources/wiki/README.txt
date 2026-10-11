@@ -9,7 +9,7 @@ INTRODUCTION
 		Currently the package works for Linux (tested with Ubuntu) and Mac (tested with Macports).
 		It might also work for Windows with Cygwin (not tested).
 		SVEngine documentation is on wiki and it is available:
-		http://bitbucket.org/charade/svengine/wiki
+		../../Manual.rst
 
 INSTALL
 ========
@@ -58,7 +58,7 @@ INSTALL
 		2. For installations without root priviledge, you need to use virtualenv python or your local python installation,
 			 Please see https://virtualenv.pypa.io and http://dl.dropbox.com/u/35182955/Development_environment.html 
 			 for details to install virtualenv or your own python. Also see the install script examples
-			 in https://bitbucket.org/charade/svengine/wiki/Example for detailed steps.
+			 in ../../Example.rst for detailed steps.
 
 			Briefly, download virtualenv from: https://pypi.python.org/pypi/virtualenv
 			 then unzip and change into your virtualenv directory and run:
@@ -134,15 +134,15 @@ USAGE
 		
 WIKI
 ========
-		http://bitbucket.org/charade/svengine/wiki/Home
+		../../../README.rst
 		
 FAQ
 ========
-		http://bitbucket.org/charade/svengine/wiki/FAQ
+		../../FAQ.rst
 		
 BUG
 ========
-		https://bitbucket.org/charade/svengine/issues
+		https://github.com/labxscut/svengine/issues
 
 CONTACT
 ========

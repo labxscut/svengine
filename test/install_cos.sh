@@ -27,6 +27,6 @@ cd setuptools-$PVER
 python2 setup.py install
 ~/usr/bin/easy_install cython
 #SVEngine
-git clone https://bitbucket.org:charade/svengine.git
+git clone https://github.com/labxscut/svengine.git
 cd svengine
 ~/usr/bin/easy_install .
